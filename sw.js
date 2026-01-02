@@ -1,6 +1,6 @@
 const CACHE_NAME = 'mcorp-tracker-v1';
 const ASSETS_TO_CACHE = [
-  'Index.html',
+  'index.html',
   'manifest.json',
   'https://cdn.tailwindcss.com',
   'https://unpkg.com/lucide@latest',
