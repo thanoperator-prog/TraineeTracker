@@ -29,10 +29,9 @@
         .printable-report { 
             background: white; 
             width: 100%;
-            max-width: 8.5in; 
+            max-width: 7.5in; 
             margin: 0 auto;
             color: #1e293b;
-            padding: 0.5in;
         }
 
         .no-break { page-break-inside: avoid; }
@@ -52,7 +51,7 @@
             .no-print { display: none !important; }
             body { background: white; }
             main { padding: 0 !important; margin: 0 !important; }
-            .printable-report { box-shadow: none; border: none; width: 100%; max-width: 100%; padding: 0.5in; }
+            .printable-report { box-shadow: none; border: none; width: 100%; max-width: 100%; }
         }
     </style>
 </head>
@@ -83,6 +82,7 @@
                 <p class="text-slate-500">Real-time monitoring of operational performance and schedules.</p>
             </div>
 
+            <!-- Stats Grid -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div class="glass-card p-6 rounded-3xl shadow-sm border-l-4 border-blue-500">
                     <p class="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Total Workforce</p>
@@ -103,6 +103,7 @@
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Activity Feed -->
                 <div class="lg:col-span-1 space-y-4">
                     <div class="flex items-center gap-2 mb-2">
                         <i data-lucide="activity" class="text-blue-500 w-5 h-5"></i>
@@ -111,6 +112,7 @@
                     <div id="activity-feed" class="space-y-3 max-h-[600px] overflow-y-auto pr-2"></div>
                 </div>
 
+                <!-- Scheduling -->
                 <div class="lg:col-span-2 space-y-8">
                     <div class="space-y-4">
                         <div class="flex items-center gap-2 mb-2">
@@ -206,7 +208,7 @@
                         <h3 class="text-xl font-bold">Factory Reset</h3>
                     </div>
                     <p class="text-sm text-slate-500 leading-relaxed">Permanently erase all personnel records and activity logs. This action cannot be undone.</p>
-                    <button onclick="showFactoryResetModal()" class="bg-rose-50 text-rose-600 py-3 px-8 rounded-xl font-bold border-2 border-rose-100 hover:bg-rose-600 hover:text-white transition-all w-fit">
+                    <button onclick="factoryReset()" class="bg-rose-50 text-rose-600 py-3 px-8 rounded-xl font-bold border-2 border-rose-100 hover:bg-rose-600 hover:text-white transition-all w-fit">
                         Clear All System Data
                     </button>
                 </div>
@@ -235,7 +237,7 @@
                 <button id="back-to-report-btn" class="p-2 hover:bg-slate-100 rounded-full transition-colors"><i data-lucide="arrow-left"></i></button>
                 <button id="download-eval-pdf" class="bg-slate-900 text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg"><i data-lucide="download"></i> Download Report</button>
             </div>
-            <div id="eval-detail-content" class="printable-report"></div>
+            <div id="eval-detail-content" class="printable-report p-[0.1in]"></div>
         </div>
 
         <div id="endorsement-view" class="hidden space-y-8">
@@ -243,7 +245,7 @@
                 <button id="back-to-report-from-endorse" class="p-2 hover:bg-slate-100 rounded-full transition-colors"><i data-lucide="arrow-left"></i></button>
                 <button id="download-endorse-pdf" class="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg"><i data-lucide="download"></i> Download Endorsement</button>
             </div>
-            <div id="endorsement-content" class="printable-report"></div>
+            <div id="endorsement-content" class="printable-report p-[0.1in]"></div>
         </div>
 
         <div id="termination-view" class="hidden space-y-8">
@@ -251,40 +253,12 @@
                 <button id="back-to-report-from-term" class="p-2 hover:bg-slate-100 rounded-full transition-colors"><i data-lucide="arrow-left"></i></button>
                 <button id="download-term-pdf" class="bg-rose-600 text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg"><i data-lucide="download"></i> Download Notice</button>
             </div>
-            <div id="termination-content" class="printable-report"></div>
+            <div id="termination-content" class="printable-report p-[0.1in]"></div>
         </div>
     </main>
 
-    <!-- Modals Backdrop -->
+    <!-- Modals -->
     <div id="modal-backdrop" class="fixed inset-0 bg-slate-900/60 hidden z-[60] backdrop-blur-sm flex items-center justify-center p-4">
-        
-        <!-- Generic Confirmation Modal -->
-        <div id="confirm-modal" class="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-8 hidden text-center">
-            <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <i data-lucide="help-circle" class="w-8 h-8"></i>
-            </div>
-            <h3 class="text-xl font-bold mb-2" id="confirm-modal-title">Confirm Action</h3>
-            <p class="text-sm text-slate-500 mb-8" id="confirm-modal-message">Are you sure you want to proceed?</p>
-            <div class="flex gap-3">
-                <button onclick="closeModal()" class="flex-1 py-3 text-slate-500 font-bold hover:bg-slate-50 rounded-xl transition-all">Cancel</button>
-                <button id="generic-confirm-btn" class="flex-1 py-3 bg-blue-600 text-white font-bold rounded-xl shadow-lg transition-all">Proceed</button>
-            </div>
-        </div>
-
-        <!-- Factory Reset Verification Modal -->
-        <div id="factory-reset-modal" class="bg-white w-full max-w-md rounded-3xl shadow-2xl p-8 hidden text-center border-4 border-rose-100">
-            <div class="w-16 h-16 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <i data-lucide="alert-octagon" class="w-8 h-8"></i>
-            </div>
-            <h3 class="text-xl font-bold mb-2">Security Verification</h3>
-            <p class="text-sm text-slate-500 mb-6">This will PERMANENTLY erase all system data. Type <span class="font-black text-rose-600">RESET</span> to confirm.</p>
-            <input type="text" id="reset-verify-input" placeholder="Type keyword here..." class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-rose-500 text-center font-bold mb-6">
-            <div class="flex gap-3">
-                <button onclick="closeModal()" class="flex-1 py-3 text-slate-500 font-bold hover:bg-slate-50 rounded-xl transition-all">Cancel</button>
-                <button id="confirm-reset-btn" class="flex-1 py-3 bg-rose-600 text-white font-bold rounded-xl shadow-lg transition-all">Execute Wipe</button>
-            </div>
-        </div>
-
         <!-- Add/Edit Personnel Modal -->
         <div id="add-trainee-modal" class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-8 hidden">
             <div class="flex justify-between items-center mb-6">
@@ -299,19 +273,18 @@
             </form>
         </div>
 
-        <!-- Termination Reason Modal -->
+        <!-- Termination Modal -->
         <div id="terminate-modal" class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-8 hidden text-center">
             <div class="w-16 h-16 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-4"><i data-lucide="user-x" class="w-8 h-8"></i></div>
-            <h3 class="text-xl font-bold mb-2">Termination Grounds</h3>
+            <h3 class="text-xl font-bold mb-2">Termination Notice</h3>
             <p class="text-sm text-slate-500 mb-6 italic">Document the formal grounds for contract termination.</p>
             <textarea id="terminate-reason" class="w-full p-4 border border-slate-200 rounded-xl h-32 text-sm focus:ring-2 focus:ring-rose-500 outline-none mb-6" placeholder="Reason for termination..."></textarea>
             <div class="flex gap-2">
                 <button onclick="closeModal()" class="flex-1 py-3 text-slate-500 font-bold hover:bg-slate-50 rounded-xl transition-all">Cancel</button>
-                <button id="confirm-terminate-btn" class="flex-1 py-3 bg-rose-600 text-white font-bold rounded-xl shadow-lg transition-all">Confirm</button>
+                <button id="confirm-terminate-btn" class="flex-1 py-3 bg-rose-600 text-white font-bold rounded-xl shadow-lg shadow-rose-100 transition-all">Confirm</button>
             </div>
         </div>
 
-        <!-- Success/Promotion Modal -->
         <div id="congrats-modal" class="bg-white w-full max-w-4xl rounded-[40px] shadow-2xl p-0 overflow-hidden hidden">
             <div id="cert-pdf-wrapper" class="p-[0.1in] bg-white">
                 <div id="cert-container" class="certificate-border p-12 text-center space-y-10">
@@ -347,49 +320,18 @@
     </div>
 
     <script>
-        // PWA SW
+        // Service Worker Registration
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('sw.js')
-                    .then(reg => console.log('SW Registered'))
-                    .catch(err => console.log('SW Failed'));
+                    .then(reg => console.log('SW Registered', reg))
+                    .catch(err => console.log('SW Registration Failed', err));
             });
         }
 
         let employees = JSON.parse(localStorage.getItem('m_corp_employees')) || [];
         let activityLog = JSON.parse(localStorage.getItem('m_corp_activity')) || [];
         let currentEvalEmployeeId = null;
-
-        // Custom Modal Logic
-        function showConfirmModal(title, message, onConfirm) {
-            document.getElementById('confirm-modal-title').innerText = title;
-            document.getElementById('confirm-modal-message').innerText = message;
-            document.getElementById('modal-backdrop').classList.remove('hidden');
-            document.getElementById('confirm-modal').classList.remove('hidden');
-            document.getElementById('generic-confirm-btn').onclick = () => {
-                onConfirm();
-                closeModal();
-            };
-            lucide.createIcons();
-        }
-
-        function showFactoryResetModal() {
-            document.getElementById('reset-verify-input').value = '';
-            document.getElementById('modal-backdrop').classList.remove('hidden');
-            document.getElementById('factory-reset-modal').classList.remove('hidden');
-            document.getElementById('confirm-reset-btn').onclick = () => {
-                const keyword = document.getElementById('reset-verify-input').value.trim();
-                if (keyword === 'RESET') {
-                    localStorage.clear();
-                    employees = [];
-                    activityLog = [];
-                    location.reload();
-                } else {
-                    showNotification("Invalid keyword.");
-                }
-            };
-            lucide.createIcons();
-        }
 
         function getStatusClass(s) {
             switch(s) {
@@ -466,7 +408,6 @@
             form.querySelector('input[name="id"]').value = '';
             document.getElementById('modal-backdrop').classList.remove('hidden');
             document.getElementById('add-trainee-modal').classList.remove('hidden');
-            lucide.createIcons();
         }
 
         function showEditModal(id) {
@@ -479,22 +420,16 @@
             form.querySelector('input[name="hireDate"]').value = emp.hireDate;
             document.getElementById('modal-backdrop').classList.remove('hidden');
             document.getElementById('add-trainee-modal').classList.remove('hidden');
-            lucide.createIcons();
         }
 
         function confirmDelete(id) {
             const emp = employees.find(e => e.id == id);
             if (!emp) return;
-            showConfirmModal(
-                "Delete Record", 
-                `Are you sure you want to permanently delete the dossier for ${emp.name}? This cannot be undone.`, 
-                () => {
-                    employees = employees.filter(e => e.id != id);
-                    logActivity('delete', 'Record deleted permanently', emp.name);
-                    saveData(); 
-                    renderDashboard();
-                }
-            );
+            if(confirm(`Permanently DELETE ${emp.name}'s dossier?`)) {
+                employees = employees.filter(e => e.id != id);
+                logActivity('delete', 'Record deleted permanently', emp.name);
+                saveData(); renderDashboard();
+            }
         }
 
         document.getElementById('add-trainee-form').onsubmit = (e) => {
@@ -768,7 +703,7 @@
                                             <button onclick="generateEndorsementLetter(${emp.id}, ${a.id})" class="flex-1 py-1.5 bg-amber-500 text-white rounded-lg text-[10px] font-bold uppercase hover:bg-amber-600">Endorsement</button>
                                         </div>
                                     </div>
-                                `).join('') || '<p class="text-xs text-slate-400 italic">No milestones found.</p>'}
+                                `).join('') || '<p class="text-xs text-slate-400 italic">No logs found.</p>'}
                             </div>
                         </div>
                     </div>
@@ -802,57 +737,29 @@
             const weaknesses = ev.details.filter(d => d.score <= 2), neutral = ev.details.filter(d => d.score === 3), strengths = ev.details.filter(d => d.score >= 4);
 
             container.innerHTML = `
-                <div class="space-y-12">
-                    <div class="flex justify-between items-start border-b-8 border-slate-900 pb-8 uppercase font-black tracking-tighter">
-                        <div>
-                            <h1 class="text-2xl">M-Commerce Corporation</h1>
-                            <p class="text-sm font-bold text-blue-600 uppercase tracking-widest">Performance Evaluation Dossier</p>
-                            <p class="text-[10px] text-slate-400 font-black mt-2">Document ID: ASSESS-${ev.id}</p>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-[10px] text-slate-400 uppercase">Weighted Final Grade</p>
-                            <p class="text-7xl text-slate-900 leading-none">${ev.score}%</p>
-                        </div>
+                <div class="space-y-10">
+                    <div class="flex justify-between items-start border-b-4 border-slate-900 pb-8 uppercase font-black tracking-tighter">
+                        <div><h1>M-Commerce Corporation</h1><p class="text-sm font-bold text-blue-600 uppercase tracking-widest">Assessment: ${ev.type} | Month ${ev.phaseMonth} Report</p></div>
+                        <div class="text-right"><p class="text-xs text-slate-400">Final Grade</p><p class="text-6xl text-slate-900">${ev.score}%</p></div>
                     </div>
-                    
-                    <div class="grid grid-cols-4 gap-6 bg-slate-50 p-6 rounded-3xl border border-slate-200 text-[10px] uppercase font-black">
-                        <div><p class="text-slate-400 mb-1">Subject Personnel</p><p class="text-slate-900">${emp.name}</p></div>
-                        <div><p class="text-slate-400 mb-1">Assessment Date</p><p class="text-slate-900">${ev.date}</p></div>
-                        <div><p class="text-slate-400 mb-1">Functional Group</p><p class="text-slate-900">Operations</p></div>
-                        <div><p class="text-slate-400 mb-1">Phase Status</p><p class="text-slate-900">${ev.type} | Mo. ${ev.phaseMonth}</p></div>
+                    <div class="grid grid-cols-4 gap-6 bg-slate-50 p-6 rounded-3xl border text-[10px] uppercase font-black">
+                        <div><p class="text-slate-400">Personnel</p><p>${emp.name}</p></div>
+                        <div><p class="text-slate-400">Date</p><p>${ev.date}</p></div>
+                        <div><p class="text-slate-400">Division</p><p>Operation</p></div>
+                        <div><p class="text-slate-400">Phase</p><p>${ev.type}</p></div>
                     </div>
-
-                    <div class="space-y-4">
-                        <h2 class="text-xs font-black uppercase tracking-widest text-slate-900 border-l-4 border-slate-900 pl-3">Executive Summary of Performance</h2>
-                        <div class="grid grid-cols-3 gap-6 no-break">
-                            <div class="space-y-4">
-                                <h4 class="font-black text-rose-600 text-[9px] uppercase tracking-wider">Deficiency Areas (1-2)</h4>
-                                <div class="space-y-2">${weaknesses.map(w => `<div class="p-4 bg-rose-50 rounded-2xl border border-rose-100 text-[9px] font-semibold text-rose-800"><p>${w.q}</p></div>`).join('') || '<p class="text-[9px] italic text-slate-400">No critical deficiencies identified.</p>'}</div>
-                            </div>
-                            <div class="space-y-4">
-                                <h4 class="font-black text-blue-600 text-[9px] uppercase tracking-wider">Satisfactory Benchmarks (3)</h4>
-                                <div class="space-y-2">${neutral.map(n => `<div class="p-4 bg-blue-50 rounded-2xl border border-blue-100 text-[9px] font-semibold text-blue-800"><p>${n.q}</p></div>`).join('') || '<p class="text-[9px] italic text-slate-400">No neutral benchmarks logged.</p>'}</div>
-                            </div>
-                            <div class="space-y-4">
-                                <h4 class="font-black text-emerald-600 text-[9px] uppercase tracking-wider">Proficiency Strengths (4-5)</h4>
-                                <div class="space-y-2">${strengths.map(s => `<div class="p-4 bg-emerald-50 rounded-2xl border border-emerald-100 text-[9px] font-semibold text-emerald-800"><p>${s.q}</p></div>`).join('') || '<p class="text-[9px] italic text-slate-400">No exceptional proficiencies identified.</p>'}</div>
-                            </div>
-                        </div>
+                    <div class="grid grid-cols-3 gap-6 no-break">
+                        <div class="space-y-4"><h4 class="font-black text-rose-600 text-[10px] uppercase">Weakness</h4><div class="space-y-2">${weaknesses.map(w => `<div class="p-3 bg-rose-50 rounded-xl border border-rose-100 text-[9px] font-medium text-rose-800"><p>${w.q}</p></div>`).join('') || '<p class="text-[9px] italic text-slate-400">None.</p>'}</div></div>
+                        <div class="space-y-4"><h4 class="font-black text-blue-600 text-[10px] uppercase">Neutral</h4><div class="space-y-2">${neutral.map(n => `<div class="p-3 bg-blue-50 rounded-xl border border-blue-100 text-[9px] font-medium text-blue-800"><p>${n.q}</p></div>`).join('') || '<p class="text-[9px] italic text-slate-400">None.</p>'}</div></div>
+                        <div class="space-y-4"><h4 class="font-black text-emerald-600 text-[10px] uppercase">Strength</h4><div class="space-y-2">${strengths.map(s => `<div class="p-3 bg-emerald-50 rounded-xl border border-emerald-100 text-[9px] font-medium text-emerald-800"><p>${s.q}</p></div>`).join('') || '<p class="text-[9px] italic text-slate-400">None.</p>'}</div></div>
                     </div>
-
-                    <div class="space-y-4">
-                         <h2 class="text-xs font-black uppercase tracking-widest text-slate-900 border-l-4 border-slate-900 pl-3">Comprehensive Technical Breakdown</h2>
-                        <table class="w-full text-left text-[10px] border-collapse no-break">
-                            <thead><tr class="bg-slate-900 text-white"><th class="p-4 border border-slate-700 uppercase tracking-widest">Technical Assessment Indicator</th><th class="p-4 border border-slate-700 text-right uppercase tracking-widest">Metric Score</th></tr></thead>
-                            <tbody>${ev.details.map(d => `<tr class="no-break"><td class="p-4 border border-slate-200 font-bold text-slate-700">${d.q}<br><span class="text-[8px] font-black text-slate-400 uppercase">${d.cat}</span></td><td class="p-4 border border-slate-200 text-right font-black text-blue-600">${d.score} / 5.0</td></tr>`).join('')}</tbody>
-                        </table>
-                    </div>
-
-                    <div class="pt-24 grid grid-cols-2 gap-y-20 gap-x-12 px-6 no-break font-black text-[8px] tracking-[0.2em] text-slate-400 text-center uppercase">
-                        <div class="border-t-2 border-slate-900 pt-4 text-slate-900">Evaluated Personnel Signature</div>
-                        <div class="border-t-2 border-slate-300 pt-4">Technical Trainer Authorization</div>
-                        <div class="border-t-2 border-slate-300 pt-4">Operational Lead Oversight</div>
-                        <div class="border-t-2 border-slate-300 pt-4">Department Management Approval</div>
+                    <table class="w-full text-left text-[10px] border-collapse no-break">
+                        <thead><tr class="bg-slate-900 text-white"><th class="p-4 border uppercase">Metric</th><th class="p-4 border text-right">Score</th></tr></thead>
+                        <tbody>${ev.details.map(d => `<tr class="no-break"><td class="p-4 border font-bold text-slate-700">${d.q}<br><span class="text-[8px] font-black text-slate-400 uppercase">${d.cat}</span></td><td class="p-4 border text-right font-black text-blue-600">${d.score} / 5</td></tr>`).join('')}</tbody>
+                    </table>
+                    <div class="pt-32 grid grid-cols-2 gap-y-24 gap-x-12 px-6 no-break font-black text-[9px] tracking-widest text-slate-400 text-center uppercase">
+                        <div class="border-t-2 border-slate-900 pt-3">Operator Trainee</div>
+                        <div class="border-t-2 border-slate-300 pt-3">Operator Trainer</div>
                     </div>
                 </div>`;
             document.getElementById('back-to-report-btn').onclick = () => viewReport(empId);
@@ -867,50 +774,21 @@
             const avg = (a.evaluations.reduce((acc, curr) => acc + parseFloat(curr.score), 0) / a.evaluations.length).toFixed(1);
 
             container.innerHTML = `
-                <div class="space-y-12">
-                    <div class="flex justify-between items-start border-b-2 border-slate-100 pb-10">
-                        <div>
-                            <h1 class="text-2xl font-black text-slate-900 uppercase">M-Commerce Corporation</h1>
-                            <p class="text-xs text-slate-500 font-black uppercase tracking-widest mt-1">Operations & Workforce Management Division</p>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-sm font-bold text-slate-900 uppercase">Date: ${a.date}</p>
-                            <p class="text-[9px] text-slate-400 font-black uppercase tracking-tighter">Reference: ENDORSE-${a.id}</p>
+                <div class="space-y-16">
+                    <div class="flex justify-between items-start border-b-2 border-slate-100 pb-8 uppercase font-black">
+                        <div><h1>M-Commerce Corporation</h1><p class="text-xs text-slate-400 tracking-widest">Operation Department</p></div>
+                        <div class="text-right"><p class="text-sm text-slate-900">${a.date}</p></div>
+                    </div>
+                    <div class="space-y-10 text-slate-800">
+                        <p class="font-black text-lg uppercase tracking-widest text-slate-900">TO THE MANAGEMENT,</p>
+                        <div class="space-y-8 text-sm leading-relaxed text-justify">
+                            <p>This document serves as the official endorsement of <strong>${emp.name}</strong> for promotion to <strong>${a.type}</strong>.</p>
+                            <p>System metrics demonstrate a cumulative performance average of <strong>${avg}%</strong>.</p>
                         </div>
                     </div>
-
-                    <div class="space-y-8 text-slate-800">
-                        <div class="font-black text-sm uppercase tracking-wider text-slate-900">
-                            <p>Subject: Formal Endorsement for Professional Advancement</p>
-                        </div>
-
-                        <div class="space-y-6 text-sm leading-relaxed text-justify text-slate-700">
-                            <p>I am writing to formally submit the professional endorsement of <strong>${emp.name}</strong> for advancement to the role of <strong>${a.type}</strong> within the M-Commerce Corporation operational structure. This recommendation follows a comprehensive and rigorous period of evaluation and technical observation.</p>
-                            
-                            <p>During the <strong>${a.fromStatus}</strong> phase, <strong>${emp.name}</strong> has consistently demonstrated a high degree of technical mastery, professional integrity, and operational efficiency. Our internal tracking metrics indicate a cumulative performance score of <strong>${avg}%</strong>, which is significantly above the required satisfactory threshold for professional advancement.</p>
-                            
-                            <p>The candidate has shown exceptional competency in high-pressure troubleshooting scenarios, OBS environment management, and camera technical configurations. Beyond technical skills, their professional conduct and clear communication have contributed positively to our functional environment.</p>
-
-                            <p>Based on these consistent performance results, we have total confidence in their ability to handle the increased responsibilities associated with the role of <strong>${a.type}</strong>. We request that the necessary administrative updates be executed to formalize this promotion effective immediately.</p>
-                        </div>
-                    </div>
-
-                    <div class="page-break pt-12">
-                        <h2 class="text-xs font-black uppercase tracking-[0.2em] mb-8 text-center text-slate-400">Performance Data Annex</h2>
-                        <table class="w-full text-left text-[11px] border-collapse border border-slate-200">
-                            <thead><tr class="bg-slate-900 text-white"><th class="p-4 border border-slate-700 uppercase tracking-widest">Assessment Period</th><th class="p-4 border border-slate-700 uppercase tracking-widest">Phase Category</th><th class="p-4 border border-slate-700 text-right uppercase tracking-widest">Metric Score</th></tr></thead>
-                            <tbody>
-                                ${a.evaluations.map(ev => `<tr class="bg-white"><td class="p-4 border border-slate-200 font-bold">Month ${ev.phaseMonth}</td><td class="p-4 border border-slate-200 uppercase">${ev.type}</td><td class="p-4 border border-slate-200 text-right font-black text-blue-600">${ev.score}%</td></tr>`).join('')}
-                                <tr class="bg-slate-50 font-black"><td colspan="2" class="p-5 border border-slate-200 text-right uppercase tracking-widest text-slate-600">Phase Achievement Average</td><td class="p-5 border border-slate-200 text-right text-blue-600 text-xl">${avg}%</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div class="pt-32 grid grid-cols-2 gap-y-20 gap-x-12 px-6 no-break font-black text-[8px] tracking-[0.2em] text-slate-400 text-center uppercase">
-                        <div class="border-t-2 border-slate-300 pt-4">Training Lead Signature</div>
-                        <div class="border-t-2 border-slate-300 pt-4">Operations Manager Approval</div>
-                        <div class="border-t-2 border-slate-300 pt-4">HR Records Acknowledgment</div>
-                        <div class="border-t-2 border-slate-300 pt-4">Candidate Confirmation</div>
+                    <div class="pt-32 grid grid-cols-2 gap-y-24 gap-x-12 px-6 no-break font-black text-[9px] tracking-widest text-slate-400 text-center uppercase">
+                        <div class="border-t-2 border-slate-900 pt-3">Operator Trainee</div>
+                        <div class="border-t-2 border-slate-300 pt-3">Operator Trainer</div>
                     </div>
                 </div>`;
             document.getElementById('back-to-report-from-endorse').onclick = () => viewReport(empId);
@@ -922,47 +800,21 @@
             const emp = employees.find(e => e.id == id);
             const container = document.getElementById('termination-content');
             container.innerHTML = `
-                <div class="space-y-12">
-                    <div class="flex justify-between items-start border-b-2 border-slate-200 pb-10">
-                        <div>
-                            <h1 class="text-2xl font-black text-slate-900 uppercase">M-Commerce Corporation</h1>
-                            <p class="text-xs text-slate-500 font-black uppercase tracking-widest mt-1">Human Resources & Operational Integrity</p>
-                        </div>
-                        <div class="text-right">
-                            <p class="text-sm font-bold text-slate-900 uppercase">Effective Date: ${emp.terminationDate}</p>
-                            <p class="text-[9px] text-slate-400 font-black uppercase tracking-tighter">REF: NOTICE-TERM-${emp.id}</p>
+                <div class="space-y-16">
+                    <div class="flex justify-between items-start border-b-2 border-slate-100 pb-8 uppercase font-black">
+                        <div><h1>M-Commerce Corporation</h1><p class="text-xs text-slate-400 tracking-widest">Operation Department</p></div>
+                        <div class="text-right"><p class="text-sm text-slate-900">${emp.terminationDate}</p></div>
+                    </div>
+                    <div class="space-y-10 text-slate-800">
+                        <p class="font-black text-lg uppercase tracking-widest text-slate-900">TO THE MANAGEMENT,</p>
+                        <div class="space-y-8 text-sm leading-relaxed text-justify">
+                            <p>Termination notification for <strong>${emp.name}</strong>, effective <strong>${emp.terminationDate}</strong>.</p>
+                            <div class="p-8 bg-slate-50 border-l-4 border-rose-500 rounded-r-3xl italic text-slate-700 shadow-sm leading-relaxed">"${emp.terminationReason}"</div>
                         </div>
                     </div>
-
-                    <div class="space-y-8 text-slate-800">
-                        <div class="font-black text-sm uppercase tracking-wider text-slate-900">
-                            <p>Private & Confidential</p>
-                            <p>To: ${emp.name}</p>
-                            <p class="mt-4">Subject: Notice of Contract Termination</p>
-                        </div>
-
-                        <div class="space-y-6 text-sm leading-relaxed text-justify text-slate-700">
-                            <p>Dear <strong>${emp.name}</strong>,</p>
-                            
-                            <p>This correspondence serves as a formal and final notification regarding the termination of your employment relationship with M-Commerce Corporation, effective immediately as of <strong>${emp.terminationDate}</strong>.</p>
-                            
-                            <p>This decision follows a thorough administrative review of your professional dossier and the comprehensive performance data gathered during your assessment period. After careful consideration, the Management has concluded that your current technical trajectory and operational conduct do not meet the standards required for the long-term objectives of the Operations Department. This action is taken based on the following specific administrative grounds:</p>
-                            
-                            <div class="p-10 bg-rose-50 border-l-8 border-rose-500 rounded-r-[32px] italic text-rose-900 shadow-sm leading-relaxed text-xs font-medium">
-                                "${emp.terminationReason}"
-                            </div>
-
-                            <p>As part of this separation process, all corporate credentials, digital security access, and professional authorizations associated with your personnel record are revoked effective immediately. You are requested to finalize any outstanding administrative clearances with the Department Lead before departure.</p>
-
-                            <p>This decision is final and has been executed to maintain the integrity and high performance standards of M-Commerce Corporation. We wish you success in your future professional endeavors.</p>
-                        </div>
-                    </div>
-
-                    <div class="pt-32 grid grid-cols-2 gap-y-20 gap-x-12 px-6 no-break font-black text-[8px] tracking-[0.2em] text-slate-400 text-center uppercase">
-                        <div class="border-t-2 border-slate-900 pt-4 text-slate-900">Issuing Authority (Ops Management)</div>
-                        <div class="border-t-2 border-slate-300 pt-4">HR Department Oversight</div>
-                        <div class="border-t-2 border-slate-300 pt-4">Witness Signature</div>
-                        <div class="border-t-2 border-slate-300 pt-4">Acknowledged by Recipient</div>
+                    <div class="pt-32 grid grid-cols-2 gap-y-24 gap-x-12 px-6 no-break font-black text-[9px] tracking-widest text-slate-400 text-center uppercase">
+                        <div class="border-t-2 border-slate-900 pt-3">Operator Trainee</div>
+                        <div class="border-t-2 border-slate-300 pt-3">Operator Trainer</div>
                     </div>
                 </div>`;
             document.getElementById('back-to-report-from-term').onclick = () => viewReport(id);
@@ -972,13 +824,7 @@
 
         async function downloadPDF(elementId, filename) {
             const element = document.getElementById(elementId);
-            const opt = { 
-                margin: [0.3, 0.3, 0.3, 0.3], 
-                filename, 
-                image: { type: 'jpeg', quality: 0.98 }, 
-                html2canvas: { scale: 2, useCORS: true, letterRendering: true, backgroundColor: '#ffffff' }, 
-                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } 
-            };
+            const opt = { margin: [0.5, 0.5, 0.5, 0.5], filename, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true, letterRendering: true, backgroundColor: '#ffffff' }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } };
             showNotification("Compiling PDF...");
             try { await html2pdf().set(opt).from(element).save(); } catch (e) { showNotification("Export failed."); }
         }
@@ -1007,11 +853,10 @@
                     saveData(); renderDashboard(); closeModal();
                 }
             };
-            lucide.createIcons();
         }
 
         function backupData() {
-            const data = { employees, activityLog, version: "2.6", ts: Date.now() };
+            const data = { employees, activityLog, version: "2.1", ts: Date.now() };
             const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a'); a.href = url; a.download = `MCorp_Backup_${new Date().toISOString().split('T')[0]}.json`;
@@ -1021,26 +866,23 @@
 
         function restoreData(event) {
             const file = event.target.files[0]; if(!file) return;
-            showConfirmModal(
-                "Restore Data", 
-                "Proceeding will overwrite all existing records with the backup file. Continue?", 
-                () => {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        try {
-                            const data = JSON.parse(e.target.result);
-                            if(data.employees && data.activityLog) {
-                                employees = data.employees; 
-                                activityLog = data.activityLog; 
-                                saveData(); 
-                                renderDashboard(); 
-                                showNotification("Data Restored.");
-                            }
-                        } catch (err) { showNotification("Invalid backup file."); }
-                    };
-                    reader.readAsText(file);
-                }
-            );
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if(data.employees && data.activityLog) {
+                        if(confirm("Confirm overwrite?")) { employees = data.employees; activityLog = data.activityLog; saveData(); renderDashboard(); showNotification("Restored."); }
+                    }
+                } catch (err) { showNotification("Invalid file."); }
+            };
+            reader.readAsText(file);
+        }
+
+        function factoryReset() {
+            if(confirm("Permanently wipe all records?")) {
+                const check = prompt("Type 'RESET' to confirm:");
+                if(check === 'RESET') { localStorage.clear(); location.reload(); }
+            }
         }
 
         function showNotification(text) {
