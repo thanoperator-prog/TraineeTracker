@@ -855,13 +855,11 @@
 
         function showEvalDetail(empId, evalId) {
             const emp = window.employees.find(e => e.id == empId), ev = emp.evaluations.find(e => e.id == evalId); if (!ev) return;
-            const weak = ev.details.filter(d => d.score <= 2), neut = ev.details.filter(d => d.score === 3), str = ev.details.filter(d => d.score >= 4);
             
             // Group details by section title for the report
             let tableRows = '';
             const groupedDetails = {};
             
-            // Group by section. If section is missing (legacy data), group under category
             ev.details.forEach(d => {
                 const groupKey = d.section || d.cat; 
                 if (!groupedDetails[groupKey]) groupedDetails[groupKey] = [];
@@ -869,9 +867,7 @@
             });
 
             for (const [groupName, items] of Object.entries(groupedDetails)) {
-                // Add Group Header row
                 tableRows += `<tr class="bg-slate-50"><td colspan="2" class="p-3 border font-black text-slate-800 text-[10px] uppercase tracking-wider">${groupName}</td></tr>`;
-                // Add items
                 items.forEach(d => {
                     tableRows += `<tr><td class="p-4 border font-bold text-slate-700 text-[10px]">${d.q}</td><td class="p-4 border text-right font-black text-blue-600 text-[10px]">${d.score} / 5.0</td></tr>`;
                 });
@@ -897,12 +893,6 @@
                         A final weighted score of <strong>${ev.score}%</strong> was achieved based on these categorized performance indicators.</p>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 no-break">
-                        <div><h4 class="font-black text-rose-600 text-[9px] uppercase tracking-wider mb-2">Deficiencies</h4>${weak.map(w => `<div class="p-3 bg-rose-50 rounded-xl border mb-2 text-[9px] font-semibold">${w.q}</div>`).join('') || '<p class="text-[9px] italic text-slate-400">None logged.</p>'}</div>
-                        <div><h4 class="font-black text-blue-600 text-[9px] uppercase tracking-wider mb-2">Satisfactory</h4>${neut.map(n => `<div class="p-3 bg-blue-50 rounded-xl border mb-2 text-[9px] font-semibold">${n.q}</div>`).join('') || '<p class="text-[9px] italic text-slate-400">None logged.</p>'}</div>
-                        <div><h4 class="font-black text-emerald-600 text-[9px] uppercase tracking-wider mb-2">Proficiencies</h4>${str.map(s => `<div class="p-3 bg-emerald-50 rounded-xl border mb-2 text-[9px] font-semibold">${s.q}</div>`).join('') || '<p class="text-[9px] italic text-slate-400">None logged.</p>'}</div>
-                    </div>
-
                     <div class="overflow-x-auto">
                     <h2 class="text-sm font-black uppercase tracking-widest text-slate-900 border-l-4 border-slate-900 pl-4 py-1 mb-4">II. Detailed Metric Breakdown</h2>
                     <table class="w-full text-[10px] border-collapse no-break border border-slate-200">
@@ -911,11 +901,11 @@
                     </table>
                     </div>
                     
-                    <div class="pt-24 grid grid-cols-1 md:grid-cols-2 gap-y-24 gap-x-12 px-6 font-black text-[8px] text-center uppercase tracking-[0.2em] text-slate-400 no-break">
-                        <div class="border-t-2 border-slate-900 pt-4 text-slate-900">Live Operator Trainee</div>
-                        <div class="border-t-2 border-slate-300 pt-4">Live Operator Trainor</div>
-                        <div class="border-t-2 border-slate-300 pt-4">Live Operator Lead</div>
-                        <div class="border-t-2 border-slate-300 pt-4">Technical Support Supervisor</div>
+                    <div class="pt-24 grid grid-cols-1 md:grid-cols-2 gap-y-24 gap-x-12 px-6 font-black text-[8px] text-center uppercase tracking-[0.2em] text-black no-break">
+                        <div class="border-t-2 border-black pt-4">Live Operator Trainee</div>
+                        <div class="border-t-2 border-black pt-4">Live Operator Trainor</div>
+                        <div class="border-t-2 border-black pt-4">Live Operator Lead</div>
+                        <div class="border-t-2 border-black pt-4">Technical Support Supervisor</div>
                     </div>
                 </div>`;
             document.getElementById('back-to-report-btn').onclick = () => viewReport(empId);
@@ -933,7 +923,7 @@
                         <div class="text-right"><p class="text-sm font-bold uppercase">Date: ${a.date}</p></div>
                     </div>
                     <div class="space-y-8 text-slate-800">
-                        <div class="font-black text-sm uppercase tracking-wider text-slate-900"><p>Subject: Formal Endorsement for Professional Advancement</p></div>
+                        <div class="font-black text-sm uppercase tracking-wider text-slate-900"><p>Formal Endorsement for Professional Advancement</p></div>
                         
                         <div class="space-y-6 text-sm text-justify text-slate-700 leading-relaxed">
                             <p>I am writing to formally submit the professional endorsement of <strong>${emp.name}</strong> for advancement to <strong>${a.type}</strong> within the M-Commerce Corporation operational hierarchy. 
@@ -948,11 +938,11 @@
 
                     <div class="pt-8 overflow-x-auto"><table class="w-full text-left text-[11px] border-collapse border"><thead><tr class="bg-slate-900 text-white"><th class="p-4 border uppercase">Assessment Cycle</th><th class="p-4 border uppercase">Category</th><th class="p-4 border text-right uppercase">Metric</th></tr></thead><tbody>${a.evaluations.map(ev => `<tr class="bg-white"><td class="p-4 border font-bold">Month ${ev.phaseMonth}</td><td class="p-4 border uppercase">${ev.type}</td><td class="p-4 border text-right font-black text-blue-600">${ev.score}%</td></tr>`).join('')}<tr class="bg-slate-50 font-black"><td colspan="2" class="p-5 border text-right uppercase tracking-widest text-slate-600">Weighted Phase Average</td><td class="p-5 border text-right text-blue-600 text-xl">${avg}%</td></tr></tbody></table></div>
                     
-                    <div class="pt-32 grid grid-cols-1 md:grid-cols-2 gap-y-24 gap-x-12 px-6 font-black text-[8px] text-center uppercase tracking-[0.2em] text-slate-400 no-break">
-                        <div class="border-t-2 border-slate-300 pt-4">Live Operator Trainee</div>
-                        <div class="border-t-2 border-slate-300 pt-4">Live Operator Trainor</div>
-                        <div class="border-t-2 border-slate-300 pt-4">Live Operator Lead</div>
-                        <div class="border-t-2 border-slate-300 pt-4">Technical Support Supervisor</div>
+                    <div class="pt-32 grid grid-cols-1 md:grid-cols-2 gap-y-24 gap-x-12 px-6 font-black text-[8px] text-center uppercase tracking-[0.2em] text-black no-break">
+                        <div class="border-t-2 border-black pt-4">Live Operator Trainee</div>
+                        <div class="border-t-2 border-black pt-4">Live Operator Trainor</div>
+                        <div class="border-t-2 border-black pt-4">Live Operator Lead</div>
+                        <div class="border-t-2 border-black pt-4">Technical Support Supervisor</div>
                     </div>
                 </div>`;
             document.getElementById('back-to-report-from-endorse').onclick = () => viewReport(empId);
@@ -969,7 +959,7 @@
                         <div class="text-right"><p class="text-sm font-bold uppercase text-rose-600">Effective: ${emp.terminationDate}</p></div>
                     </div>
                     <div class="space-y-8 text-slate-800">
-                        <div class="font-black text-sm uppercase tracking-wider text-slate-900"><p>Subject: Notice of Formal Contract Termination</p></div>
+                        <div class="font-black text-sm uppercase tracking-wider text-slate-900"><p>Notice of Formal Contract Termination</p></div>
                         
                         <div class="space-y-6 text-sm text-justify text-slate-700 leading-relaxed">
                             <p>Dear <strong>${emp.name}</strong>,</p>
@@ -985,11 +975,11 @@
                         </div>
                     </div>
 
-                    <div class="pt-32 grid grid-cols-1 md:grid-cols-2 gap-y-24 gap-x-12 px-6 font-black text-[8px] text-center uppercase tracking-[0.2em] text-slate-400 no-break">
-                        <div class="border-t-2 border-slate-900 pt-4 text-slate-900">Issuing Manager</div>
-                        <div class="border-t-2 border-slate-300 pt-4">HR Oversight</div>
-                        <div class="border-t-2 border-slate-300 pt-4">Witness Signature</div>
-                        <div class="border-t-2 border-slate-300 pt-4">Recipient Acknowledgment</div>
+                    <div class="pt-32 grid grid-cols-1 md:grid-cols-2 gap-y-24 gap-x-12 px-6 font-black text-[8px] text-center uppercase tracking-[0.2em] text-black no-break">
+                        <div class="border-t-2 border-black pt-4">Issuing Manager</div>
+                        <div class="border-t-2 border-black pt-4">HR Oversight</div>
+                        <div class="border-t-2 border-black pt-4">Witness Signature</div>
+                        <div class="border-t-2 border-black pt-4">Recipient Acknowledgment</div>
                     </div>
                 </div>`;
             document.getElementById('back-to-report-from-term').onclick = () => viewReport(id);
