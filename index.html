@@ -23,7 +23,7 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, setDoc, addDoc, updateDoc, deleteDoc, collection, query, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Firebase Configuration (User-provided)
+        // Firebase Configuration
         const userProvidedConfig = {
             apiKey: "AIzaSyAKUM3Mo91_Gm-Rj5x7EgrN43HWUpxYprU",
             authDomain: "traineetracker-91496.firebaseapp.com",
@@ -34,7 +34,6 @@
             measurementId: "G-YXB1YTESWG"
         };
 
-        // Use environment config if provided, else fallback to user config
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : userProvidedConfig;
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -48,77 +47,65 @@
         window.employees = [];
         window.activityLog = [];
 
-        // Rule 3: Auth BEFORE Queries with Token Mismatch Handling
+        // Auth Logic with Error Handling
         async function startSystem() {
             try {
-                // Priority 1: Environment Custom Token
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     try {
                         await signInWithCustomToken(auth, __initial_auth_token);
-                        console.log("Authenticated via Custom Token");
-                    } catch (tokenError) {
-                        // Priority 2: Fallback to Anonymous if token mismatches (happens when using personal config)
-                        console.warn("Custom Token rejected, falling back to Anonymous Auth...");
+                    } catch (e) {
+                        console.warn("Custom token failed, falling back to anonymous.");
                         await signInAnonymously(auth);
                     }
                 } else {
-                    // Priority 3: Default Anonymous Auth
                     await signInAnonymously(auth);
-                    console.log("Authenticated Anonymously");
                 }
             } catch (error) {
-                console.error("Firebase System Auth Failed:", error);
-                showNotification("Cloud Connection Blocked.");
+                console.error("Auth Error:", error);
+                showNotification("Database Auth Failed.");
             }
         }
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                console.log("Secure Session Active:", user.uid);
+                console.log("Session Active:", user.uid);
                 setupRealtimeSync();
             }
         });
 
-        // Rule 2: JS-side processing for performance/rules
+        // Data Sync
         function setupRealtimeSync() {
             if (!auth.currentUser) return;
             const employeesRef = collection(db, 'artifacts', appId, 'public', 'data', 'employees');
             const activityRef = collection(db, 'artifacts', appId, 'public', 'data', 'activity');
 
-            // Sync Employees
             onSnapshot(employeesRef, (snapshot) => {
                 window.employees = snapshot.docs.map(doc => ({ firebaseId: doc.id, ...doc.data() }));
-                if (typeof renderDashboard === 'function') renderDashboard();
+                renderDashboard();
             }, (error) => {
-                console.error("Employee Sync Failed:", error);
-                if (error.code === 'permission-denied') showNotification("Permission Denied: Check Cloud Rules.");
+                if (error.code === 'permission-denied') showNotification("Permission Denied: Check Rules.");
             });
 
-            // Sync Activity
             onSnapshot(activityRef, (snapshot) => {
                 window.activityLog = snapshot.docs.map(doc => doc.data())
                     .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-                if (typeof renderDashboard === 'function') renderDashboard();
-            }, (error) => console.error("Activity Sync Failed:", error));
+                renderDashboard();
+            });
         }
 
-        // Global Action Handlers
+        // Global Handlers
         window.logActivity = async function(type, message, empName) {
             if (!auth.currentUser) return;
             try {
                 const activityRef = collection(db, 'artifacts', appId, 'public', 'data', 'activity');
-                await addDoc(activityRef, { 
-                    type, message, empName, 
-                    date: new Date().toLocaleString(), 
-                    timestamp: Date.now() 
-                });
+                await addDoc(activityRef, { type, message, empName, date: new Date().toLocaleString(), timestamp: Date.now() });
             } catch (e) { console.error("Log failed", e); }
         };
 
         window.saveEmployee = async function(empData) {
             if (!auth.currentUser) return;
+            const employeesRef = collection(db, 'artifacts', appId, 'public', 'data', 'employees');
             try {
-                const employeesRef = collection(db, 'artifacts', appId, 'public', 'data', 'employees');
                 if (empData.firebaseId) {
                     const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'employees', empData.firebaseId);
                     const { firebaseId, ...cleanData } = empData;
@@ -126,11 +113,8 @@
                 } else {
                     await addDoc(employeesRef, empData);
                 }
-                showNotification("Database Sync Successful.");
-            } catch (e) { 
-                console.error("Cloud Save Failed:", e);
-                showNotification("Sync Failed: Restricted Access.");
-            }
+                showNotification("Record Saved.");
+            } catch (e) { showNotification("Save Failed."); }
         };
 
         window.deleteEmployee = async function(firebaseId) {
@@ -138,7 +122,7 @@
             try {
                 const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'employees', firebaseId);
                 await deleteDoc(docRef);
-                showNotification("Record Erased.");
+                showNotification("Record Deleted.");
             } catch (e) { console.error(e); }
         };
 
@@ -223,7 +207,7 @@
         <div id="dashboard-view" class="space-y-8">
             <div>
                 <h2 class="text-3xl font-black text-slate-900">System Dashboard</h2>
-                <p class="text-slate-500">Cloud-synced operational workforce monitoring.</p>
+                <p class="text-slate-500">Real-time cloud monitoring of operational performance.</p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -249,7 +233,7 @@
                 <div class="lg:col-span-1 space-y-4">
                     <div class="flex items-center gap-2 mb-2">
                         <i data-lucide="activity" class="text-blue-500 w-5 h-5"></i>
-                        <h4 class="font-black text-slate-900 uppercase text-sm tracking-wider">Cloud Activity Log</h4>
+                        <h4 class="font-black text-slate-900 uppercase text-sm tracking-wider">Recent Activity Log</h4>
                     </div>
                     <div id="activity-feed" class="space-y-3 max-h-[600px] overflow-y-auto pr-2"></div>
                 </div>
@@ -278,7 +262,7 @@
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <h2 class="text-3xl font-black text-slate-900">Personnel Records</h2>
-                    <p class="text-slate-500">Filter and manage all employees in the cloud system.</p>
+                    <p class="text-slate-500">Cloud-synced employee data management.</p>
                 </div>
                 <div class="flex flex-col md:flex-row gap-3 w-full md:w-auto">
                     <div class="relative w-full md:w-72">
@@ -326,7 +310,7 @@
                 <div class="glass-card p-8 rounded-3xl space-y-6">
                     <div class="flex items-center gap-3">
                         <div class="p-2 bg-blue-100 text-blue-600 rounded-lg"><i data-lucide="database"></i></div>
-                        <h3 class="text-xl font-bold">Cloud Data Persistence</h3>
+                        <h3 class="text-xl font-bold">Cloud Persistence</h3>
                     </div>
                     <p class="text-sm text-slate-500 leading-relaxed">Your data is synchronized with Firebase. Use manual backups for local auditing purposes.</p>
                     
@@ -346,9 +330,9 @@
                 <div class="glass-card p-8 rounded-3xl border-2 border-rose-50 space-y-6">
                     <div class="flex items-center gap-3 text-rose-600">
                         <div class="p-2 bg-rose-100 rounded-lg"><i data-lucide="alert-octagon"></i></div>
-                        <h3 class="text-xl font-bold">Security Wipe</h3>
+                        <h3 class="text-xl font-bold">Factory Reset</h3>
                     </div>
-                    <p class="text-sm text-slate-500 leading-relaxed">Permanently erase all personnel records and activity logs from the Firebase database.</p>
+                    <p class="text-sm text-slate-500 leading-relaxed">Permanently erase all personnel records and activity logs from the Firebase cloud database.</p>
                     <button onclick="showFactoryResetModal()" class="bg-rose-50 text-rose-600 py-3 px-8 rounded-xl font-bold border-2 border-rose-100 hover:bg-rose-600 hover:text-white transition-all w-fit">
                         Wipe Database Records
                     </button>
@@ -494,45 +478,12 @@
             });
         }
 
-        // --- Shared Core logic ---
-        const EVAL_STRUCTURE = [
-            { category: "Part I - OBS Setup & Troubleshooting", sections: [
-                { title: "OBS Livescene & Source", questions: [
-                    { q: "Parts of Livescene (Basic & Advance)", ans: "Basic: Header, Sticker, Podium, Background. Advance: Logos, Campaign Header, Frame, Stickers." },
-                    { q: "Mostly used Source in OBS", ans: "Image, Media Source, Video Capture (Basic) + Color Source, Text (Advance)" },
-                    { q: "Proper Microphone Setup", ans: "Input audio source directly on OBS settings" }
-                ]},
-                { title: "OBS Settings", questions: [
-                    { q: "OBS Canvas Settings", ans: "1080x1920 (Aspect Ratio 9:16)" },
-                    { q: "OBS Encoder & Rate Control", ans: "Nvidia NVEC H264, CBR (Constant) / VBR (Variable)" }
-                ]}
-            ]},
-            { category: "Part II - Camera Setup", sections: [
-                { title: "Technical Settings", questions: [
-                    { q: "HDMI & Power Save Settings", ans: "Power Save Always Off, HDMI 2160p/1080p @ 60p" },
-                    { q: "Camera Cleaning", ans: "Brush outer part, Air pump for dust, Wet/Dry wipes for lens" }
-                ]}
-            ]},
-            { category: "Part III - Skills & Performance", sections: [
-                { title: "Soft Skills", questions: [
-                    { q: "Composure & Emotional Control", ans: "Calm under pressure, no panic during malfunctions." },
-                    { q: "Clear Communication", ans: "Short, direct instructions without rushing." },
-                    { q: "Technical Speed", ans: "Overall efficiency of technical tasks (Trainer Graded)." }
-                ]}
-            ]}
-        ];
+        // Shared Local/Cloud Memory
+        window.employees = [];
+        window.activityLog = [];
+        let currentEvalEmployeeId = null;
 
-        // --- Hoisted UI Functions ---
-        function showCongrats(emp) {
-            document.getElementById('cert-name').innerText = emp.name;
-            document.getElementById('cert-status').innerText = emp.status;
-            document.getElementById('cert-date').innerText = new Date().toLocaleDateString();
-            document.getElementById('modal-backdrop').classList.remove('hidden');
-            document.getElementById('congrats-modal').classList.remove('hidden');
-            document.getElementById('download-cert-pdf').onclick = () => downloadPDF('cert-pdf-wrapper', `${emp.name}_Certificate.pdf`);
-            lucide.createIcons();
-        }
-
+        // --- Core UI Logic ---
         function showConfirmModal(title, message, onConfirm) {
             document.getElementById('confirm-modal-title').innerText = title;
             document.getElementById('confirm-modal-message').innerText = message;
@@ -607,6 +558,16 @@
             });
         }
 
+        function showCongrats(emp) {
+            document.getElementById('cert-name').innerText = emp.name;
+            document.getElementById('cert-status').innerText = emp.status;
+            document.getElementById('cert-date').innerText = new Date().toLocaleDateString();
+            document.getElementById('modal-backdrop').classList.remove('hidden');
+            document.getElementById('congrats-modal').classList.remove('hidden');
+            document.getElementById('download-cert-pdf').onclick = () => downloadPDF('cert-pdf-wrapper', `${emp.name}_Certificate.pdf`);
+            lucide.createIcons();
+        }
+
         document.getElementById('add-trainee-form').onsubmit = (e) => {
             e.preventDefault();
             const formData = new FormData(e.target);
@@ -632,6 +593,70 @@
             }
             closeModal();
         };
+
+        const EVAL_STRUCTURE = [
+            { category: "Part I - OBS Setup & Troubleshooting", sections: [
+                { title: "1. OBS", questions: [
+                    { q: "Parts of Livescene", ans: "Basic: Header, Sticker, Podium/Platform, Background.<br>Advance: Header/Brand Logo, Sub-Header, Header Background, Frame, Stickers (UL/UR/LL/LR), Podium." },
+                    { q: "Mostly used Source in OBS", ans: "Basic: Image, Media Source, Video Capture.<br>Advance: Image, Media Source, Video Capture, Color Source, Text." },
+                    { q: "Proper Microphone Setup", ans: "Input audio source directly on OBS settings." }
+                ]},
+                { title: "2. OBS Settings", questions: [
+                    { q: "OBS Canvas Settings", ans: "Basic: 1080x1920.<br>Advance: 1080x1920 (9:16 Aspect Ratio)." },
+                    { q: "OBS Encoder", ans: "Nvidia NVEC H264." },
+                    { q: "OBS Rate Control", ans: "Basic: CBR & VBR.<br>Advance: CBR (Constant) & VBR (Variable)." },
+                    { q: "Use of CBR & VBR", ans: "CBR: Forces specific bitrate (good for fast net, lags if drops).<br>VBR: Adapts bitrate between min/max limits (good for slow net)." }
+                ]},
+                { title: "3. OBS Source Settings", questions: [
+                    { q: "Video Capture Device", ans: "Disable Buffering; Audio output mode: DirectSound." },
+                    { q: "Media Source", ans: "Check all except 'Close File when inactive' (prevents preview issues)." }
+                ]},
+                { title: "4. OBS Chroma Key", questions: [
+                    { q: "Similarity", ans: "Controls how close pixels must be to the key color to be removed." },
+                    { q: "Smoothness", ans: "Softens edges and removes jagged artifacts." },
+                    { q: "Key Color Spill", ans: "Removes green/blue fringe from edges." }
+                ]},
+                { title: "5. OBS Chroma Key Troubleshooting", questions: [
+                    { q: "Default Settings", ans: "Similarity: Variable. Smoothness: 80. Key Color Spill: 50." },
+                    { q: "Greenline Issues", ans: "Prevention: Proper camera/lighting.<br>Fix: Adjust similarity/spill slightly, or pick exact color." }
+                ]},
+                { title: "6. Greenscreen Protection", questions: [
+                    { q: "Purpose", ans: "Maintains visibility of green items matching background (prevents transparency)." },
+                    { q: "How to Add", ans: "Duplicate camera group, add Chroma Key filter to group, crop source to host body." }
+                ]},
+                { title: "7. OBS Internet & CPU Troubleshooting", questions: [
+                    { q: "Encoder Rate Control Check", ans: "If CBR fails, switch to VBR (Min 2500, Max 4500)." },
+                    { q: "CPU Usage Preset", ans: "If rate control fails, reduce CPU Preset by one level." },
+                    { q: "ISP Issues", ans: "If all fails, bandwidth is insufficient. Request ISP change." }
+                ]}
+            ]},
+            { category: "Part II - Camera Setup & Troubleshooting", sections: [
+                { title: "Camera Setup", questions: [
+                    { q: "Power Settings Option", ans: "Save Start Time: Off. Save by Monitor: Both Linked. Auto Off Temp: High." },
+                    { q: "HDMI Setting", ans: "Res: 2160p/1080p. Output: 60p. Info Disp: Off." },
+                    { q: "Camera Cleaning", ans: "Brush body (not lens). Air pump dust. Wet/Dry wipes for lens." }
+                ]},
+                { title: "Camera Troubleshooting", questions: [
+                    { q: "True Color Camera Setup", ans: "ISO (Brightness/Grain), Shutter (Sync/No Lag), Exposure (Lighting), Focus (Clarity)." },
+                    { q: "Standard Setup of Camera", ans: "Shutter: 1/160. Aperture: 3.5 (lowest). Focal: +1.0 to +1.7." },
+                    { q: "Camera Overheating", ans: "Auto-shutdown off. Check fan. Use external fan if needed." },
+                    { q: "Camera Blackscreen/No Output", ans: "Reset Shoot Mode. Re-plug Capture Card. Restart Camera." },
+                    { q: "Robotic, Slow Motion, Lagging Camera", ans: "Cause: Super Low Shutter Speed." }
+                ]}
+            ]},
+            { category: "Part III - Skills", sections: [
+                { title: "Soft Skills", questions: [
+                    { q: "Composure", ans: "Calm under pressure; thinks clearly despite malfunctions. Emotional control." },
+                    { q: "Clear Communication", ans: "Steady voice, short direct instructions, no rushing." },
+                    { q: "Situational Awareness", ans: "Constant awareness to minimize/preempt mistakes." },
+                    { q: "Confidence", ans: "Knows tools/plans, reacts fast without overthinking." },
+                    { q: "Professional Presence", ans: "Composed, polite, respectful tone." },
+                    { q: "Controlled Pace", ans: "Avoids rushing, takes intentional steps." },
+                    { q: "Problem-Solving Mindset", ans: "Focus on solutions/recovery, not blame." },
+                    { q: "Technical Speed", ans: "Efficiency graded by trainer." }
+                ]}
+            ]}
+        ];
 
         function calculateNextDate(hireDate, count) {
             const d = new Date(hireDate); d.setMonth(d.getMonth() + count + 1);
@@ -762,10 +787,10 @@
                 const val = parseInt(document.getElementById(`q_${cIdx}_${sIdx}_${qIdx}`).value);
                 if(val === 0) inc = true; responses.push({ q: q.q, cat: cat.category, score: val }); totalS += val; totalP += 5;
             })));
-            if(inc) { showNotification("Assessment data incomplete."); return; }
+            if(inc) { showNotification("Form incomplete."); return; }
             const score = ((totalS / totalP) * 100).toFixed(1);
             const updated = [...emp.evaluations, { id: Date.now(), phaseMonth: emp.evaluations.slice(emp.phaseStartIdx || 0).length + 1, type: emp.status, score, date: new Date().toLocaleDateString(), details: responses }];
-            window.saveEmployee({ ...emp, evaluations: updated }).then(() => { window.logActivity('eval', `Assessment result: ${score}%`, emp.name); switchView('trainee-list'); });
+            window.saveEmployee({ ...emp, evaluations: updated }).then(() => { window.logActivity('eval', `Assessment Logged: ${score}%`, emp.name); switchView('trainee-list'); });
         }
 
         function handleDecision(id, action) {
@@ -773,59 +798,16 @@
             if(action === 'promote') {
                 const oldS = emp.status, newS = oldS === 'Trainee' ? 'Probationary' : 'Regular';
                 const achievements = [...emp.achievements, { id: Date.now(), title: `Promoted to ${newS}`, date: new Date().toLocaleDateString(), type: newS, fromStatus: oldS, evaluations: [...emp.evaluations.slice(emp.phaseStartIdx || 0)] }];
-                window.saveEmployee({ ...emp, status: newS, achievements, phaseStartIdx: emp.evaluations.length, phaseLimit: 3 }).then(() => { window.logActivity('promote', `Advanced to ${newS}`, emp.name); showCongrats({ ...emp, status: newS }); });
+                window.saveEmployee({ ...emp, status: newS, achievements, phaseStartIdx: emp.evaluations.length, phaseLimit: 3 }).then(() => { window.logActivity('promote', `Contract Advanced to ${newS}`, emp.name); showCongrats({ ...emp, status: newS }); });
             } else {
-                window.saveEmployee({ ...emp, phaseLimit: (emp.phaseLimit || 3) + 1 }).then(() => { window.logActivity('extend', `Training cycle extended (+1 Mo)`, emp.name); showNotification("Review Cycle Extended."); });
+                window.saveEmployee({ ...emp, phaseLimit: (emp.phaseLimit || 3) + 1 }).then(() => { window.logActivity('extend', `Review Cycle Extended`, emp.name); showNotification("Review Cycle Extended."); });
             }
         }
 
         function viewReport(id) {
             const emp = window.employees.find(e => e.id == id);
             const container = document.getElementById('report-content');
-            container.innerHTML = `
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div class="lg:col-span-1 space-y-6">
-                        <div class="glass-card p-8 rounded-3xl text-center shadow-md border-b-4 border-b-blue-600">
-                            <div class="w-24 h-24 bg-blue-600 text-white rounded-3xl flex items-center justify-center mx-auto mb-6 font-black text-3xl shadow-lg uppercase">${emp.name.charAt(0)}</div>
-                            <h3 class="text-2xl font-black text-slate-900">${emp.name}</h3>
-                            <span class="px-4 py-1.5 bg-slate-100 rounded-full text-[10px] font-black uppercase tracking-widest text-slate-500">${emp.status}</span>
-                            ${emp.status === 'Terminated' ? `<div class="mt-4"><button onclick="generateTerminationLetter(${emp.id})" class="w-full py-2 bg-rose-600 text-white rounded-xl text-[10px] font-black uppercase shadow-lg">Notice of Termination (PDF)</button></div>` : ''}
-                        </div>
-                        <div class="glass-card p-6 rounded-3xl shadow-sm">
-                            <h4 class="font-black text-slate-900 mb-6 flex items-center gap-2 text-xs uppercase tracking-widest"><i data-lucide="award" class="w-4 h-4 text-amber-500"></i> Career Milestones</h4>
-                            <div class="space-y-4">
-                                ${emp.achievements.map(a => `
-                                    <div class="p-4 bg-amber-50 border border-amber-100 rounded-2xl space-y-3">
-                                        <p class="text-xs font-black text-slate-800">${a.title}</p>
-                                        <div class="flex gap-2">
-                                            <button onclick="viewCardFromAchievement(${emp.id}, ${a.id})" class="flex-1 py-1.5 bg-white border border-amber-200 text-amber-600 rounded-lg text-[10px] font-bold uppercase hover:bg-amber-50">Certificate</button>
-                                            <button onclick="generateEndorsementLetter(${emp.id}, ${a.id})" class="flex-1 py-1.5 bg-amber-500 text-white rounded-lg text-[10px] font-bold uppercase hover:bg-amber-600">Endorsement</button>
-                                        </div>
-                                    </div>
-                                `).join('') || '<p class="text-xs text-slate-400 italic">No cloud milestones logged.</p>'}
-                            </div>
-                        </div>
-                    </div>
-                    <div class="lg:col-span-2 space-y-6">
-                        <div class="glass-card p-8 rounded-3xl shadow-sm">
-                            <h4 class="font-black text-slate-900 mb-6 flex items-center gap-2 text-xs uppercase tracking-widest"><i data-lucide="activity" class="w-4 h-4 text-blue-500"></i> Performance Logs</h4>
-                            <div class="space-y-3">
-                                ${emp.evaluations.slice().reverse().map(ev => `
-                                    <div onclick="showEvalDetail(${emp.id}, ${ev.id})" class="flex items-center justify-between p-5 bg-slate-50/50 rounded-2xl border border-slate-100 cursor-pointer hover:bg-white transition-all group">
-                                        <div class="flex items-center gap-4">
-                                            <div class="bg-white p-3 rounded-xl shadow-sm text-[10px] font-black uppercase text-blue-600">PH${ev.phaseMonth}</div>
-                                            <div><p class="text-xs font-black text-slate-700 uppercase">${ev.type}</p><p class="text-[10px] text-slate-400 font-bold">${ev.date}</p></div>
-                                        </div>
-                                        <div class="text-right">
-                                            <p class="text-xl font-black ${ev.score >= 80 ? 'text-emerald-600' : 'text-rose-600'}">${ev.score}%</p>
-                                            <span class="text-[8px] font-black uppercase text-blue-500">View Breakdown</span>
-                                        </div>
-                                    </div>
-                                `).join('') || '<p class="text-xs italic text-slate-400 text-center py-10">No cloud records found.</p>'}
-                            </div>
-                        </div>
-                    </div>
-                </div>`;
+            container.innerHTML = `<div class="grid grid-cols-1 lg:grid-cols-3 gap-8"><div class="lg:col-span-1 space-y-6"><div class="glass-card p-8 rounded-3xl text-center shadow-md border-b-4 border-b-blue-600"><div class="w-24 h-24 bg-blue-600 text-white rounded-3xl flex items-center justify-center mx-auto mb-6 font-black text-3xl shadow-lg uppercase">${emp.name.charAt(0)}</div><h3 class="text-2xl font-black text-slate-900">${emp.name}</h3><span class="px-4 py-1.5 bg-slate-100 rounded-full text-[10px] font-black uppercase tracking-widest text-slate-500">${emp.status}</span>${emp.status === 'Terminated' ? `<div class="mt-4"><button onclick="generateTerminationLetter(${emp.id})" class="w-full py-2 bg-rose-600 text-white rounded-xl text-[10px] font-black uppercase shadow-lg">Notice of Termination (PDF)</button></div>` : ''}</div><div class="glass-card p-6 rounded-3xl shadow-sm"><h4 class="font-black text-slate-900 mb-6 flex items-center gap-2 text-xs uppercase tracking-widest"><i data-lucide="award" class="w-4 h-4 text-amber-500"></i> Career Milestones</h4><div class="space-y-4">${emp.achievements.map(a => `<div class="p-4 bg-amber-50 border border-amber-100 rounded-2xl space-y-3"><p class="text-xs font-black text-slate-800">${a.title}</p><div class="flex gap-2"><button onclick="viewCardFromAchievement(${emp.id}, ${a.id})" class="flex-1 py-1.5 bg-white border border-amber-200 text-amber-600 rounded-lg text-[10px] font-bold uppercase hover:bg-amber-50">Certificate</button><button onclick="generateEndorsementLetter(${emp.id}, ${a.id})" class="flex-1 py-1.5 bg-amber-500 text-white rounded-lg text-[10px] font-bold uppercase hover:bg-amber-600">Endorsement</button></div></div>`).join('') || '<p class="text-xs text-slate-400 italic">No cloud milestones logged.</p>'}</div></div></div><div class="lg:col-span-2 space-y-6"><div class="glass-card p-8 rounded-3xl shadow-sm"><h4 class="font-black text-slate-900 mb-6 flex items-center gap-2 text-xs uppercase tracking-widest"><i data-lucide="activity" class="w-4 h-4 text-blue-500"></i> Performance Logs</h4><div class="space-y-3">${emp.evaluations.slice().reverse().map(ev => `<div onclick="showEvalDetail(${emp.id}, ${ev.id})" class="flex items-center justify-between p-5 bg-slate-50/50 rounded-2xl border border-slate-100 cursor-pointer hover:bg-white transition-all group"><div class="flex items-center gap-4"><div class="bg-white p-3 rounded-xl shadow-sm text-[10px] font-black uppercase text-blue-600">PH${ev.phaseMonth}</div><div><p class="text-xs font-black text-slate-700 uppercase">${ev.type}</p><p class="text-[10px] text-slate-400 font-bold">${ev.date}</p></div></div><div class="text-right"><p class="text-xl font-black ${ev.score >= 80 ? 'text-emerald-600' : 'text-rose-600'}">${ev.score}%</p><span class="text-[8px] font-black uppercase text-blue-500">View Breakdown</span></div></div>`).join('') || '<p class="text-xs italic text-slate-400 text-center py-10">No cloud records found.</p>'}</div></div></div></div>`;
             switchView('report');
         }
 
@@ -926,7 +908,7 @@
                         <div class="space-y-6 text-sm text-justify text-slate-700 leading-relaxed">
                             <p>Dear <strong>${emp.name}</strong>,</p>
                             
-                            <p>This correspondence serves as a formal notification regarding the termination of your employment relationship with M-Commerce Corporation, effective <strong>${emp.terminationDate}</strong>. 
+                            <p>This correspondence serves as a formal notification regarding the termination of your employment relationship with M-Commerce Corporation, effective immediately as of <strong>${emp.terminationDate}</strong>. 
                             This action follows an exhaustive review of technical performance trajectories which failed to align with department benchmarks.</p>
 
                             <div class="p-10 bg-rose-50 border-l-8 border-rose-500 rounded-r-[32px] italic text-rose-900 text-xs font-medium leading-relaxed">
@@ -952,7 +934,7 @@
         async function downloadPDF(elId, filename) {
             const el = document.getElementById(elId);
             const opt = { margin: [0.3, 0.3, 0.3, 0.3], filename, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true, letterRendering: true }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } };
-            showNotification("Compiling Formal PDF...");
+            showNotification("Processing formal export...");
             try { await html2pdf().set(opt).from(el).save(); } catch (e) { showNotification("Export failed."); }
         }
 
@@ -975,9 +957,9 @@
             document.getElementById('terminate-modal').classList.remove('hidden');
             document.getElementById('confirm-terminate-btn').onclick = () => {
                 const r = document.getElementById('terminate-reason').value;
-                if(!r.trim()) { showNotification("Documentation required."); return; }
+                if(!r.trim()) { showNotification("Grounds required."); return; }
                 window.saveEmployee({ ...emp, status: 'Terminated', terminationReason: r, terminationDate: new Date().toLocaleDateString() })
-                    .then(() => { window.logActivity('term', `Separation executed`, emp.name); closeModal(); });
+                    .then(() => { window.logActivity('term', `Personnel Separation logged`, emp.name); closeModal(); });
             };
             lucide.createIcons();
         }
@@ -988,7 +970,7 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a'); a.href = url; a.download = `MCorp_Tracker_Backup_${new Date().toISOString().split('T')[0]}.json`;
             a.click(); URL.revokeObjectURL(url);
-            showNotification("Backup Created.");
+            showNotification("Dossier Backup Created.");
         }
 
         function restoreData(event) {
@@ -999,7 +981,7 @@
                     try {
                         const data = JSON.parse(e.target.result);
                         if(data.employees) data.employees.forEach(emp => { const { firebaseId, ...clean } = emp; window.saveEmployee(clean); });
-                        showNotification("Syncing Cloud Data...");
+                        showNotification("Syncing Backup...");
                     } catch (err) { showNotification("Format Error."); }
                 };
                 reader.readAsText(file);
