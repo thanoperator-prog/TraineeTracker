@@ -823,7 +823,10 @@
             let responses = [], totalS = 0, totalP = 0, inc = false;
             EVAL_STRUCTURE_UPDATED.forEach((cat, cIdx) => cat.sections.forEach((sec, sIdx) => sec.questions.forEach((q, qIdx) => {
                 const val = parseInt(document.getElementById(`q_${cIdx}_${sIdx}_${qIdx}`).value);
-                if(val === 0) inc = true; responses.push({ q: q.q, cat: cat.category, score: val }); totalS += val; totalP += 5;
+                if(val === 0) inc = true; 
+                // Capture section title here
+                responses.push({ q: q.q, cat: cat.category, section: sec.title, score: val }); 
+                totalS += val; totalP += 5;
             })));
             if(inc) { showNotification("Form incomplete."); return; }
             const score = ((totalS / totalP) * 100).toFixed(1);
@@ -853,6 +856,27 @@
         function showEvalDetail(empId, evalId) {
             const emp = window.employees.find(e => e.id == empId), ev = emp.evaluations.find(e => e.id == evalId); if (!ev) return;
             const weak = ev.details.filter(d => d.score <= 2), neut = ev.details.filter(d => d.score === 3), str = ev.details.filter(d => d.score >= 4);
+            
+            // Group details by section title for the report
+            let tableRows = '';
+            const groupedDetails = {};
+            
+            // Group by section. If section is missing (legacy data), group under category
+            ev.details.forEach(d => {
+                const groupKey = d.section || d.cat; 
+                if (!groupedDetails[groupKey]) groupedDetails[groupKey] = [];
+                groupedDetails[groupKey].push(d);
+            });
+
+            for (const [groupName, items] of Object.entries(groupedDetails)) {
+                // Add Group Header row
+                tableRows += `<tr class="bg-slate-50"><td colspan="2" class="p-3 border font-black text-slate-800 text-[10px] uppercase tracking-wider">${groupName}</td></tr>`;
+                // Add items
+                items.forEach(d => {
+                    tableRows += `<tr><td class="p-4 border font-bold text-slate-700 text-[10px]">${d.q}</td><td class="p-4 border text-right font-black text-blue-600 text-[10px]">${d.score} / 5.0</td></tr>`;
+                });
+            }
+
             document.getElementById('eval-detail-content').innerHTML = `
                 <div class="space-y-12">
                     <div class="flex flex-col md:flex-row justify-between items-start border-b-8 border-slate-900 pb-8 uppercase font-black tracking-tighter gap-4">
@@ -869,8 +893,8 @@
                     <div class="space-y-6 text-xs text-slate-600 leading-relaxed text-justify">
                         <h2 class="text-sm font-black uppercase tracking-widest text-slate-900 border-l-4 border-slate-900 pl-4 py-1">I. Technical Audit Summary</h2>
                         <p>This performance dossier provides a comprehensive technical audit for <strong>${emp.name}</strong> during the <strong>${ev.type}</strong> phase. 
-                        The evaluated personnel was subjected to standard operational benchmarks including OBS environment stability, camera technical configuration mastery, 
-                        and real-time troubleshooting proficiency. A final weighted score of <strong>${ev.score}%</strong> was achieved.</p>
+                        The evaluation assessed specific grouped competencies including <strong>OBS Setup & Troubleshooting</strong>, <strong>Camera Technical Configurations</strong>, and core <strong>Operational Skills</strong>. 
+                        A final weighted score of <strong>${ev.score}%</strong> was achieved based on these categorized performance indicators.</p>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 no-break">
@@ -880,9 +904,10 @@
                     </div>
 
                     <div class="overflow-x-auto">
-                    <table class="w-full text-[10px] border-collapse no-break">
-                        <thead><tr class="bg-slate-900 text-white"><th class="p-4 border text-left uppercase">Detailed Metric Breakdown</th><th class="p-4 border text-right uppercase">Score</th></tr></thead>
-                        <tbody>${ev.details.map(d => `<tr><td class="p-4 border font-bold text-slate-700">${d.q}<br><span class="text-[8px] font-black text-slate-400 uppercase">${d.cat}</span></td><td class="p-4 border text-right font-black text-blue-600">${d.score} / 5.0</td></tr>`).join('')}</tbody>
+                    <h2 class="text-sm font-black uppercase tracking-widest text-slate-900 border-l-4 border-slate-900 pl-4 py-1 mb-4">II. Detailed Metric Breakdown</h2>
+                    <table class="w-full text-[10px] border-collapse no-break border border-slate-200">
+                        <thead><tr class="bg-slate-900 text-white"><th class="p-4 border text-left uppercase w-3/4">Assessment Indicator</th><th class="p-4 border text-right uppercase w-1/4">Score</th></tr></thead>
+                        <tbody>${tableRows}</tbody>
                     </table>
                     </div>
                     
@@ -904,7 +929,7 @@
             document.getElementById('endorsement-content').innerHTML = `
                 <div class="space-y-12">
                     <div class="flex justify-between items-start border-b-2 pb-10">
-                        <div><h1 class="text-2xl font-black uppercase text-slate-900">M-Commerce Corporation</h1><p class="text-xs text-slate-500 font-black uppercase tracking-widest mt-1">Workforce Management Division</p></div>
+                        <div><h1 class="text-2xl font-black uppercase text-slate-900">M-Commerce Corporation</h1><p class="text-xs text-slate-500 font-black uppercase tracking-widest mt-1">Operation Department</p></div>
                         <div class="text-right"><p class="text-sm font-bold uppercase">Date: ${a.date}</p></div>
                     </div>
                     <div class="space-y-8 text-slate-800">
