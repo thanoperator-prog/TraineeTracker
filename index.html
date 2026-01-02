@@ -16,6 +16,149 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <!-- Firebase SDK Integration -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, addDoc, updateDoc, deleteDoc, collection, query, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Firebase Configuration (User-provided)
+        const userProvidedConfig = {
+            apiKey: "AIzaSyAKUM3Mo91_Gm-Rj5x7EgrN43HWUpxYprU",
+            authDomain: "traineetracker-91496.firebaseapp.com",
+            projectId: "traineetracker-91496",
+            storageBucket: "traineetracker-91496.firebasestorage.app",
+            messagingSenderId: "930372715628",
+            appId: "1:930372715628:web:e76cbce93faf492b494449",
+            measurementId: "G-YXB1YTESWG"
+        };
+
+        // Use environment config if provided, else fallback to user config
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : userProvidedConfig;
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : firebaseConfig.projectId;
+
+        // Shared Global State
+        window.db = db;
+        window.auth = auth;
+        window.appId = appId;
+        window.employees = [];
+        window.activityLog = [];
+
+        // Rule 3: Auth BEFORE Queries with Token Mismatch Handling
+        async function startSystem() {
+            try {
+                // Priority 1: Environment Custom Token
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    try {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                        console.log("Authenticated via Custom Token");
+                    } catch (tokenError) {
+                        // Priority 2: Fallback to Anonymous if token mismatches (happens when using personal config)
+                        console.warn("Custom Token rejected, falling back to Anonymous Auth...");
+                        await signInAnonymously(auth);
+                    }
+                } else {
+                    // Priority 3: Default Anonymous Auth
+                    await signInAnonymously(auth);
+                    console.log("Authenticated Anonymously");
+                }
+            } catch (error) {
+                console.error("Firebase System Auth Failed:", error);
+                showNotification("Cloud Connection Blocked.");
+            }
+        }
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                console.log("Secure Session Active:", user.uid);
+                setupRealtimeSync();
+            }
+        });
+
+        // Rule 2: JS-side processing for performance/rules
+        function setupRealtimeSync() {
+            if (!auth.currentUser) return;
+            const employeesRef = collection(db, 'artifacts', appId, 'public', 'data', 'employees');
+            const activityRef = collection(db, 'artifacts', appId, 'public', 'data', 'activity');
+
+            // Sync Employees
+            onSnapshot(employeesRef, (snapshot) => {
+                window.employees = snapshot.docs.map(doc => ({ firebaseId: doc.id, ...doc.data() }));
+                if (typeof renderDashboard === 'function') renderDashboard();
+            }, (error) => {
+                console.error("Employee Sync Failed:", error);
+                if (error.code === 'permission-denied') showNotification("Permission Denied: Check Cloud Rules.");
+            });
+
+            // Sync Activity
+            onSnapshot(activityRef, (snapshot) => {
+                window.activityLog = snapshot.docs.map(doc => doc.data())
+                    .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                if (typeof renderDashboard === 'function') renderDashboard();
+            }, (error) => console.error("Activity Sync Failed:", error));
+        }
+
+        // Global Action Handlers
+        window.logActivity = async function(type, message, empName) {
+            if (!auth.currentUser) return;
+            try {
+                const activityRef = collection(db, 'artifacts', appId, 'public', 'data', 'activity');
+                await addDoc(activityRef, { 
+                    type, message, empName, 
+                    date: new Date().toLocaleString(), 
+                    timestamp: Date.now() 
+                });
+            } catch (e) { console.error("Log failed", e); }
+        };
+
+        window.saveEmployee = async function(empData) {
+            if (!auth.currentUser) return;
+            try {
+                const employeesRef = collection(db, 'artifacts', appId, 'public', 'data', 'employees');
+                if (empData.firebaseId) {
+                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'employees', empData.firebaseId);
+                    const { firebaseId, ...cleanData } = empData;
+                    await updateDoc(docRef, cleanData);
+                } else {
+                    await addDoc(employeesRef, empData);
+                }
+                showNotification("Database Sync Successful.");
+            } catch (e) { 
+                console.error("Cloud Save Failed:", e);
+                showNotification("Sync Failed: Restricted Access.");
+            }
+        };
+
+        window.deleteEmployee = async function(firebaseId) {
+            if (!auth.currentUser) return;
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'employees', firebaseId);
+                await deleteDoc(docRef);
+                showNotification("Record Erased.");
+            } catch (e) { console.error(e); }
+        };
+
+        window.factoryResetDB = async function() {
+            if (!auth.currentUser) return;
+            try {
+                const employeesRef = collection(db, 'artifacts', appId, 'public', 'data', 'employees');
+                const activityRef = collection(db, 'artifacts', appId, 'public', 'data', 'activity');
+                const [empSnap, actSnap] = await Promise.all([getDocs(employeesRef), getDocs(activityRef)]);
+                const deletions = [];
+                empSnap.forEach(d => deletions.push(deleteDoc(d.ref)));
+                actSnap.forEach(d => deletions.push(deleteDoc(d.ref)));
+                await Promise.all(deletions);
+                location.reload();
+            } catch (e) { console.error(e); }
+        };
+
+        startSystem();
+    </script>
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&display=swap');
@@ -29,9 +172,10 @@
         .printable-report { 
             background: white; 
             width: 100%;
-            max-width: 7.5in; 
+            max-width: 8.5in; 
             margin: 0 auto;
             color: #1e293b;
+            padding: 0.6in;
         }
 
         .no-break { page-break-inside: avoid; }
@@ -51,7 +195,7 @@
             .no-print { display: none !important; }
             body { background: white; }
             main { padding: 0 !important; margin: 0 !important; }
-            .printable-report { box-shadow: none; border: none; width: 100%; max-width: 100%; }
+            .printable-report { box-shadow: none; border: none; width: 100%; max-width: 100%; padding: 0.4in; }
         }
     </style>
 </head>
@@ -79,10 +223,9 @@
         <div id="dashboard-view" class="space-y-8">
             <div>
                 <h2 class="text-3xl font-black text-slate-900">System Dashboard</h2>
-                <p class="text-slate-500">Real-time monitoring of operational performance and schedules.</p>
+                <p class="text-slate-500">Cloud-synced operational workforce monitoring.</p>
             </div>
 
-            <!-- Stats Grid -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <div class="glass-card p-6 rounded-3xl shadow-sm border-l-4 border-blue-500">
                     <p class="text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Total Workforce</p>
@@ -103,16 +246,14 @@
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <!-- Activity Feed -->
                 <div class="lg:col-span-1 space-y-4">
                     <div class="flex items-center gap-2 mb-2">
                         <i data-lucide="activity" class="text-blue-500 w-5 h-5"></i>
-                        <h4 class="font-black text-slate-900 uppercase text-sm tracking-wider">Recent Activity</h4>
+                        <h4 class="font-black text-slate-900 uppercase text-sm tracking-wider">Cloud Activity Log</h4>
                     </div>
                     <div id="activity-feed" class="space-y-3 max-h-[600px] overflow-y-auto pr-2"></div>
                 </div>
 
-                <!-- Scheduling -->
                 <div class="lg:col-span-2 space-y-8">
                     <div class="space-y-4">
                         <div class="flex items-center gap-2 mb-2">
@@ -137,7 +278,7 @@
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <h2 class="text-3xl font-black text-slate-900">Personnel Records</h2>
-                    <p class="text-slate-500">Filter and manage all employees in the system.</p>
+                    <p class="text-slate-500">Filter and manage all employees in the cloud system.</p>
                 </div>
                 <div class="flex flex-col md:flex-row gap-3 w-full md:w-auto">
                     <div class="relative w-full md:w-72">
@@ -178,16 +319,16 @@
         <div id="settings-view" class="hidden space-y-8 max-w-2xl">
             <div>
                 <h2 class="text-3xl font-black text-slate-900">System Settings</h2>
-                <p class="text-slate-500">Manage application data backups and system maintenance.</p>
+                <p class="text-slate-500">Manage cloud connectivity and data integrity.</p>
             </div>
 
             <div class="grid grid-cols-1 gap-6">
                 <div class="glass-card p-8 rounded-3xl space-y-6">
                     <div class="flex items-center gap-3">
                         <div class="p-2 bg-blue-100 text-blue-600 rounded-lg"><i data-lucide="database"></i></div>
-                        <h3 class="text-xl font-bold">Data Management</h3>
+                        <h3 class="text-xl font-bold">Cloud Data Persistence</h3>
                     </div>
-                    <p class="text-sm text-slate-500 leading-relaxed">Protect your personnel records by exporting a local backup file. You can restore data on another device or after a system reset.</p>
+                    <p class="text-sm text-slate-500 leading-relaxed">Your data is synchronized with Firebase. Use manual backups for local auditing purposes.</p>
                     
                     <div class="flex flex-col sm:flex-row gap-4 pt-2">
                         <button onclick="backupData()" class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-blue-700 transition-all">
@@ -205,17 +346,17 @@
                 <div class="glass-card p-8 rounded-3xl border-2 border-rose-50 space-y-6">
                     <div class="flex items-center gap-3 text-rose-600">
                         <div class="p-2 bg-rose-100 rounded-lg"><i data-lucide="alert-octagon"></i></div>
-                        <h3 class="text-xl font-bold">Factory Reset</h3>
+                        <h3 class="text-xl font-bold">Security Wipe</h3>
                     </div>
-                    <p class="text-sm text-slate-500 leading-relaxed">Permanently erase all personnel records and activity logs. This action cannot be undone.</p>
-                    <button onclick="factoryReset()" class="bg-rose-50 text-rose-600 py-3 px-8 rounded-xl font-bold border-2 border-rose-100 hover:bg-rose-600 hover:text-white transition-all w-fit">
-                        Clear All System Data
+                    <p class="text-sm text-slate-500 leading-relaxed">Permanently erase all personnel records and activity logs from the Firebase database.</p>
+                    <button onclick="showFactoryResetModal()" class="bg-rose-50 text-rose-600 py-3 px-8 rounded-xl font-bold border-2 border-rose-100 hover:bg-rose-600 hover:text-white transition-all w-fit">
+                        Wipe Database Records
                     </button>
                 </div>
             </div>
         </div>
 
-        <!-- Hidden Detail Views -->
+        <!-- Detail Views -->
         <div id="eval-view" class="hidden max-w-4xl mx-auto space-y-6">
             <div class="flex items-center gap-4">
                 <button onclick="switchView('trainee-list')" class="p-2 hover:bg-slate-100 rounded-full transition-colors"><i data-lucide="arrow-left"></i></button>
@@ -237,7 +378,7 @@
                 <button id="back-to-report-btn" class="p-2 hover:bg-slate-100 rounded-full transition-colors"><i data-lucide="arrow-left"></i></button>
                 <button id="download-eval-pdf" class="bg-slate-900 text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg"><i data-lucide="download"></i> Download Report</button>
             </div>
-            <div id="eval-detail-content" class="printable-report p-[0.1in]"></div>
+            <div id="eval-detail-content" class="printable-report"></div>
         </div>
 
         <div id="endorsement-view" class="hidden space-y-8">
@@ -245,7 +386,7 @@
                 <button id="back-to-report-from-endorse" class="p-2 hover:bg-slate-100 rounded-full transition-colors"><i data-lucide="arrow-left"></i></button>
                 <button id="download-endorse-pdf" class="bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg"><i data-lucide="download"></i> Download Endorsement</button>
             </div>
-            <div id="endorsement-content" class="printable-report p-[0.1in]"></div>
+            <div id="endorsement-content" class="printable-report"></div>
         </div>
 
         <div id="termination-view" class="hidden space-y-8">
@@ -253,38 +394,63 @@
                 <button id="back-to-report-from-term" class="p-2 hover:bg-slate-100 rounded-full transition-colors"><i data-lucide="arrow-left"></i></button>
                 <button id="download-term-pdf" class="bg-rose-600 text-white px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg"><i data-lucide="download"></i> Download Notice</button>
             </div>
-            <div id="termination-content" class="printable-report p-[0.1in]"></div>
+            <div id="termination-content" class="printable-report"></div>
         </div>
     </main>
 
     <!-- Modals -->
     <div id="modal-backdrop" class="fixed inset-0 bg-slate-900/60 hidden z-[60] backdrop-blur-sm flex items-center justify-center p-4">
-        <!-- Add/Edit Personnel Modal -->
+        
+        <!-- Confirmation Modal -->
+        <div id="confirm-modal" class="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-8 hidden text-center">
+            <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4"><i data-lucide="help-circle" class="w-8 h-8"></i></div>
+            <h3 class="text-xl font-bold mb-2" id="confirm-modal-title">Confirm</h3>
+            <p class="text-sm text-slate-500 mb-8" id="confirm-modal-message">Are you sure?</p>
+            <div class="flex gap-3">
+                <button onclick="closeModal()" class="flex-1 py-3 text-slate-500 font-bold hover:bg-slate-50 rounded-xl transition-all">Cancel</button>
+                <button id="generic-confirm-btn" class="flex-1 py-3 bg-blue-600 text-white font-bold rounded-xl shadow-lg transition-all">Proceed</button>
+            </div>
+        </div>
+
+        <!-- Security Reset Modal -->
+        <div id="factory-reset-modal" class="bg-white w-full max-w-md rounded-3xl shadow-2xl p-8 hidden text-center border-4 border-rose-100">
+            <div class="w-16 h-16 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-4"><i data-lucide="alert-octagon" class="w-8 h-8"></i></div>
+            <h3 class="text-xl font-bold mb-2">Security Verification</h3>
+            <p class="text-sm text-slate-500 mb-6">Erasing all database records. Type <span class="font-black text-rose-600">RESET</span> to confirm.</p>
+            <input type="text" id="reset-verify-input" placeholder="..." class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-rose-500 text-center font-bold mb-6">
+            <div class="flex gap-3">
+                <button onclick="closeModal()" class="flex-1 py-3 text-slate-500 font-bold hover:bg-slate-50 rounded-xl transition-all">Cancel</button>
+                <button id="confirm-reset-btn" class="flex-1 py-3 bg-rose-600 text-white font-bold rounded-xl shadow-lg transition-all">Execute Reset</button>
+            </div>
+        </div>
+
+        <!-- Add Personnel Modal -->
         <div id="add-trainee-modal" class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-8 hidden">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="text-xl font-bold" id="trainee-modal-title">Register Personnel</h3>
+                <h3 class="text-xl font-bold" id="trainee-modal-title">Personnel Entry</h3>
                 <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x"></i></button>
             </div>
             <form id="add-trainee-form" class="space-y-4">
+                <input type="hidden" name="firebaseId">
                 <input type="hidden" name="id">
                 <div><label class="block text-sm font-semibold mb-1 text-slate-700">Full Name</label><input type="text" name="name" required class="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500"></div>
                 <div><label class="block text-sm font-semibold mb-1 text-slate-700">Hire Date</label><input type="date" name="hireDate" required class="w-full px-4 py-2 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500"></div>
-                <button type="submit" class="w-full bg-slate-900 text-white py-3 rounded-xl font-bold hover:bg-black transition-all">Save Record</button>
+                <button type="submit" class="w-full bg-slate-900 text-white py-3 rounded-xl font-bold hover:bg-black transition-all">Save to Database</button>
             </form>
         </div>
 
         <!-- Termination Modal -->
         <div id="terminate-modal" class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-8 hidden text-center">
             <div class="w-16 h-16 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-4"><i data-lucide="user-x" class="w-8 h-8"></i></div>
-            <h3 class="text-xl font-bold mb-2">Termination Notice</h3>
-            <p class="text-sm text-slate-500 mb-6 italic">Document the formal grounds for contract termination.</p>
-            <textarea id="terminate-reason" class="w-full p-4 border border-slate-200 rounded-xl h-32 text-sm focus:ring-2 focus:ring-rose-500 outline-none mb-6" placeholder="Reason for termination..."></textarea>
+            <h3 class="text-xl font-bold mb-2">Grounds for Termination</h3>
+            <textarea id="terminate-reason" class="w-full p-4 border border-slate-200 rounded-xl h-32 text-sm focus:ring-2 focus:ring-rose-500 outline-none mb-6" placeholder="Document specific administrative grounds..."></textarea>
             <div class="flex gap-2">
                 <button onclick="closeModal()" class="flex-1 py-3 text-slate-500 font-bold hover:bg-slate-50 rounded-xl transition-all">Cancel</button>
-                <button id="confirm-terminate-btn" class="flex-1 py-3 bg-rose-600 text-white font-bold rounded-xl shadow-lg shadow-rose-100 transition-all">Confirm</button>
+                <button id="confirm-terminate-btn" class="flex-1 py-3 bg-rose-600 text-white font-bold rounded-xl shadow-lg transition-all">Finalize Action</button>
             </div>
         </div>
 
+        <!-- Celebration Modal -->
         <div id="congrats-modal" class="bg-white w-full max-w-4xl rounded-[40px] shadow-2xl p-0 overflow-hidden hidden">
             <div id="cert-pdf-wrapper" class="p-[0.1in] bg-white">
                 <div id="cert-container" class="certificate-border p-12 text-center space-y-10">
@@ -303,10 +469,7 @@
                         <p class="text-3xl font-black text-blue-900 uppercase tracking-tighter" id="cert-status"></p>
                     </div>
                     <div class="pt-20 grid grid-cols-3 gap-10">
-                        <div class="border-t border-slate-900 pt-3">
-                            <p class="text-[9px] font-black uppercase text-slate-400">Date of Award</p>
-                            <p class="text-xs font-bold text-slate-900" id="cert-date"></p>
-                        </div>
+                        <div class="border-t border-slate-900 pt-3"><p class="text-[9px] font-black uppercase text-slate-400">Date of Award</p><p class="text-xs font-bold text-slate-900" id="cert-date"></p></div>
                         <div class="flex justify-center items-center opacity-30"><i data-lucide="award" class="text-blue-900 w-12 h-12"></i></div>
                         <div class="border-t border-slate-900 pt-3"><p class="text-[9px] font-black uppercase text-slate-400">Authorization</p><p class="text-xs font-bold text-slate-900">Operation Mgmt</p></div>
                     </div>
@@ -320,28 +483,18 @@
     </div>
 
     <script>
-        // Service Worker Registration
+        // Protocols handling
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js')
-                    .then(reg => console.log('SW Registered', reg))
-                    .catch(err => console.log('SW Registration Failed', err));
+                if (window.location.protocol.startsWith('http')) {
+                    navigator.serviceWorker.register('sw.js')
+                        .then(reg => console.log('SW Active'))
+                        .catch(err => console.warn('SW: Passive mode.'));
+                }
             });
         }
 
-        let employees = JSON.parse(localStorage.getItem('m_corp_employees')) || [];
-        let activityLog = JSON.parse(localStorage.getItem('m_corp_activity')) || [];
-        let currentEvalEmployeeId = null;
-
-        function getStatusClass(s) {
-            switch(s) {
-                case 'Trainee': return 'bg-blue-50 text-blue-600 border border-blue-100';
-                case 'Probationary': return 'bg-purple-50 text-purple-600 border border-purple-100';
-                case 'Regular': return 'bg-emerald-50 text-emerald-600 border border-emerald-100';
-                default: return 'bg-rose-50 text-rose-600 border border-rose-100';
-            }
-        }
-
+        // --- Shared Core logic ---
         const EVAL_STRUCTURE = [
             { category: "Part I - OBS Setup & Troubleshooting", sections: [
                 { title: "OBS Livescene & Source", questions: [
@@ -369,19 +522,39 @@
             ]}
         ];
 
-        window.onload = () => {
-            switchView('dashboard');
-        };
-
-        function saveData() { 
-            localStorage.setItem('m_corp_employees', JSON.stringify(employees)); 
-            localStorage.setItem('m_corp_activity', JSON.stringify(activityLog));
+        // --- Hoisted UI Functions ---
+        function showCongrats(emp) {
+            document.getElementById('cert-name').innerText = emp.name;
+            document.getElementById('cert-status').innerText = emp.status;
+            document.getElementById('cert-date').innerText = new Date().toLocaleDateString();
+            document.getElementById('modal-backdrop').classList.remove('hidden');
+            document.getElementById('congrats-modal').classList.remove('hidden');
+            document.getElementById('download-cert-pdf').onclick = () => downloadPDF('cert-pdf-wrapper', `${emp.name}_Certificate.pdf`);
+            lucide.createIcons();
         }
 
-        function logActivity(type, message, empName) {
-            activityLog.unshift({ type, message, empName, date: new Date().toLocaleString(), id: Date.now() });
-            if (activityLog.length > 50) activityLog.pop();
-            saveData();
+        function showConfirmModal(title, message, onConfirm) {
+            document.getElementById('confirm-modal-title').innerText = title;
+            document.getElementById('confirm-modal-message').innerText = message;
+            document.getElementById('modal-backdrop').classList.remove('hidden');
+            document.getElementById('confirm-modal').classList.remove('hidden');
+            document.getElementById('generic-confirm-btn').onclick = () => { onConfirm(); closeModal(); };
+            lucide.createIcons();
+        }
+
+        function showFactoryResetModal() {
+            document.getElementById('reset-verify-input').value = '';
+            document.getElementById('modal-backdrop').classList.remove('hidden');
+            document.getElementById('factory-reset-modal').classList.remove('hidden');
+            document.getElementById('confirm-reset-btn').onclick = () => {
+                const keyword = document.getElementById('reset-verify-input').value.trim();
+                if (keyword === 'RESET') {
+                    window.factoryResetDB().then(() => { showNotification("Cloud System Reset."); closeModal(); });
+                } else {
+                    showNotification("Invalid Security Key.");
+                }
+            };
+            lucide.createIcons();
         }
 
         function switchView(view) {
@@ -391,9 +564,7 @@
             document.querySelectorAll('nav button[id^="nav-"]').forEach(btn => btn.classList.remove('nav-link-active'));
             const navBtn = document.getElementById(`nav-${view}`);
             if (navBtn) navBtn.classList.add('nav-link-active');
-            renderDashboard();
-            lucide.createIcons();
-            window.scrollTo(0,0);
+            renderDashboard(); lucide.createIcons(); window.scrollTo(0,0);
         }
 
         function closeModal() {
@@ -402,125 +573,115 @@
         }
 
         function showAddTraineeModal() {
-            document.getElementById('trainee-modal-title').innerText = 'Register Personnel';
+            document.getElementById('trainee-modal-title').innerText = 'Personnel Registration';
             const form = document.getElementById('add-trainee-form');
             form.reset();
+            form.querySelector('input[name="firebaseId"]').value = '';
             form.querySelector('input[name="id"]').value = '';
             document.getElementById('modal-backdrop').classList.remove('hidden');
             document.getElementById('add-trainee-modal').classList.remove('hidden');
+            lucide.createIcons();
         }
 
         function showEditModal(id) {
-            const emp = employees.find(e => e.id == id);
+            const emp = window.employees.find(e => e.id == id);
             if (!emp) return;
-            document.getElementById('trainee-modal-title').innerText = 'Update Personnel Record';
+            document.getElementById('trainee-modal-title').innerText = 'Update Personnel File';
             const form = document.getElementById('add-trainee-form');
+            form.querySelector('input[name="firebaseId"]').value = emp.firebaseId || '';
             form.querySelector('input[name="id"]').value = emp.id;
             form.querySelector('input[name="name"]').value = emp.name;
             form.querySelector('input[name="hireDate"]').value = emp.hireDate;
             document.getElementById('modal-backdrop').classList.remove('hidden');
             document.getElementById('add-trainee-modal').classList.remove('hidden');
+            lucide.createIcons();
         }
 
         function confirmDelete(id) {
-            const emp = employees.find(e => e.id == id);
+            const emp = window.employees.find(e => e.id == id);
             if (!emp) return;
-            if(confirm(`Permanently DELETE ${emp.name}'s dossier?`)) {
-                employees = employees.filter(e => e.id != id);
-                logActivity('delete', 'Record deleted permanently', emp.name);
-                saveData(); renderDashboard();
-            }
+            showConfirmModal("Delete Dossier", `Permanently erase ${emp.name} from the cloud database?`, () => {
+                window.deleteEmployee(emp.firebaseId).then(() => {
+                    window.logActivity('delete', 'Record deleted', emp.name);
+                });
+            });
         }
 
         document.getElementById('add-trainee-form').onsubmit = (e) => {
             e.preventDefault();
             const formData = new FormData(e.target);
-            const id = formData.get('id');
+            const firebaseId = formData.get('firebaseId');
+            const id = formData.get('id') || Date.now();
             const name = formData.get('name');
             const hireDate = formData.get('hireDate');
 
-            if (id) {
-                const emp = employees.find(e => e.id == id);
+            if (firebaseId) {
+                const emp = window.employees.find(e => e.firebaseId == firebaseId);
                 if (emp) {
-                    emp.name = name;
-                    emp.hireDate = hireDate;
-                    logActivity('edit', 'Profile updated', name);
+                    window.saveEmployee({
+                        firebaseId, id: parseInt(id), name, hireDate,
+                        status: emp.status, evaluations: emp.evaluations,
+                        achievements: emp.achievements, phaseStartIdx: emp.phaseStartIdx, phaseLimit: emp.phaseLimit
+                    }).then(() => window.logActivity('edit', 'Updated personnel details', name));
                 }
             } else {
-                employees.push({
-                    id: Date.now(),
-                    name,
-                    hireDate,
-                    status: 'Trainee',
-                    evaluations: [],
-                    achievements: [],
-                    phaseStartIdx: 0,
-                    phaseLimit: 3
-                });
-                logActivity('new_hire', 'Personnel added', name);
+                window.saveEmployee({
+                    id: parseInt(id), name, hireDate, status: 'Trainee',
+                    evaluations: [], achievements: [], phaseStartIdx: 0, phaseLimit: 3
+                }).then(() => window.logActivity('new_hire', 'New personnel registered', name));
             }
-            saveData(); renderDashboard(); closeModal();
+            closeModal();
         };
 
         function calculateNextDate(hireDate, count) {
-            const d = new Date(hireDate);
-            d.setMonth(d.getMonth() + count + 1);
+            const d = new Date(hireDate); d.setMonth(d.getMonth() + count + 1);
             return d.toLocaleDateString();
         }
 
         function renderDashboard() {
             const today = new Date(); today.setHours(0,0,0,0);
-            const searchQuery = document.getElementById('trainee-search').value.toLowerCase();
+            const searchInput = document.getElementById('trainee-search');
+            const queryText = searchInput ? searchInput.value.toLowerCase() : '';
+            const employees = window.employees || [];
 
             let overdueCount = 0, overdueItems = [], upcomingItems = [];
-            const filteredEmployees = employees.filter(e => e.name.toLowerCase().includes(searchQuery));
+            const filtered = employees.filter(e => e.name.toLowerCase().includes(queryText));
 
             employees.forEach(emp => {
                 if (emp.status === 'Regular' || emp.status === 'Terminated') return;
-                const nextDateStr = calculateNextDate(emp.hireDate, emp.evaluations.length);
-                const nextDate = new Date(nextDateStr);
-                
+                const nextStr = calculateNextDate(emp.hireDate, emp.evaluations.length);
+                const nextDate = new Date(nextStr);
                 if (nextDate < today) {
                     overdueCount++;
-                    const diffDays = Math.ceil(Math.abs(today - nextDate) / (1000 * 60 * 60 * 24));
-                    overdueItems.push({ name: emp.name, date: nextDateStr, days: diffDays, status: emp.status });
+                    overdueItems.push({ name: emp.name, date: nextStr, days: Math.ceil(Math.abs(today - nextDate) / 86400000), status: emp.status });
                 } else {
-                    upcomingItems.push({ name: emp.name, date: nextDateStr, status: emp.status });
+                    upcomingItems.push({ name: emp.name, date: nextStr, status: emp.status });
                 }
             });
 
-            document.getElementById('dash-total').innerText = employees.length;
-            document.getElementById('dash-active').innerText = employees.filter(e => e.status !== 'Terminated' && e.status !== 'Regular').length;
-            document.getElementById('dash-regular').innerText = employees.filter(e => e.status === 'Regular').length;
-            document.getElementById('dash-overdue').innerText = overdueCount;
+            const stats = { 'dash-total': employees.length, 'dash-active': employees.filter(e => e.status !== 'Terminated' && e.status !== 'Regular').length, 'dash-regular': employees.filter(e => e.status === 'Regular').length, 'dash-overdue': overdueCount };
+            for (const [id, val] of Object.entries(stats)) { const el = document.getElementById(id); if (el) el.innerText = val; }
 
-            const overdueList = document.getElementById('overdue-list');
-            if(overdueItems.length === 0) overdueList.innerHTML = `<div class="col-span-full py-10 glass-card rounded-3xl border-dashed border-2 text-center text-xs text-slate-400 uppercase tracking-widest">No assessments overdue.</div>`;
-            else {
-                overdueItems.sort((a,b) => b.days - a.days);
-                overdueList.innerHTML = overdueItems.map(item => `<div class="glass-card p-4 rounded-2xl border-l-4 border-l-rose-500 flex justify-between items-center"><div><p class="font-black text-sm text-slate-900">${item.name}</p><p class="text-[9px] font-bold text-slate-400 uppercase">${item.status}</p></div><div class="text-right"><p class="text-[9px] font-black text-rose-600 uppercase">Late ${item.days}d</p><p class="text-[10px] font-bold text-slate-500">${item.date}</p></div></div>`).join('');
-            }
+            const ovList = document.getElementById('overdue-list');
+            if (ovList) ovList.innerHTML = overdueItems.length ? overdueItems.map(item => `<div class="glass-card p-4 rounded-2xl border-l-4 border-l-rose-500 flex justify-between items-center"><div><p class="font-black text-sm text-slate-900">${item.name}</p><p class="text-[9px] font-bold text-slate-400 uppercase">${item.status}</p></div><div class="text-right"><p class="text-[9px] font-black text-rose-600 uppercase">Late ${item.days}d</p><p class="text-[10px] font-bold text-slate-500">${item.date}</p></div></div>`).join('') : '<div class="col-span-full py-10 glass-card rounded-3xl border-dashed border-2 text-center text-xs text-slate-400 uppercase tracking-widest">No overdue assessments.</div>';
 
-            const upcomingList = document.getElementById('upcoming-list');
-            upcomingItems.sort((a,b) => new Date(a.date) - new Date(b.date));
-            upcomingList.innerHTML = upcomingItems.slice(0, 4).map(item => `<div class="glass-card p-4 rounded-2xl border-l-4 border-l-blue-500 flex justify-between items-center"><div><p class="font-black text-sm text-slate-900">${item.name}</p><p class="text-[9px] font-bold text-slate-400 uppercase">${item.status}</p></div><div class="text-right"><p class="text-[9px] font-black text-blue-600 uppercase">Scheduled</p><p class="text-[10px] font-bold text-slate-500">${item.date}</p></div></div>`).join('') || `<div class="col-span-full py-10 glass-card rounded-3xl border-dashed border-2 text-center text-xs text-slate-400">Empty queue.</div>`;
+            const upList = document.getElementById('upcoming-list');
+            if (upList) upList.innerHTML = upcomingItems.length ? upcomingItems.sort((a,b) => new Date(a.date) - new Date(b.date)).slice(0,4).map(item => `<div class="glass-card p-4 rounded-2xl border-l-4 border-l-blue-500 flex justify-between items-center"><div><p class="font-black text-sm text-slate-900">${item.name}</p><p class="text-[9px] font-bold text-slate-400 uppercase">${item.status}</p></div><div class="text-right"><p class="text-[9px] font-black text-blue-600 uppercase">Scheduled</p><p class="text-[10px] font-bold text-slate-500">${item.date}</p></div></div>`).join('') : '<div class="col-span-full py-10 glass-card rounded-3xl border-dashed border-2 text-center text-xs text-slate-400">Empty queue.</div>';
 
-            document.getElementById('activity-feed').innerHTML = activityLog.slice(0, 15).map(log => `<div class="p-3 bg-white border rounded-2xl flex items-start gap-3"><div class="flex-grow"><p class="text-[10px] font-black text-slate-800 uppercase">${log.empName}</p><p class="text-[9px] text-slate-500">${log.message}</p></div><p class="text-[8px] text-slate-400 font-bold">${log.date.split(',')[0]}</p></div>`).join('') || '<p class="text-xs italic text-slate-400">No logs found.</p>';
+            const actFeed = document.getElementById('activity-feed');
+            if (actFeed) actFeed.innerHTML = window.activityLog.slice(0,15).map(l => `<div class="p-3 bg-white border rounded-2xl flex items-start gap-3"><div class="flex-grow"><p class="text-[10px] font-black text-slate-800 uppercase">${l.empName}</p><p class="text-[9px] text-slate-500">${l.message}</p></div><p class="text-[8px] text-slate-400 font-bold">${l.date.split(',')[0]}</p></div>`).join('') || '<p class="text-xs italic text-slate-400">No logs found.</p>';
 
-            const grids = { 'Trainee': 'grid-trainee', 'Probationary': 'grid-probationary', 'Regular': 'grid-regular', 'Terminated': 'grid-terminated' };
-            Object.values(grids).forEach(id => { const el = document.getElementById(id); if(el) el.innerHTML = ''; });
+            const gridIds = { 'Trainee': 'grid-trainee', 'Probationary': 'grid-probationary', 'Regular': 'grid-regular', 'Terminated': 'grid-terminated' };
+            Object.values(gridIds).forEach(id => { const el = document.getElementById(id); if(el) el.innerHTML = ''; });
             
-            filteredEmployees.forEach(emp => {
-                const grid = document.getElementById(grids[emp.status]);
+            filtered.forEach(emp => {
+                const grid = document.getElementById(gridIds[emp.status]);
                 if(!grid) return;
                 const phaseEvals = emp.evaluations.slice(emp.phaseStartIdx || 0);
                 const isCycleComplete = phaseEvals.length >= (emp.phaseLimit || 3);
                 const avg = phaseEvals.length ? (phaseEvals.reduce((a,c) => a+parseFloat(c.score),0)/phaseEvals.length).toFixed(1) : 0;
-                
                 const card = document.createElement('div');
-                card.className = 'glass-card p-6 rounded-3xl shadow-sm border-t-8 flex flex-col ' + 
-                                (emp.status === 'Trainee' ? 'border-t-blue-500' : emp.status === 'Probationary' ? 'border-t-purple-500' : emp.status === 'Regular' ? 'border-t-emerald-500' : 'border-t-rose-500');
-                
+                card.className = 'glass-card p-6 rounded-3xl shadow-sm border-t-8 flex flex-col ' + (emp.status === 'Trainee' ? 'border-t-blue-500' : emp.status === 'Probationary' ? 'border-t-purple-500' : emp.status === 'Regular' ? 'border-t-emerald-500' : 'border-t-rose-500');
                 card.innerHTML = `
                     <div class="flex justify-between items-start mb-6">
                         <div class="max-w-[70%]"><h3 class="font-black text-lg text-slate-900 break-words">${emp.name}</h3><p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Hired ${emp.hireDate}</p></div>
@@ -550,7 +711,7 @@
                                     </div>
                                 </div>
                             </div>
-                        ` : emp.status === 'Terminated' ? `<p class="text-[9px] italic text-rose-800 line-clamp-2 uppercase font-bold tracking-tight bg-rose-50 p-2 rounded-xl border border-rose-100">Decision: ${emp.terminationReason}</p>` : ''}
+                        ` : emp.status === 'Terminated' ? `<p class="text-[9px] italic text-rose-800 line-clamp-2 uppercase font-bold tracking-tight bg-rose-50 p-2 rounded-xl border border-rose-100">Notice: ${emp.terminationReason}</p>` : ''}
                     </div>
                     <div class="grid grid-cols-2 gap-2 mt-6">
                         ${!isCycleComplete && emp.status !== 'Regular' && emp.status !== 'Terminated' ? `<button onclick="startEvaluation(${emp.id})" class="col-span-1 py-3 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-wider shadow-sm"><i data-lucide="clipboard-check" class="w-3 h-3 inline mr-1"></i> Assess M${phaseEvals.length+1}</button><button onclick="confirmTermination(${emp.id})" class="col-span-1 py-3 border border-rose-100 text-rose-500 rounded-xl text-[10px] font-black uppercase">Terminate</button>` : ''}
@@ -559,129 +720,67 @@
                 `;
                 grid.appendChild(card);
             });
-            ['trainee', 'probationary', 'regular', 'terminated'].forEach(s => { 
-                const g = document.getElementById(`grid-${s}`); 
-                const e = document.getElementById(`empty-${s}`); 
-                if(g && e) g.children.length === 0 ? e.classList.remove('hidden') : e.classList.add('hidden'); 
-            });
             lucide.createIcons();
         }
 
         function startEvaluation(id) {
             currentEvalEmployeeId = id;
-            const emp = employees.find(e => e.id == id);
+            const emp = window.employees.find(e => e.id == id);
             if (!emp) return;
-            document.getElementById('eval-title').innerText = `${emp.name}`;
             const container = document.getElementById('eval-form-container');
+            document.getElementById('eval-title').innerText = emp.name;
             container.innerHTML = '';
-            
-            EVAL_STRUCTURE.forEach((cat, catIdx) => {
-                const catDiv = document.createElement('div');
-                catDiv.className = "space-y-6";
-                catDiv.innerHTML = `<h3 class="text-sm font-black text-blue-600 uppercase tracking-widest border-b pb-2">${cat.category}</h3>`;
-                cat.sections.forEach((sec, secIdx) => {
-                    const secDiv = document.createElement('div');
-                    secDiv.className = "space-y-4 ml-2";
-                    secDiv.innerHTML = `<h4 class="font-bold text-slate-800 text-sm">${sec.title}</h4>`;
+            EVAL_STRUCTURE.forEach((cat, cIdx) => {
+                const cDiv = document.createElement('div'); cDiv.className = "space-y-6"; cDiv.innerHTML = `<h3 class="text-sm font-black text-blue-600 uppercase tracking-widest border-b pb-2">${cat.category}</h3>`;
+                cat.sections.forEach((sec, sIdx) => {
+                    const sDiv = document.createElement('div'); sDiv.className = "space-y-4 ml-2"; sDiv.innerHTML = `<h4 class="font-bold text-slate-800 text-sm">${sec.title}</h4>`;
                     sec.questions.forEach((q, qIdx) => {
-                        const qId = `q_${catIdx}_${secIdx}_${qIdx}`;
-                        const qDiv = document.createElement('div');
-                        qDiv.className = "p-5 rounded-2xl bg-white border border-slate-100 shadow-sm space-y-4 ml-2";
-                        qDiv.innerHTML = `
-                            <p class="text-sm font-semibold text-slate-700">${q.q}</p>
-                            <div class="flex flex-col md:flex-row gap-4">
-                                <div class="flex-1 bg-blue-50/50 p-3 rounded-xl border border-blue-100/50">
-                                    <p class="text-[10px] text-blue-800 font-medium leading-relaxed">${q.ans}</p>
-                                </div>
-                                <div class="w-full md:w-48 flex flex-col justify-center items-center bg-slate-50 rounded-xl p-3 border border-slate-100">
-                                    <p class="text-[10px] font-black text-slate-400 uppercase mb-2">Grade (1-5)</p>
-                                    <div class="flex gap-1.5">
-                                        ${[1,2,3,4,5].map(v => `<button type="button" onclick="selectScore('${qId}', ${v})" id="${qId}_btn_${v}" class="score-btn w-7 h-7 rounded-lg border border-slate-200 bg-white text-xs font-black transition-all hover:bg-blue-50">${v}</button>`).join('')}
-                                    </div>
-                                    <input type="hidden" id="${qId}" value="0">
-                                </div>
-                            </div>`;
-                        secDiv.appendChild(qDiv);
+                        const qId = `q_${cIdx}_${sIdx}_${qIdx}`;
+                        const qDiv = document.createElement('div'); qDiv.className = "p-5 rounded-2xl bg-white border border-slate-100 shadow-sm space-y-4 ml-2";
+                        qDiv.innerHTML = `<p class="text-sm font-semibold text-slate-700">${q.q}</p><div class="flex flex-col md:flex-row gap-4"><div class="flex-1 bg-blue-50/50 p-3 rounded-xl border border-blue-100/50"><p class="text-[10px] text-blue-800 font-medium leading-relaxed">${q.ans}</p></div><div class="w-full md:w-48 flex flex-col justify-center items-center bg-slate-50 rounded-xl p-3 border border-slate-100"><p class="text-[10px] font-black text-slate-400 uppercase mb-2">Grade (1-5)</p><div class="flex gap-1.5">${[1,2,3,4,5].map(v => `<button type="button" onclick="selectScore('${qId}', ${v})" id="${qId}_btn_${v}" class="score-btn w-7 h-7 rounded-lg border border-slate-200 bg-white text-xs font-black transition-all hover:bg-blue-50">${v}</button>`).join('')}</div><input type="hidden" id="${qId}" value="0"></div></div>`;
+                        sDiv.appendChild(qDiv);
                     });
-                    catDiv.appendChild(secDiv);
+                    cDiv.appendChild(sDiv);
                 });
-                container.appendChild(catDiv);
+                container.appendChild(cDiv);
             });
-            const actionDiv = document.createElement('div');
-            actionDiv.className = "pt-10 flex justify-center";
-            actionDiv.innerHTML = `<button onclick="submitEvaluation()" class="w-full max-w-md bg-slate-900 text-white py-4 rounded-2xl font-black uppercase hover:bg-black transition-all shadow-xl flex items-center justify-center gap-2"><i data-lucide="save"></i> Submit Assessment</button>`;
-            container.appendChild(actionDiv);
+            const action = document.createElement('div'); action.className = "pt-10 flex justify-center"; action.innerHTML = `<button onclick="submitEvaluation()" class="w-full max-w-md bg-slate-900 text-white py-4 rounded-2xl font-black uppercase hover:bg-black transition-all shadow-xl flex items-center justify-center gap-2"><i data-lucide="save"></i> Submit Assessment</button>`;
+            container.appendChild(action);
             switchView('eval');
         }
 
         function selectScore(qId, val) {
-            const input = document.getElementById(qId);
-            input.value = val;
-            for(let i=1; i<=5; i++) {
-                const btn = document.getElementById(`${qId}_btn_${i}`);
-                btn.className = "score-btn w-7 h-7 rounded-lg border border-slate-200 bg-white text-xs font-black transition-all hover:bg-blue-50";
-            }
-            const activeBtn = document.getElementById(`${qId}_btn_${val}`);
-            activeBtn.className = "score-btn w-7 h-7 rounded-lg border border-blue-600 bg-blue-600 text-white text-xs font-black transition-all";
+            const input = document.getElementById(qId); input.value = val;
+            for(let i=1; i<=5; i++) { const b = document.getElementById(`${qId}_btn_${i}`); b.className = "score-btn w-7 h-7 rounded-lg border border-slate-200 bg-white text-xs font-black transition-all hover:bg-blue-50"; }
+            document.getElementById(`${qId}_btn_${val}`).className = "score-btn w-7 h-7 rounded-lg border border-blue-600 bg-blue-600 text-white text-xs font-black transition-all";
         }
 
         function submitEvaluation() {
-            const emp = employees.find(e => e.id == currentEvalEmployeeId);
-            if (!emp) return;
-            let responses = [], totalS = 0, totalP = 0, incomplete = false;
-            EVAL_STRUCTURE.forEach((cat, catIdx) => { 
-                cat.sections.forEach((sec, secIdx) => { 
-                    sec.questions.forEach((q, qIdx) => {
-                        const val = parseInt(document.getElementById(`q_${catIdx}_${secIdx}_${qIdx}`).value);
-                        if(val === 0) incomplete = true;
-                        responses.push({ q: q.q, cat: cat.category, score: val });
-                        totalS += val; totalP += 5;
-                    });
-                });
-            });
-            if(incomplete) { showNotification("Assessment incomplete."); return; }
+            const emp = window.employees.find(e => e.id == currentEvalEmployeeId); if (!emp) return;
+            let responses = [], totalS = 0, totalP = 0, inc = false;
+            EVAL_STRUCTURE.forEach((cat, cIdx) => cat.sections.forEach((sec, sIdx) => sec.questions.forEach((q, qIdx) => {
+                const val = parseInt(document.getElementById(`q_${cIdx}_${sIdx}_${qIdx}`).value);
+                if(val === 0) inc = true; responses.push({ q: q.q, cat: cat.category, score: val }); totalS += val; totalP += 5;
+            })));
+            if(inc) { showNotification("Assessment data incomplete."); return; }
             const score = ((totalS / totalP) * 100).toFixed(1);
-            emp.evaluations.push({ 
-                id: Date.now(), 
-                phaseMonth: emp.evaluations.slice(emp.phaseStartIdx || 0).length + 1, 
-                type: emp.status, 
-                score, 
-                date: new Date().toLocaleDateString(), 
-                details: responses 
-            });
-            logActivity('eval', `Assessment: ${score}%`, emp.name);
-            saveData(); renderDashboard(); switchView('trainee-list');
+            const updated = [...emp.evaluations, { id: Date.now(), phaseMonth: emp.evaluations.slice(emp.phaseStartIdx || 0).length + 1, type: emp.status, score, date: new Date().toLocaleDateString(), details: responses }];
+            window.saveEmployee({ ...emp, evaluations: updated }).then(() => { window.logActivity('eval', `Assessment result: ${score}%`, emp.name); switchView('trainee-list'); });
         }
 
         function handleDecision(id, action) {
-            const emp = employees.find(e => e.id == id);
-            if (!emp) return;
+            const emp = window.employees.find(e => e.id == id); if (!emp) return;
             if(action === 'promote') {
                 const oldS = emp.status, newS = oldS === 'Trainee' ? 'Probationary' : 'Regular';
-                const relevantEvals = emp.evaluations.slice(emp.phaseStartIdx || 0);
-                emp.achievements.push({ id: Date.now(), title: `Promoted to ${newS}`, date: new Date().toLocaleDateString(), type: newS, fromStatus: oldS, evaluations: [...relevantEvals] });
-                emp.status = newS; emp.phaseStartIdx = emp.evaluations.length; emp.phaseLimit = 3;
-                logActivity('promote', `Advanced to ${newS}`, emp.name);
-                saveData(); renderDashboard(); showCongrats(emp);
-            } else if(action === 'extend') {
-                emp.phaseLimit = (emp.phaseLimit || 3) + 1;
-                logActivity('extend', `Extension added (+1 Mo)`, emp.name);
-                saveData(); renderDashboard(); showNotification("Extended.");
+                const achievements = [...emp.achievements, { id: Date.now(), title: `Promoted to ${newS}`, date: new Date().toLocaleDateString(), type: newS, fromStatus: oldS, evaluations: [...emp.evaluations.slice(emp.phaseStartIdx || 0)] }];
+                window.saveEmployee({ ...emp, status: newS, achievements, phaseStartIdx: emp.evaluations.length, phaseLimit: 3 }).then(() => { window.logActivity('promote', `Advanced to ${newS}`, emp.name); showCongrats({ ...emp, status: newS }); });
+            } else {
+                window.saveEmployee({ ...emp, phaseLimit: (emp.phaseLimit || 3) + 1 }).then(() => { window.logActivity('extend', `Training cycle extended (+1 Mo)`, emp.name); showNotification("Review Cycle Extended."); });
             }
         }
 
-        function showCongrats(emp) {
-            document.getElementById('cert-name').innerText = emp.name;
-            document.getElementById('cert-status').innerText = emp.status;
-            document.getElementById('cert-date').innerText = new Date().toLocaleDateString();
-            document.getElementById('modal-backdrop').classList.remove('hidden');
-            document.getElementById('congrats-modal').classList.remove('hidden');
-            document.getElementById('download-cert-pdf').onclick = () => downloadPDF('cert-pdf-wrapper', `${emp.name}_Certificate.pdf`);
-            lucide.createIcons();
-        }
-
         function viewReport(id) {
-            const emp = employees.find(e => e.id == id);
+            const emp = window.employees.find(e => e.id == id);
             const container = document.getElementById('report-content');
             container.innerHTML = `
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -703,7 +802,7 @@
                                             <button onclick="generateEndorsementLetter(${emp.id}, ${a.id})" class="flex-1 py-1.5 bg-amber-500 text-white rounded-lg text-[10px] font-bold uppercase hover:bg-amber-600">Endorsement</button>
                                         </div>
                                     </div>
-                                `).join('') || '<p class="text-xs text-slate-400 italic">No logs found.</p>'}
+                                `).join('') || '<p class="text-xs text-slate-400 italic">No cloud milestones logged.</p>'}
                             </div>
                         </div>
                     </div>
@@ -722,7 +821,7 @@
                                             <span class="text-[8px] font-black uppercase text-blue-500">View Breakdown</span>
                                         </div>
                                     </div>
-                                `).join('') || '<p class="text-xs italic text-slate-400 text-center py-10">No records found.</p>'}
+                                `).join('') || '<p class="text-xs italic text-slate-400 text-center py-10">No cloud records found.</p>'}
                             </div>
                         </div>
                     </div>
@@ -731,64 +830,81 @@
         }
 
         function showEvalDetail(empId, evalId) {
-            const emp = employees.find(e => e.id == empId), ev = emp.evaluations.find(e => e.id == evalId);
-            const container = document.getElementById('eval-detail-content');
-            if (!container || !ev) return;
-            const weaknesses = ev.details.filter(d => d.score <= 2), neutral = ev.details.filter(d => d.score === 3), strengths = ev.details.filter(d => d.score >= 4);
-
-            container.innerHTML = `
-                <div class="space-y-10">
-                    <div class="flex justify-between items-start border-b-4 border-slate-900 pb-8 uppercase font-black tracking-tighter">
-                        <div><h1>M-Commerce Corporation</h1><p class="text-sm font-bold text-blue-600 uppercase tracking-widest">Assessment: ${ev.type} | Month ${ev.phaseMonth} Report</p></div>
-                        <div class="text-right"><p class="text-xs text-slate-400">Final Grade</p><p class="text-6xl text-slate-900">${ev.score}%</p></div>
+            const emp = window.employees.find(e => e.id == empId), ev = emp.evaluations.find(e => e.id == evalId); if (!ev) return;
+            const weak = ev.details.filter(d => d.score <= 2), neut = ev.details.filter(d => d.score === 3), str = ev.details.filter(d => d.score >= 4);
+            document.getElementById('eval-detail-content').innerHTML = `
+                <div class="space-y-12">
+                    <div class="flex justify-between items-start border-b-8 border-slate-900 pb-8 uppercase font-black tracking-tighter">
+                        <div><h1 class="text-2xl">M-Commerce Corporation</h1><p class="text-sm font-bold text-blue-600 uppercase tracking-widest">Performance Evaluation Dossier</p></div>
+                        <div class="text-right"><p class="text-[10px] text-slate-400 uppercase">Weighted Final Grade</p><p class="text-7xl text-slate-900 leading-none">${ev.score}%</p></div>
                     </div>
                     <div class="grid grid-cols-4 gap-6 bg-slate-50 p-6 rounded-3xl border text-[10px] uppercase font-black">
-                        <div><p class="text-slate-400">Personnel</p><p>${emp.name}</p></div>
-                        <div><p class="text-slate-400">Date</p><p>${ev.date}</p></div>
-                        <div><p class="text-slate-400">Division</p><p>Operation</p></div>
-                        <div><p class="text-slate-400">Phase</p><p>${ev.type}</p></div>
+                        <div><p class="text-slate-400 mb-1">Subject Personnel</p><p>${emp.name}</p></div>
+                        <div><p class="text-slate-400 mb-1">Date of Assessment</p><p>${ev.date}</p></div>
+                        <div><p class="text-slate-400 mb-1">Functional Group</p><p>Operations</p></div>
+                        <div><p class="text-slate-400 mb-1">Phase Hierarchy</p><p>${ev.type} | Mo. ${ev.phaseMonth}</p></div>
                     </div>
+
+                    <div class="space-y-6 text-xs text-slate-600 leading-relaxed text-justify">
+                        <h2 class="text-sm font-black uppercase tracking-widest text-slate-900 border-l-4 border-slate-900 pl-4 py-1">I. Technical Audit Summary</h2>
+                        <p>This performance dossier provides a comprehensive technical audit for <strong>${emp.name}</strong> during the <strong>${ev.type}</strong> phase. 
+                        The evaluated personnel was subjected to standard operational benchmarks including OBS environment stability, camera technical configuration mastery, 
+                        and real-time troubleshooting proficiency. A final weighted score of <strong>${ev.score}%</strong> was achieved.</p>
+                    </div>
+
                     <div class="grid grid-cols-3 gap-6 no-break">
-                        <div class="space-y-4"><h4 class="font-black text-rose-600 text-[10px] uppercase">Weakness</h4><div class="space-y-2">${weaknesses.map(w => `<div class="p-3 bg-rose-50 rounded-xl border border-rose-100 text-[9px] font-medium text-rose-800"><p>${w.q}</p></div>`).join('') || '<p class="text-[9px] italic text-slate-400">None.</p>'}</div></div>
-                        <div class="space-y-4"><h4 class="font-black text-blue-600 text-[10px] uppercase">Neutral</h4><div class="space-y-2">${neutral.map(n => `<div class="p-3 bg-blue-50 rounded-xl border border-blue-100 text-[9px] font-medium text-blue-800"><p>${n.q}</p></div>`).join('') || '<p class="text-[9px] italic text-slate-400">None.</p>'}</div></div>
-                        <div class="space-y-4"><h4 class="font-black text-emerald-600 text-[10px] uppercase">Strength</h4><div class="space-y-2">${strengths.map(s => `<div class="p-3 bg-emerald-50 rounded-xl border border-emerald-100 text-[9px] font-medium text-emerald-800"><p>${s.q}</p></div>`).join('') || '<p class="text-[9px] italic text-slate-400">None.</p>'}</div></div>
+                        <div><h4 class="font-black text-rose-600 text-[9px] uppercase tracking-wider mb-2">Deficiencies</h4>${weak.map(w => `<div class="p-3 bg-rose-50 rounded-xl border mb-2 text-[9px] font-semibold">${w.q}</div>`).join('') || '<p class="text-[9px] italic text-slate-400">None logged.</p>'}</div>
+                        <div><h4 class="font-black text-blue-600 text-[9px] uppercase tracking-wider mb-2">Satisfactory</h4>${neut.map(n => `<div class="p-3 bg-blue-50 rounded-xl border mb-2 text-[9px] font-semibold">${n.q}</div>`).join('') || '<p class="text-[9px] italic text-slate-400">None logged.</p>'}</div>
+                        <div><h4 class="font-black text-emerald-600 text-[9px] uppercase tracking-wider mb-2">Proficiencies</h4>${str.map(s => `<div class="p-3 bg-emerald-50 rounded-xl border mb-2 text-[9px] font-semibold">${s.q}</div>`).join('') || '<p class="text-[9px] italic text-slate-400">None logged.</p>'}</div>
                     </div>
-                    <table class="w-full text-left text-[10px] border-collapse no-break">
-                        <thead><tr class="bg-slate-900 text-white"><th class="p-4 border uppercase">Metric</th><th class="p-4 border text-right">Score</th></tr></thead>
-                        <tbody>${ev.details.map(d => `<tr class="no-break"><td class="p-4 border font-bold text-slate-700">${d.q}<br><span class="text-[8px] font-black text-slate-400 uppercase">${d.cat}</span></td><td class="p-4 border text-right font-black text-blue-600">${d.score} / 5</td></tr>`).join('')}</tbody>
+
+                    <table class="w-full text-[10px] border-collapse no-break">
+                        <thead><tr class="bg-slate-900 text-white"><th class="p-4 border text-left uppercase">Detailed Metric Breakdown</th><th class="p-4 border text-right uppercase">Score</th></tr></thead>
+                        <tbody>${ev.details.map(d => `<tr><td class="p-4 border font-bold text-slate-700">${d.q}<br><span class="text-[8px] font-black text-slate-400 uppercase">${d.cat}</span></td><td class="p-4 border text-right font-black text-blue-600">${d.score} / 5.0</td></tr>`).join('')}</tbody>
                     </table>
-                    <div class="pt-32 grid grid-cols-2 gap-y-24 gap-x-12 px-6 no-break font-black text-[9px] tracking-widest text-slate-400 text-center uppercase">
-                        <div class="border-t-2 border-slate-900 pt-3">Operator Trainee</div>
-                        <div class="border-t-2 border-slate-300 pt-3">Operator Trainer</div>
+                    
+                    <div class="pt-24 grid grid-cols-2 gap-y-24 gap-x-12 px-6 font-black text-[8px] text-center uppercase tracking-[0.2em] text-slate-400 no-break">
+                        <div class="border-t-2 border-slate-900 pt-4 text-slate-900">Live Operator Trainee</div>
+                        <div class="border-t-2 border-slate-300 pt-4">Live Operator Trainor</div>
+                        <div class="border-t-2 border-slate-300 pt-4">Live Operator Lead</div>
+                        <div class="border-t-2 border-slate-300 pt-4">Technical Support Supervisor</div>
                     </div>
                 </div>`;
             document.getElementById('back-to-report-btn').onclick = () => viewReport(empId);
-            document.getElementById('download-eval-pdf').onclick = () => downloadPDF('eval-detail-content', `${emp.name}_Report_M${ev.phaseMonth}.pdf`);
+            document.getElementById('download-eval-pdf').onclick = () => downloadPDF('eval-detail-content', `${emp.name}_Evaluation_Report.pdf`);
             switchView('eval-detail');
-            lucide.createIcons();
         }
 
         function generateEndorsementLetter(empId, achievementId) {
-            const emp = employees.find(e => e.id == empId), a = emp.achievements.find(ach => ach.id == achievementId);
-            const container = document.getElementById('endorsement-content');
+            const emp = window.employees.find(e => e.id == empId), a = emp.achievements.find(ach => ach.id == achievementId); if (!a) return;
             const avg = (a.evaluations.reduce((acc, curr) => acc + parseFloat(curr.score), 0) / a.evaluations.length).toFixed(1);
-
-            container.innerHTML = `
-                <div class="space-y-16">
-                    <div class="flex justify-between items-start border-b-2 border-slate-100 pb-8 uppercase font-black">
-                        <div><h1>M-Commerce Corporation</h1><p class="text-xs text-slate-400 tracking-widest">Operation Department</p></div>
-                        <div class="text-right"><p class="text-sm text-slate-900">${a.date}</p></div>
+            document.getElementById('endorsement-content').innerHTML = `
+                <div class="space-y-12">
+                    <div class="flex justify-between items-start border-b-2 pb-10">
+                        <div><h1 class="text-2xl font-black uppercase text-slate-900">M-Commerce Corporation</h1><p class="text-xs text-slate-500 font-black uppercase tracking-widest mt-1">Workforce Management Division</p></div>
+                        <div class="text-right"><p class="text-sm font-bold uppercase">Date: ${a.date}</p></div>
                     </div>
-                    <div class="space-y-10 text-slate-800">
-                        <p class="font-black text-lg uppercase tracking-widest text-slate-900">TO THE MANAGEMENT,</p>
-                        <div class="space-y-8 text-sm leading-relaxed text-justify">
-                            <p>This document serves as the official endorsement of <strong>${emp.name}</strong> for promotion to <strong>${a.type}</strong>.</p>
-                            <p>System metrics demonstrate a cumulative performance average of <strong>${avg}%</strong>.</p>
+                    <div class="space-y-8 text-slate-800">
+                        <div class="font-black text-sm uppercase tracking-wider text-slate-900"><p>Subject: Formal Endorsement for Professional Advancement</p></div>
+                        
+                        <div class="space-y-6 text-sm text-justify text-slate-700 leading-relaxed">
+                            <p>I am writing to formally submit the professional endorsement of <strong>${emp.name}</strong> for advancement to <strong>${a.type}</strong> within the M-Commerce Corporation operational hierarchy. 
+                            This recommendation follows a comprehensive review of performance data gathering during the <strong>${a.fromStatus}</strong> assessment cycle.</p>
+                            
+                            <p>Internal metrics demonstrate that the candidate achieved a weighted achievement average of <strong>${avg}%</strong>. The personnel has shown technical mastery in OBS environment configurations, camera hardware calibrations, and 
+                            real-time system maintenance. Beyond technical skills, their professional integrity and alignment with corporate communication standards have been exemplary.</p>
+
+                            <p>Based on these consistent performance benchmarks, we have total confidence in their ability to assume the increased technical and operational responsibilities of a <strong>${a.type}</strong>. We request administrative updates to formalize this promotion.</p>
                         </div>
                     </div>
-                    <div class="pt-32 grid grid-cols-2 gap-y-24 gap-x-12 px-6 no-break font-black text-[9px] tracking-widest text-slate-400 text-center uppercase">
-                        <div class="border-t-2 border-slate-900 pt-3">Operator Trainee</div>
-                        <div class="border-t-2 border-slate-300 pt-3">Operator Trainer</div>
+
+                    <div class="pt-8"><table class="w-full text-left text-[11px] border-collapse border"><thead><tr class="bg-slate-900 text-white"><th class="p-4 border uppercase">Assessment Cycle</th><th class="p-4 border uppercase">Category</th><th class="p-4 border text-right uppercase">Metric</th></tr></thead><tbody>${a.evaluations.map(ev => `<tr class="bg-white"><td class="p-4 border font-bold">Month ${ev.phaseMonth}</td><td class="p-4 border uppercase">${ev.type}</td><td class="p-4 border text-right font-black text-blue-600">${ev.score}%</td></tr>`).join('')}<tr class="bg-slate-50 font-black"><td colspan="2" class="p-5 border text-right uppercase tracking-widest text-slate-600">Weighted Phase Average</td><td class="p-5 border text-right text-blue-600 text-xl">${avg}%</td></tr></tbody></table></div>
+                    
+                    <div class="pt-32 grid grid-cols-2 gap-y-24 gap-x-12 px-6 font-black text-[8px] text-center uppercase tracking-[0.2em] text-slate-400 no-break">
+                        <div class="border-t-2 border-slate-300 pt-4">Live Operator Trainee</div>
+                        <div class="border-t-2 border-slate-300 pt-4">Live Operator Trainor</div>
+                        <div class="border-t-2 border-slate-300 pt-4">Live Operator Lead</div>
+                        <div class="border-t-2 border-slate-300 pt-4">Technical Support Supervisor</div>
                     </div>
                 </div>`;
             document.getElementById('back-to-report-from-endorse').onclick = () => viewReport(empId);
@@ -797,24 +913,35 @@
         }
 
         function generateTerminationLetter(id) {
-            const emp = employees.find(e => e.id == id);
-            const container = document.getElementById('termination-content');
-            container.innerHTML = `
-                <div class="space-y-16">
-                    <div class="flex justify-between items-start border-b-2 border-slate-100 pb-8 uppercase font-black">
-                        <div><h1>M-Commerce Corporation</h1><p class="text-xs text-slate-400 tracking-widest">Operation Department</p></div>
-                        <div class="text-right"><p class="text-sm text-slate-900">${emp.terminationDate}</p></div>
+            const emp = window.employees.find(e => e.id == id);
+            document.getElementById('termination-content').innerHTML = `
+                <div class="space-y-12">
+                    <div class="flex justify-between items-start border-b-2 pb-10">
+                        <div><h1 class="text-2xl font-black uppercase text-slate-900">M-Commerce Corporation</h1><p class="text-xs text-slate-500 font-black uppercase tracking-widest mt-1">Operational Integrity Oversight</p></div>
+                        <div class="text-right"><p class="text-sm font-bold uppercase text-rose-600">Effective: ${emp.terminationDate}</p></div>
                     </div>
-                    <div class="space-y-10 text-slate-800">
-                        <p class="font-black text-lg uppercase tracking-widest text-slate-900">TO THE MANAGEMENT,</p>
-                        <div class="space-y-8 text-sm leading-relaxed text-justify">
-                            <p>Termination notification for <strong>${emp.name}</strong>, effective <strong>${emp.terminationDate}</strong>.</p>
-                            <div class="p-8 bg-slate-50 border-l-4 border-rose-500 rounded-r-3xl italic text-slate-700 shadow-sm leading-relaxed">"${emp.terminationReason}"</div>
+                    <div class="space-y-8 text-slate-800">
+                        <div class="font-black text-sm uppercase tracking-wider text-slate-900"><p>Subject: Notice of Formal Contract Termination</p></div>
+                        
+                        <div class="space-y-6 text-sm text-justify text-slate-700 leading-relaxed">
+                            <p>Dear <strong>${emp.name}</strong>,</p>
+                            
+                            <p>This correspondence serves as a formal notification regarding the termination of your employment relationship with M-Commerce Corporation, effective <strong>${emp.terminationDate}</strong>. 
+                            This action follows an exhaustive review of technical performance trajectories which failed to align with department benchmarks.</p>
+
+                            <div class="p-10 bg-rose-50 border-l-8 border-rose-500 rounded-r-[32px] italic text-rose-900 text-xs font-medium leading-relaxed">
+                                "${emp.terminationReason}"
+                            </div>
+
+                            <p>Digital credentials and functional authorizations are revoked effective immediately. We wish you professional success in your future endeavors.</p>
                         </div>
                     </div>
-                    <div class="pt-32 grid grid-cols-2 gap-y-24 gap-x-12 px-6 no-break font-black text-[9px] tracking-widest text-slate-400 text-center uppercase">
-                        <div class="border-t-2 border-slate-900 pt-3">Operator Trainee</div>
-                        <div class="border-t-2 border-slate-300 pt-3">Operator Trainer</div>
+
+                    <div class="pt-32 grid grid-cols-2 gap-y-24 gap-x-12 px-6 font-black text-[8px] text-center uppercase tracking-[0.2em] text-slate-400 no-break">
+                        <div class="border-t-2 border-slate-900 pt-4 text-slate-900">Issuing Manager</div>
+                        <div class="border-t-2 border-slate-300 pt-4">HR Oversight</div>
+                        <div class="border-t-2 border-slate-300 pt-4">Witness Signature</div>
+                        <div class="border-t-2 border-slate-300 pt-4">Recipient Acknowledgment</div>
                     </div>
                 </div>`;
             document.getElementById('back-to-report-from-term').onclick = () => viewReport(id);
@@ -822,15 +949,17 @@
             switchView('termination');
         }
 
-        async function downloadPDF(elementId, filename) {
-            const element = document.getElementById(elementId);
-            const opt = { margin: [0.5, 0.5, 0.5, 0.5], filename, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true, letterRendering: true, backgroundColor: '#ffffff' }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } };
-            showNotification("Compiling PDF...");
-            try { await html2pdf().set(opt).from(element).save(); } catch (e) { showNotification("Export failed."); }
+        async function downloadPDF(elId, filename) {
+            const el = document.getElementById(elId);
+            const opt = { margin: [0.3, 0.3, 0.3, 0.3], filename, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true, letterRendering: true }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } };
+            showNotification("Compiling Formal PDF...");
+            try { await html2pdf().set(opt).from(el).save(); } catch (e) { showNotification("Export failed."); }
         }
 
         function viewCardFromAchievement(empId, achId) {
-            const emp = employees.find(e => e.id == empId), a = emp.achievements.find(ach => ach.id == achId);
+            const emp = window.employees.find(e => e.id == empId);
+            const a = emp.achievements.find(ach => ach.id == achId);
+            if (!a) return;
             document.getElementById('cert-name').innerText = emp.name;
             document.getElementById('cert-status').innerText = a.type;
             document.getElementById('cert-date').innerText = a.date;
@@ -841,48 +970,40 @@
         }
 
         function confirmTermination(id) {
+            const emp = window.employees.find(e => e.id == id); if (!emp) return;
             document.getElementById('modal-backdrop').classList.remove('hidden');
             document.getElementById('terminate-modal').classList.remove('hidden');
             document.getElementById('confirm-terminate-btn').onclick = () => {
                 const r = document.getElementById('terminate-reason').value;
-                if(!r.trim()) { showNotification("Reason required."); return; }
-                const emp = employees.find(e => e.id == id);
-                if (emp) {
-                    emp.status = 'Terminated'; emp.terminationReason = r; emp.terminationDate = new Date().toLocaleDateString();
-                    logActivity('term', `Termination: ${r}`, emp.name);
-                    saveData(); renderDashboard(); closeModal();
-                }
+                if(!r.trim()) { showNotification("Documentation required."); return; }
+                window.saveEmployee({ ...emp, status: 'Terminated', terminationReason: r, terminationDate: new Date().toLocaleDateString() })
+                    .then(() => { window.logActivity('term', `Separation executed`, emp.name); closeModal(); });
             };
+            lucide.createIcons();
         }
 
         function backupData() {
-            const data = { employees, activityLog, version: "2.1", ts: Date.now() };
+            const data = { employees: window.employees, activityLog: window.activityLog, version: "Cloud-Pro-3.5", ts: Date.now() };
             const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
-            const a = document.createElement('a'); a.href = url; a.download = `MCorp_Backup_${new Date().toISOString().split('T')[0]}.json`;
+            const a = document.createElement('a'); a.href = url; a.download = `MCorp_Tracker_Backup_${new Date().toISOString().split('T')[0]}.json`;
             a.click(); URL.revokeObjectURL(url);
-            showNotification("Backup saved.");
+            showNotification("Backup Created.");
         }
 
         function restoreData(event) {
             const file = event.target.files[0]; if(!file) return;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    if(data.employees && data.activityLog) {
-                        if(confirm("Confirm overwrite?")) { employees = data.employees; activityLog = data.activityLog; saveData(); renderDashboard(); showNotification("Restored."); }
-                    }
-                } catch (err) { showNotification("Invalid file."); }
-            };
-            reader.readAsText(file);
-        }
-
-        function factoryReset() {
-            if(confirm("Permanently wipe all records?")) {
-                const check = prompt("Type 'RESET' to confirm:");
-                if(check === 'RESET') { localStorage.clear(); location.reload(); }
-            }
+            showConfirmModal("Restore Data", "Proceeding will overwrite cloud records from the file. Continue?", () => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        if(data.employees) data.employees.forEach(emp => { const { firebaseId, ...clean } = emp; window.saveEmployee(clean); });
+                        showNotification("Syncing Cloud Data...");
+                    } catch (err) { showNotification("Format Error."); }
+                };
+                reader.readAsText(file);
+            });
         }
 
         function showNotification(text) {
@@ -892,6 +1013,15 @@
             document.body.appendChild(div);
             lucide.createIcons();
             setTimeout(() => div.remove(), 4000);
+        }
+
+        function getStatusClass(s) {
+            switch(s) {
+                case 'Trainee': return 'bg-blue-50 text-blue-600 border border-blue-100';
+                case 'Probationary': return 'bg-purple-50 text-purple-600 border border-purple-100';
+                case 'Regular': return 'bg-emerald-50 text-emerald-600 border border-emerald-100';
+                default: return 'bg-rose-50 text-rose-600 border border-rose-100';
+            }
         }
     </script>
 </body>
