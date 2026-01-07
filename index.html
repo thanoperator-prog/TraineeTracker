@@ -10,7 +10,6 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="M-Corp Tracker">
-    <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
     
@@ -800,7 +799,6 @@
             
             // STRICT DYNAMIC CALCULATION:
             // Calculate total months of tenure leading up to this specific achievement
-            // by summing the evaluation counts of this achievement and all preceding ones.
             let totalMonths = 0;
             for (const ach of emp.achievements) {
                 totalMonths += ach.evaluations.length;
@@ -812,23 +810,81 @@
             const scheduledDateObj = new Date(parseInt(hParts[0]), parseInt(hParts[1]) - 1, parseInt(hParts[2]));
             scheduledDateObj.setMonth(scheduledDateObj.getMonth() + totalMonths);
             
-            const effectiveDateStr = scheduledDateObj.toLocaleDateString();
+            const effectiveDateStr = scheduledDateObj.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
             
             const today = new Date(); today.setHours(0,0,0,0);
             const isOverdue = today > scheduledDateObj;
             
             const apologyHTML = isOverdue ? `<div class="no-break mt-8 p-4 bg-slate-50 border-l-4 border-slate-300 text-xs italic text-slate-500 text-justify"><strong>Trainer Note:</strong> This document is formally issued today to finalize the assessment records. Please note that the effective date of the promotion is retroactive to <strong>${effectiveDateStr}</strong>, reflecting the candidate's actual completion of the evaluation phase.</div>` : '';
 
-            document.getElementById('endorsement-content').innerHTML = `
-                <div class="space-y-12">
-                    <div class="no-break flex justify-between items-start border-b-2 pb-10">
-                        <div><h1 class="text-2xl font-black uppercase text-slate-900">M-Commerce Corporation</h1><p class="text-xs text-slate-500 font-black uppercase tracking-widest mt-1">Operation Department</p></div>
-                        <div class="text-right"><p class="text-sm font-bold uppercase">Date: ${new Date().toLocaleDateString()}</p></div>
+            // Helper to get Evaluation Date based on Hire Date + Phase Month
+            // Logic: Hire Date Month + Phase Month Index
+            const getScheduledEvalDate = (hireDate, phaseMonth) => {
+                const parts = hireDate.split('-');
+                // parts[1] is month (01-12). In JS Date, month is 0-11.
+                // We want: Month 1 = Hire Month + 1.
+                // Example: Hire July (7). Month 1 = August (8).
+                // JS: new Date(Y, 6, D).setMonth(6 + 1) -> August.
+                const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+                d.setMonth(d.getMonth() + phaseMonth); 
+                return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            };
+
+            // --- NEW: Generate Detailed Log HTML for all included evaluations ---
+            let allDetailsHTML = '';
+            a.evaluations.forEach(ev => {
+                const evalDateDisplay = getScheduledEvalDate(emp.hireDate, ev.phaseMonth);
+                let tableRows = '';
+                const groupedDetails = {};
+                
+                // Group by Section
+                if(ev.details) {
+                    ev.details.forEach(d => {
+                        const groupKey = d.section || d.cat; 
+                        if (!groupedDetails[groupKey]) groupedDetails[groupKey] = [];
+                        groupedDetails[groupKey].push(d);
+                    });
+
+                    // Build Rows
+                    for (const [groupName, items] of Object.entries(groupedDetails)) {
+                        tableRows += `<tr class="bg-slate-50"><td colspan="2" class="p-2 border font-black text-slate-800 text-[9px] uppercase tracking-wider">${groupName}</td></tr>`;
+                        items.forEach(d => {
+                            tableRows += `<tr class="bg-white"><td class="p-2 border font-medium text-slate-700 text-[9px]">${d.q}</td><td class="p-2 border text-right font-black text-blue-600 text-[9px]">${d.score}</td></tr>`;
+                        });
+                    }
+                }
+
+                // Added 'no-break' class to the outer container of each log to prevent cutting inside the log block
+                allDetailsHTML += `
+                    <div class="mt-6 no-break bg-slate-50/50 p-4 rounded-xl border border-slate-100" style="page-break-inside: avoid;">
+                        <div class="flex justify-between items-center mb-3 border-b border-slate-200 pb-2">
+                            <div>
+                                <h4 class="font-black text-[10px] uppercase text-slate-900">Evaluation Date: ${evalDateDisplay}</h4>
+                                <p class="text-[8px] text-slate-400 font-bold uppercase">Phase Month ${ev.phaseMonth}</p>
+                            </div>
+                            <div class="text-right">
+                                <span class="font-black text-xs text-blue-600 block">${ev.score}%</span>
+                                <span class="text-[8px] text-slate-400 font-bold uppercase">Cycle Score</span>
+                            </div>
+                        </div>
+                        <table class="w-full text-[10px] border-collapse border border-slate-200 bg-white">
+                            <tbody>${tableRows}</tbody>
+                        </table>
                     </div>
-                    <div class="space-y-8 text-slate-800">
-                        <div class="no-break font-black text-sm uppercase tracking-wider text-slate-900"><p>Formal Endorsement for Professional Advancement</p></div>
+                `;
+            });
+
+            document.getElementById('endorsement-content').innerHTML = `
+                <div class="space-y-8">
+                    <div class="no-break flex justify-between items-start border-b-2 pb-6">
+                        <div><h1 class="text-xl md:text-2xl font-black uppercase text-slate-900">M-Commerce Corporation</h1><p class="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-1">Operation Department</p></div>
+                        <div class="text-right"><p class="text-[10px] font-bold uppercase">Date: ${new Date().toLocaleDateString()}</p></div>
+                    </div>
+                    
+                    <div class="space-y-6 text-slate-800">
+                        <div class="no-break font-black text-xs uppercase tracking-wider text-slate-900"><p>Formal Endorsement for Professional Advancement</p></div>
                         
-                        <div class="no-break space-y-6 text-sm text-justify text-slate-700 leading-relaxed">
+                        <div class="no-break space-y-4 text-[11px] text-justify text-slate-700 leading-relaxed">
                             <p>I am writing to formally submit the professional endorsement of <strong>${emp.name}</strong> for advancement to <strong>${a.type}</strong> within the M-Commerce Corporation operational hierarchy. 
                             This recommendation follows a comprehensive review of performance data gathering during the <strong>${a.fromStatus}</strong> assessment cycle.</p>
                             
@@ -839,14 +895,43 @@
                         </div>
                     </div>
 
-                    <div class="pt-8 overflow-x-auto"><table class="w-full text-left text-[11px] border-collapse border"><thead><tr class="bg-slate-900 text-white"><th class="p-4 border uppercase">Assessment Cycle</th><th class="p-4 border uppercase">Category</th><th class="p-4 border text-right uppercase">Metric</th></tr></thead><tbody>${a.evaluations.map(ev => `<tr class="bg-white"><td class="p-4 border font-bold">Month ${ev.phaseMonth}</td><td class="p-4 border uppercase">${ev.type}</td><td class="p-4 border text-right font-black text-blue-600">${ev.score}%</td></tr>`).join('')}<tr class="bg-slate-50 font-black"><td colspan="2" class="p-5 border text-right uppercase tracking-widest text-slate-600">Weighted Phase Average</td><td class="p-5 border text-right text-blue-600 text-xl">${avg}%</td></tr></tbody></table></div>
+                    <div class="no-break pt-4 overflow-x-auto">
+                        <h5 class="text-[9px] font-black uppercase text-slate-400 mb-2 pl-1">I. Phase Summary</h5>
+                        <table class="w-full text-left text-[10px] border-collapse border">
+                            <thead>
+                                <tr class="bg-slate-900 text-white">
+                                    <th class="p-3 border uppercase">Evaluation Date</th>
+                                    <th class="p-3 border uppercase">Category</th>
+                                    <th class="p-3 border text-right uppercase">Metric</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${a.evaluations.map(ev => `
+                                    <tr class="bg-white">
+                                        <td class="p-3 border font-bold">${getScheduledEvalDate(emp.hireDate, ev.phaseMonth)}</td>
+                                        <td class="p-3 border uppercase">${ev.type}</td>
+                                        <td class="p-3 border text-right font-black text-blue-600">${ev.score}%</td>
+                                    </tr>
+                                `).join('')}
+                                <tr class="bg-slate-50 font-black">
+                                    <td colspan="2" class="p-3 border text-right uppercase tracking-widest text-slate-600">Weighted Phase Average</td>
+                                    <td class="p-3 border text-right text-blue-600 text-lg">${avg}%</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                     
-                    <div class="space-y-6 text-sm text-justify text-slate-700 leading-relaxed mt-8">
+                    <div class="pt-4">
+                         <div class="no-break"><h5 class="text-[9px] font-black uppercase text-slate-400 mb-2 pl-1">II. Detailed Assessment Logs</h5></div>
+                         ${allDetailsHTML}
+                    </div>
+
+                    <div class="space-y-4 text-[11px] text-justify text-slate-700 leading-relaxed mt-4">
                          <div class="no-break"><p>Based on these consistent performance benchmarks, we request the immediate formalization of this promotion, effective as of <strong>${effectiveDateStr}</strong>.</p></div>
                          ${apologyHTML}
                     </div>
 
-                    <div class="no-break pt-24 grid grid-cols-1 md:grid-cols-2 gap-y-24 gap-x-12 px-6 font-black text-[8px] text-center uppercase tracking-[0.2em] text-black">
+                    <div class="no-break pt-16 grid grid-cols-1 md:grid-cols-2 gap-y-16 gap-x-12 px-6 font-black text-[7px] text-center uppercase tracking-[0.2em] text-black">
                         <div class="border-t-2 border-black pt-4">Live Operator Trainee</div>
                         <div class="border-t-2 border-black pt-4">Live Operator Trainer</div>
                         <div class="border-t-2 border-black pt-4">Live Operator Lead</div>
@@ -903,7 +988,7 @@
                 image: { type: 'jpeg', quality: 0.98 }, 
                 html2canvas: { scale: 2, useCORS: true, letterRendering: true, scrollY: 0 }, 
                 jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
-                pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+                pagebreak: { mode: ['css', 'legacy'] } 
             };
             showNotification("Processing formal export...");
             try { await html2pdf().set(opt).from(el).save(); } catch (e) { showNotification("Export failed."); }
@@ -981,7 +1066,7 @@
 
         // Firebase Configuration
         const userProvidedConfig = {
-            apiKey: "AIzaSyAKUM3Mo91_Gm-Rj5x7EgrN43HWUpxYprU",
+            apiKey: "",
             authDomain: "traineetracker-91496.firebaseapp.com",
             projectId: "traineetracker-91496",
             storageBucket: "traineetracker-91496.firebasestorage.app",
