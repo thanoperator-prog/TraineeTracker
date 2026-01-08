@@ -690,7 +690,19 @@
                         const existingScore = existingData[q.q] || 0;
                         
                         const qDiv = document.createElement('div'); qDiv.className = "p-4 md:p-5 rounded-2xl bg-white border border-slate-100 shadow-sm space-y-4 ml-0 md:ml-2";
-                        qDiv.innerHTML = `<p class="text-sm font-semibold text-slate-700">${q.q}</p><div class="flex flex-col md:flex-row gap-4"><div class="flex-1 bg-blue-50/50 p-3 rounded-xl border border-blue-100/50"><p class="text-[10px] text-blue-800 font-medium leading-relaxed break-words">${q.ans}</p></div><div class="w-full md:w-48 flex flex-col justify-center items-center bg-slate-50 rounded-xl p-3 border border-slate-100"><p class="text-[10px] font-black text-slate-400 uppercase mb-2">Grade (1-5)</p><div class="flex gap-2">${[1,2,3,4,5].map(v => `<button type="button" onclick="selectScore('${qId}', ${v})" id="${qId}_btn_${v}" class="score-btn w-8 h-8 rounded-lg border border-slate-200 bg-white text-xs font-black transition-all hover:bg-blue-50 active:scale-90 ${existingScore === v ? 'border-blue-600 bg-blue-600 text-white shadow-md' : ''}">${v}</button>`).join('')}</div><input type="hidden" id="${qId}" class="eval-input" value="${existingScore}"></div></div>`;
+                        
+                        // Fix: Conditionally apply classes to prevent 'bg-white' from overriding selected state
+                        const buttonsHtml = [1,2,3,4,5].map(v => {
+                            const isSelected = existingScore === v;
+                            const baseClass = "score-btn w-8 h-8 rounded-lg border text-xs font-black transition-all active:scale-90";
+                            const stateClass = isSelected 
+                                ? "border-blue-600 bg-blue-600 text-white shadow-md" 
+                                : "border-slate-200 bg-white hover:bg-blue-50";
+                            
+                            return `<button type="button" onclick="selectScore('${qId}', ${v})" id="${qId}_btn_${v}" class="${baseClass} ${stateClass}">${v}</button>`;
+                        }).join('');
+
+                        qDiv.innerHTML = `<p class="text-sm font-semibold text-slate-700">${q.q}</p><div class="flex flex-col md:flex-row gap-4"><div class="flex-1 bg-blue-50/50 p-3 rounded-xl border border-blue-100/50"><p class="text-[10px] text-blue-800 font-medium leading-relaxed break-words">${q.ans}</p></div><div class="w-full md:w-48 flex flex-col justify-center items-center bg-slate-50 rounded-xl p-3 border border-slate-100"><p class="text-[10px] font-black text-slate-400 uppercase mb-2">Grade (1-5)</p><div class="flex gap-2">${buttonsHtml}</div><input type="hidden" id="${qId}" class="eval-input" value="${existingScore}"></div></div>`;
                         sDiv.appendChild(qDiv);
                     });
                     cDiv.appendChild(sDiv);
@@ -819,13 +831,42 @@
         window.viewReport = function(id) {
             const emp = window.employees.find(e => e.id == id);
             
-            // Dates Logic
+            // --- UPDATED DATES LOGIC (Computed) ---
             const probAch = emp.achievements.find(a => a.type === 'Probationary');
             const regAch = emp.achievements.find(a => a.type === 'Regular');
+
+            const parseDateLocal = (dateStr) => {
+                const parts = dateStr.split('-');
+                return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+            };
+
+            const formatDate = (dateObj) => {
+                return dateObj.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+            };
+
+            const addMonthsToHireDate = (months) => {
+                const d = parseDateLocal(emp.hireDate);
+                d.setMonth(d.getMonth() + months);
+                return formatDate(d);
+            };
             
-            const dateHired = emp.hireDate;
-            const dateProb = probAch ? probAch.date : 'Pending';
-            const dateReg = regAch ? regAch.date : 'Pending';
+            const dateHired = formatDate(parseDateLocal(emp.hireDate));
+            
+            let dateProb = 'Pending';
+            if (probAch) {
+                // Duration of Trainee phase = number of evaluations in the 'Promoted to Probationary' achievement
+                const traineeDuration = probAch.evaluations.length;
+                dateProb = addMonthsToHireDate(traineeDuration);
+            }
+
+            let dateReg = 'Pending';
+            if (regAch) {
+                // Total duration = Trainee Phase + Probationary Phase
+                const traineeDuration = probAch ? probAch.evaluations.length : 0; 
+                const probDuration = regAch.evaluations.length;
+                dateReg = addMonthsToHireDate(traineeDuration + probDuration);
+            }
+            // --------------------------------------
 
             // Action Buttons Logic (Moved from Dashboard Card)
             const phaseEvals = emp.evaluations.slice(emp.phaseStartIdx || 0);
@@ -1262,13 +1303,13 @@
 
         // Firebase Configuration
         const userProvidedConfig = {
-          	 apiKey: "AIzaSyAKUM3Mo91_Gm-Rj5x7EgrN43HWUpxYprU",
-  authDomain: "traineetracker-91496.firebaseapp.com",
-  projectId: "traineetracker-91496",
-  storageBucket: "traineetracker-91496.firebasestorage.app",
-  messagingSenderId: "930372715628",
-  appId: "1:930372715628:web:e76cbce93faf492b494449",
-  measurementId: "G-YXB1YTESWG"
+          	 apiKey: "",
+ 		 authDomain: "traineetracker-91496.firebaseapp.com",
+  		 projectId: "traineetracker-91496",
+ 		 storageBucket: "traineetracker-91496.firebasestorage.app",
+ 		 messagingSenderId: "930372715628",
+ 		 appId: "1:930372715628:web:e76cbce93faf492b494449",
+ 		 measurementId: "G-YXB1YTESWG"
         };
 
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : userProvidedConfig;
