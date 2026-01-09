@@ -1,0 +1,1449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>M-Commerce Corporation | Trainee Tracking System</title>
+    
+    <!-- PWA Metadata -->
+    <meta name="theme-color" content="#2563eb">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="M-Corp Tracker">
+    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3135/3135715.png">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&display=swap');
+        
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
+        .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border: 1px solid rgba(226, 232, 240, 0.8); }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        
+        .printable-report { 
+            background: white; 
+            width: 100%;
+            max-width: 8.27in; 
+            margin: 0 auto;
+            color: #1e293b;
+            padding: 0.5in;
+        }
+
+        .no-break { page-break-inside: avoid; break-inside: avoid; }
+        .page-break { page-break-before: always; }
+        
+        /* Prevent table rows from being cut */
+        tr { page-break-inside: avoid; break-inside: avoid; }
+
+        .certificate-border {
+            border: 15px solid transparent;
+            border-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0H100V100H0V0ZM5 5V95H95V5H5Z' fill='%23B48C36'/%3E%3Cpath d='M10 10V90H90V10H10ZM12 12H88V88H12V12Z' fill='%23D4AF37'/%3E%3C/svg%3E") 30 stretch;
+            background: #fff;
+        }
+
+        .cert-title { font-family: 'Playfair Display', serif; color: #1e293b; }
+        .cert-gold-text { color: #B48C36; }
+        .nav-link-active { color: #2563eb; border-bottom: 2px solid #2563eb; }
+
+        /* Mobile specific adjustments */
+        @media (max-width: 640px) {
+            .printable-report { padding: 0.25in; font-size: 0.8em; }
+            .glass-card { border-radius: 1rem; }
+        }
+
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white; }
+            main { padding: 0 !important; margin: 0 !important; }
+            .printable-report { box-shadow: none; border: none; width: 100%; max-width: 100%; padding: 0.4in; }
+        }
+    </style>
+</head>
+<body class="min-h-screen text-slate-800 pb-safe">
+
+    <!-- Navigation -->
+    <nav class="no-print sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200 px-4 md:px-6 py-3 flex justify-between items-center shadow-sm">
+        <div class="flex items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-blue-600 p-2 rounded-lg text-white shadow-lg shadow-blue-200"><i data-lucide="monitor"></i></div>
+                <div>
+                    <h1 class="font-bold text-lg md:text-xl tracking-tight text-slate-900 leading-tight">M-Commerce</h1>
+                    <p class="text-[9px] md:text-[10px] text-slate-400 uppercase tracking-widest font-bold hidden sm:block">Operation Department</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Desktop Nav -->
+        <div class="hidden md:flex gap-6 h-full items-center">
+            <button onclick="switchView('dashboard')" id="nav-dashboard" class="text-sm font-semibold py-1 transition-all border-b-2 border-transparent hover:text-blue-600">Dashboard</button>
+            <button onclick="switchView('trainee-list')" id="nav-trainee-list" class="text-sm font-semibold py-1 transition-all border-b-2 border-transparent hover:text-blue-600">Trainee List</button>
+            <button onclick="switchView('settings')" id="nav-settings" class="text-sm font-semibold py-1 transition-all border-b-2 border-transparent hover:text-blue-600">Settings</button>
+        </div>
+
+        <!-- Mobile Menu Button -->
+        <button onclick="toggleMobileMenu()" class="md:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-lg">
+            <i data-lucide="menu"></i>
+        </button>
+    </nav>
+
+    <!-- Mobile Nav Menu (Hidden by default) -->
+    <div id="mobile-menu" class="fixed inset-x-0 top-[60px] bg-white border-b border-slate-100 shadow-xl z-40 hidden md:hidden flex-col p-4 space-y-2 no-print">
+        <button onclick="switchView('dashboard')" class="w-full text-left p-3 rounded-xl font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-3"><i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard</button>
+        <button onclick="switchView('trainee-list')" class="w-full text-left p-3 rounded-xl font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-3"><i data-lucide="users" class="w-4 h-4"></i> Trainee List</button>
+        <button onclick="switchView('settings')" class="w-full text-left p-3 rounded-xl font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-3"><i data-lucide="settings" class="w-4 h-4"></i> Settings</button>
+    </div>
+
+    <main class="w-full max-w-7xl mx-auto p-4 md:p-6 pb-24 md:pb-20">
+        <!-- Dashboard View -->
+        <div id="dashboard-view" class="space-y-6 md:space-y-8">
+            <div>
+                <h2 class="text-2xl md:text-3xl font-black text-slate-900">System Dashboard</h2>
+                <p class="text-sm md:text-base text-slate-500">Real-time cloud monitoring of operational performance.</p>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
+                <div class="glass-card p-4 md:p-6 rounded-2xl md:rounded-3xl shadow-sm border-l-4 border-blue-500">
+                    <p class="text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Total</p>
+                    <h3 class="text-2xl md:text-3xl font-black text-slate-900" id="dash-total">0</h3>
+                </div>
+                <div class="glass-card p-4 md:p-6 rounded-2xl md:rounded-3xl shadow-sm border-l-4 border-purple-500">
+                    <p class="text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Active</p>
+                    <h3 class="text-2xl md:text-3xl font-black text-slate-900" id="dash-active">0</h3>
+                </div>
+                <div class="glass-card p-4 md:p-6 rounded-2xl md:rounded-3xl shadow-sm border-l-4 border-emerald-500">
+                    <p class="text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Regular</p>
+                    <h3 class="text-2xl md:text-3xl font-black text-slate-900" id="dash-regular">0</h3>
+                </div>
+                <div class="glass-card p-4 md:p-6 rounded-2xl md:rounded-3xl shadow-sm border-l-4 border-rose-500">
+                    <p class="text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Overdue</p>
+                    <h3 class="text-2xl md:text-3xl font-black text-rose-600" id="dash-overdue">0</h3>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+                <div class="lg:col-span-1 space-y-4">
+                    <div class="flex items-center gap-2 mb-2">
+                        <i data-lucide="activity" class="text-blue-500 w-5 h-5"></i>
+                        <h4 class="font-black text-slate-900 uppercase text-sm tracking-wider">Cloud Activity Log</h4>
+                    </div>
+                    <div id="activity-feed" class="space-y-3 max-h-[400px] md:max-h-[600px] overflow-y-auto pr-2"></div>
+                </div>
+
+                <div class="lg:col-span-2 space-y-8">
+                    <div class="space-y-4">
+                        <div class="flex items-center gap-2 mb-2">
+                            <i data-lucide="alert-triangle" class="text-rose-500 w-5 h-5"></i>
+                            <h4 class="font-black text-slate-900 uppercase text-sm tracking-wider">Overdue Evaluations</h4>
+                        </div>
+                        <div id="overdue-list" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="flex items-center gap-2 mb-2">
+                            <i data-lucide="calendar" class="text-emerald-500 w-5 h-5"></i>
+                            <h4 class="font-black text-slate-900 uppercase text-sm tracking-wider">Evaluation Queue</h4>
+                        </div>
+                        <div id="upcoming-list" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Trainee List View -->
+        <div id="trainee-list-view" class="hidden space-y-8 md:space-y-12">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h2 class="text-2xl md:text-3xl font-black text-slate-900">Personnel Records</h2>
+                    <p class="text-sm md:text-base text-slate-500">Cloud-synced employee data management.</p>
+                </div>
+                <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                    <div class="relative w-full sm:w-72">
+                        <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4"></i>
+                        <input type="text" id="trainee-search" oninput="renderDashboard()" placeholder="Search..." class="w-full pl-10 pr-4 py-3 md:py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm transition-all shadow-sm">
+                    </div>
+                    <button onclick="showAddTraineeModal()" class="bg-slate-900 text-white px-6 py-3 md:py-2 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 hover:bg-black transition-all shadow-lg active:scale-95">
+                        <i data-lucide="user-plus" class="w-4 h-4"></i> Add Trainee
+                    </button>
+                </div>
+            </div>
+
+            <div id="sections-container" class="space-y-8 md:space-y-12">
+                <section id="sec-trainee">
+                    <div class="border-l-4 border-blue-500 pl-4 mb-4 md:mb-6"><h3 class="font-black text-slate-900 uppercase tracking-widest text-xs">Active Trainees</h3></div>
+                    <div id="grid-trainee" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"></div>
+                    <div id="empty-trainee" class="hidden text-center py-10 glass-card rounded-3xl border-dashed border-2"><p class="text-slate-400 italic">No records found.</p></div>
+                </section>
+                <section id="sec-probationary">
+                    <div class="border-l-4 border-purple-500 pl-4 mb-4 md:mb-6"><h3 class="font-black text-slate-900 uppercase tracking-widest text-xs">Probationary Period</h3></div>
+                    <div id="grid-probationary" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"></div>
+                    <div id="empty-probationary" class="hidden text-center py-10 glass-card rounded-3xl border-dashed border-2"><p class="text-slate-400 italic">No records found.</p></div>
+                </section>
+                <section id="sec-regular">
+                    <div class="border-l-4 border-emerald-500 pl-4 mb-4 md:mb-6"><h3 class="font-black text-slate-900 uppercase tracking-widest text-xs">Regular Staff</h3></div>
+                    <div id="grid-regular" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"></div>
+                    <div id="empty-regular" class="hidden text-center py-10 glass-card rounded-3xl border-dashed border-2"><p class="text-slate-400 italic">No records found.</p></div>
+                </section>
+                <section id="sec-terminated">
+                    <div class="border-l-4 border-rose-500 pl-4 mb-4 md:mb-6"><h3 class="font-black text-slate-900 uppercase tracking-widest text-xs text-rose-600">Terminated Records</h3></div>
+                    <div id="grid-terminated" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 opacity-75"></div>
+                    <div id="empty-terminated" class="hidden text-center py-10 glass-card rounded-3xl border-dashed border-2"><p class="text-slate-400 italic">No records found.</p></div>
+                </section>
+            </div>
+        </div>
+
+        <!-- Settings View -->
+        <div id="settings-view" class="hidden space-y-8 max-w-2xl mx-auto">
+            <div>
+                <h2 class="text-2xl md:text-3xl font-black text-slate-900">System Settings</h2>
+                <p class="text-sm md:text-base text-slate-500">Manage cloud connectivity and data integrity.</p>
+            </div>
+
+            <div class="grid grid-cols-1 gap-6">
+                <div class="glass-card p-6 md:p-8 rounded-3xl space-y-6">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2 bg-blue-100 text-blue-600 rounded-lg"><i data-lucide="database"></i></div>
+                        <h3 class="text-xl font-bold">Cloud Persistence</h3>
+                    </div>
+                    <p class="text-sm text-slate-500 leading-relaxed">Your records are stored in Firebase Firestore. You can still export a manual backup for local archiving.</p>
+                    
+                    <div class="flex flex-col sm:flex-row gap-4 pt-2">
+                        <button onclick="backupData()" class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-blue-700 transition-all shadow-md active:scale-95">
+                            <i data-lucide="download"></i> Backup Data
+                        </button>
+                        <div class="flex-1 relative">
+                            <input type="file" id="restore-input" onchange="restoreData(event)" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                            <button class="w-full bg-slate-100 text-slate-700 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-slate-200 transition-all border border-slate-200 shadow-sm active:scale-95">
+                                <i data-lucide="upload"></i> Restore
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-card p-6 md:p-8 rounded-3xl border-2 border-rose-50 space-y-6">
+                    <div class="flex items-center gap-3 text-rose-600">
+                        <div class="p-2 bg-rose-100 rounded-lg"><i data-lucide="alert-octagon"></i></div>
+                        <h3 class="text-xl font-bold">Factory Reset</h3>
+                    </div>
+                    <p class="text-sm text-slate-500 leading-relaxed">Permanently erase all personnel records and activity logs from the Firebase cloud database.</p>
+                    <button onclick="showFactoryResetModal()" class="w-full sm:w-auto bg-rose-50 text-rose-600 py-3 px-8 rounded-xl font-bold border-2 border-rose-100 hover:bg-rose-600 hover:text-white transition-all shadow-sm active:scale-95">
+                        Wipe Database Records
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detail Views -->
+        <div id="eval-view" class="hidden max-w-4xl mx-auto space-y-6">
+            <div class="flex items-center justify-between gap-4 sticky top-[68px] z-30 bg-slate-50/90 backdrop-blur-md p-2 rounded-2xl shadow-sm border border-slate-200">
+                 <div class="flex items-center gap-4">
+                    <button onclick="switchView('trainee-list')" class="p-2 hover:bg-slate-100 rounded-full transition-colors"><i data-lucide="arrow-left"></i></button>
+                    <h2 class="text-lg md:text-xl font-bold" id="eval-title">Evaluation</h2>
+                 </div>
+                 <div class="px-4 py-2 bg-slate-900 text-white rounded-xl font-black font-mono text-lg shadow-lg" id="live-score-display">0.0%</div>
+            </div>
+            
+            <div class="glass-card p-6 md:p-8 rounded-3xl shadow-lg space-y-8" id="eval-form-container"></div>
+        </div>
+
+        <div id="report-view" class="hidden space-y-8">
+            <div class="flex items-center gap-4 no-print">
+                <button onclick="switchView('trainee-list')" class="p-2 hover:bg-slate-100 rounded-full transition-colors"><i data-lucide="arrow-left"></i></button>
+                <h2 class="text-xl md:text-2xl font-bold text-slate-900">Performance Dossier</h2>
+            </div>
+            <div id="report-content" class="overflow-x-auto"></div>
+        </div>
+
+        <div id="eval-detail-view" class="hidden space-y-8">
+            <div class="flex items-center justify-between no-print gap-4">
+                <button id="back-to-report-btn" class="p-2 hover:bg-slate-100 rounded-full transition-colors"><i data-lucide="arrow-left"></i></button>
+                <button id="download-eval-pdf" class="bg-slate-900 text-white px-4 md:px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg text-sm active:scale-95"><i data-lucide="download"></i> <span class="hidden sm:inline">Download</span> Report</button>
+            </div>
+            <div id="eval-detail-content" class="printable-report bg-white rounded-lg shadow-sm"></div>
+        </div>
+
+        <div id="endorsement-view" class="hidden space-y-8">
+            <div class="flex items-center justify-between no-print gap-4">
+                <button id="back-to-report-from-endorse" class="p-2 hover:bg-slate-100 rounded-full transition-colors"><i data-lucide="arrow-left"></i></button>
+                <button id="download-endorse-pdf" class="bg-blue-600 text-white px-4 md:px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg text-sm active:scale-95"><i data-lucide="download"></i> <span class="hidden sm:inline">Download</span> Endorsement</button>
+            </div>
+            <div id="endorsement-content" class="printable-report bg-white rounded-lg shadow-sm"></div>
+        </div>
+
+        <div id="termination-view" class="hidden space-y-8">
+            <div class="flex items-center justify-between no-print gap-4">
+                <button id="back-to-report-from-term" class="p-2 hover:bg-slate-100 rounded-full transition-colors"><i data-lucide="arrow-left"></i></button>
+                <button id="download-term-pdf" class="bg-rose-600 text-white px-4 md:px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg text-sm active:scale-95"><i data-lucide="download"></i> <span class="hidden sm:inline">Download</span> Notice</button>
+            </div>
+            <div id="termination-content" class="printable-report bg-white rounded-lg shadow-sm"></div>
+        </div>
+    </main>
+
+    <!-- Modals -->
+    <div id="modal-backdrop" class="fixed inset-0 bg-slate-900/60 hidden z-[60] backdrop-blur-sm flex items-center justify-center p-4">
+        
+        <!-- Confirmation Modal -->
+        <div id="confirm-modal" class="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-6 md:p-8 hidden text-center mx-4">
+            <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4"><i data-lucide="help-circle" class="w-8 h-8"></i></div>
+            <h3 class="text-xl font-bold mb-2" id="confirm-modal-title">Confirm</h3>
+            <p class="text-sm text-slate-500 mb-8 px-2" id="confirm-modal-message">Are you sure?</p>
+            <div class="flex gap-3">
+                <button onclick="closeModal()" class="flex-1 py-3 text-slate-500 font-bold hover:bg-slate-50 rounded-xl transition-all active:scale-95">Cancel</button>
+                <button id="generic-confirm-btn" class="flex-1 py-3 bg-blue-600 text-white font-bold rounded-xl shadow-lg transition-all active:scale-95">Proceed</button>
+            </div>
+        </div>
+
+        <!-- Security Reset Modal -->
+        <div id="factory-reset-modal" class="bg-white w-full max-w-md rounded-3xl shadow-2xl p-6 md:p-8 hidden text-center border-4 border-rose-100 mx-4">
+            <div class="w-16 h-16 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-4"><i data-lucide="alert-octagon" class="w-8 h-8"></i></div>
+            <h3 class="text-xl font-bold mb-2">Security Verification</h3>
+            <p class="text-sm text-slate-500 mb-6">Erasing all database records. Type <span class="font-black text-rose-600">RESET</span> to confirm.</p>
+            <input type="text" id="reset-verify-input" placeholder="..." class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-rose-500 text-center font-bold mb-6">
+            <div class="flex gap-3">
+                <button onclick="closeModal()" class="flex-1 py-3 text-slate-500 font-bold hover:bg-slate-50 rounded-xl transition-all active:scale-95">Cancel</button>
+                <button id="confirm-reset-btn" class="flex-1 py-3 bg-rose-600 text-white font-bold rounded-xl shadow-lg transition-all active:scale-95">Execute Reset</button>
+            </div>
+        </div>
+
+        <!-- Add Personnel Modal -->
+        <div id="add-trainee-modal" class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 md:p-8 hidden mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold" id="trainee-modal-title">Personnel Entry</h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 p-2"><i data-lucide="x"></i></button>
+            </div>
+            <form id="add-trainee-form" class="space-y-4">
+                <input type="hidden" name="firebaseId">
+                <input type="hidden" name="id">
+                <div><label class="block text-sm font-semibold mb-1 text-slate-700">Full Name</label><input type="text" name="name" required class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500"></div>
+                <div><label class="block text-sm font-semibold mb-1 text-slate-700">Hire Date</label><input type="date" name="hireDate" required class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500"></div>
+                <button type="submit" class="w-full bg-slate-900 text-white py-3.5 rounded-xl font-bold hover:bg-black transition-all shadow-lg mt-4 active:scale-95">Save to Database</button>
+            </form>
+        </div>
+
+        <!-- Termination Modal -->
+        <div id="terminate-modal" class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 md:p-8 hidden text-center mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="w-16 h-16 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-4"><i data-lucide="user-x" class="w-8 h-8"></i></div>
+            <h3 class="text-xl font-bold mb-2">Grounds for Termination</h3>
+            <textarea id="terminate-reason" class="w-full p-4 border border-slate-200 rounded-xl h-32 text-sm focus:ring-2 focus:ring-rose-500 outline-none mb-6" placeholder="Document specific administrative grounds..."></textarea>
+            <div class="flex gap-2">
+                <button onclick="closeModal()" class="flex-1 py-3 text-slate-500 font-bold hover:bg-slate-50 rounded-xl transition-all active:scale-95">Cancel</button>
+                <button id="confirm-terminate-btn" class="flex-1 py-3 bg-rose-600 text-white font-bold rounded-xl shadow-lg transition-all active:scale-95">Finalize</button>
+            </div>
+        </div>
+
+        <!-- Celebration Modal -->
+        <div id="congrats-modal" class="bg-white w-full max-w-4xl rounded-[30px] md:rounded-[40px] shadow-2xl p-0 overflow-hidden hidden mx-4 max-h-[90vh] overflow-y-auto">
+            <div id="cert-pdf-wrapper" class="p-[0.1in] bg-white">
+                <div id="cert-container" class="certificate-border p-6 md:p-12 text-center space-y-6 md:space-y-10">
+                    <div class="space-y-2">
+                        <h4 class="text-blue-900 font-black uppercase tracking-[0.3em] text-[10px] md:text-xs">M-Commerce Corporation</h4>
+                        <p class="text-[8px] md:text-[10px] text-slate-400 font-bold uppercase tracking-widest">Operation Department</p>
+                    </div>
+                    <div class="space-y-4">
+                        <h2 class="cert-title text-3xl md:text-6xl font-black text-slate-900">Certificate of Promotion</h2>
+                        <p class="text-slate-500 font-medium italic text-sm md:text-base">This honor is officially awarded to</p>
+                    </div>
+                    <div class="space-y-4">
+                        <h3 class="text-3xl md:text-5xl font-black cert-gold-text underline underline-offset-8 decoration-slate-200" id="cert-name"></h3>
+                        <p class="text-slate-500 text-sm md:text-lg">For demonstrating exceptional technical mastery and professionalism,</p>
+                        <p class="text-slate-500 text-sm md:text-lg">qualifying for advancement to the role of</p>
+                        <p class="text-xl md:text-3xl font-black text-blue-900 uppercase tracking-tighter" id="cert-status"></p>
+                    </div>
+                    <div class="pt-10 md:pt-20 grid grid-cols-3 gap-4 md:gap-10">
+                        <div class="border-t border-slate-900 pt-3"><p class="text-[7px] md:text-[9px] font-black uppercase text-slate-400">Date of Award</p><p class="text-[9px] md:text-xs font-bold text-slate-900" id="cert-date"></p></div>
+                        <div class="flex justify-center items-center opacity-30"><i data-lucide="award" class="text-blue-900 w-8 h-8 md:w-12 md:h-12"></i></div>
+                        <div class="border-t border-slate-900 pt-3"><p class="text-[7px] md:text-[9px] font-black uppercase text-slate-400">Authorization</p><p class="text-[9px] md:text-xs font-bold text-slate-900">Live Operator Trainer</p></div>
+                    </div>
+                </div>
+            </div>
+            <div class="p-6 md:p-8 bg-slate-50 flex flex-col md:flex-row justify-end gap-3 md:gap-4">
+                <button onclick="closeModal()" class="w-full md:w-auto px-8 py-3 text-slate-500 font-bold hover:bg-white rounded-xl transition-all active:scale-95">Close</button>
+                <button id="download-cert-pdf" class="w-full md:w-auto px-8 py-3 bg-blue-900 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-xl active:scale-95"><i data-lucide="download"></i> Download Certificate</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, addDoc, updateDoc, deleteDoc, collection, query, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Shared Global State
+        window.employees = [];
+        window.activityLog = [];
+        let currentEvalEmployeeId = null;
+        let currentEditingEvalId = null; // Track if we are editing
+
+        // Protocols handling
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                if (window.location.protocol.startsWith('http')) {
+                    navigator.serviceWorker.register('sw.js')
+                        .then(reg => console.log('SW Active'))
+                        .catch(err => console.warn('SW: Passive mode.'));
+                }
+            });
+        }
+
+        // --- Core UI Logic (Attached to Window for Global Access) ---
+        window.toggleMobileMenu = function() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+            menu.classList.toggle('flex');
+        }
+
+        window.showConfirmModal = function(title, message, onConfirm) {
+            document.getElementById('confirm-modal-title').innerText = title;
+            document.getElementById('confirm-modal-message').innerText = message;
+            document.getElementById('modal-backdrop').classList.remove('hidden');
+            document.getElementById('confirm-modal').classList.remove('hidden');
+            document.getElementById('generic-confirm-btn').onclick = () => { onConfirm(); closeModal(); };
+            lucide.createIcons();
+        }
+
+        window.showFactoryResetModal = function() {
+            document.getElementById('reset-verify-input').value = '';
+            document.getElementById('modal-backdrop').classList.remove('hidden');
+            document.getElementById('factory-reset-modal').classList.remove('hidden');
+            document.getElementById('confirm-reset-btn').onclick = () => {
+                const keyword = document.getElementById('reset-verify-input').value.trim();
+                if (keyword === 'RESET') {
+                    window.factoryResetDB().then(() => { showNotification("Cloud System Reset."); closeModal(); });
+                } else {
+                    showNotification("Invalid Security Key.");
+                }
+            };
+            lucide.createIcons();
+        }
+
+        window.switchView = function(view) {
+            document.querySelectorAll('main > div').forEach(el => el.classList.add('hidden'));
+            const target = document.getElementById(`${view}-view`);
+            if (target) target.classList.remove('hidden');
+            
+            // Highlight Nav Desktop
+            document.querySelectorAll('nav button[id^="nav-"]').forEach(btn => btn.classList.remove('nav-link-active'));
+            const navBtn = document.getElementById(`nav-${view}`);
+            if (navBtn) navBtn.classList.add('nav-link-active');
+            
+            // Close mobile menu if open
+            document.getElementById('mobile-menu').classList.add('hidden');
+            document.getElementById('mobile-menu').classList.remove('flex');
+
+            renderDashboard(); lucide.createIcons(); window.scrollTo(0,0);
+        }
+
+        window.closeModal = function() {
+            document.getElementById('modal-backdrop').classList.add('hidden');
+            document.querySelectorAll('#modal-backdrop > div').forEach(el => el.classList.add('hidden'));
+        }
+
+        window.showAddTraineeModal = function() {
+            document.getElementById('trainee-modal-title').innerText = 'Personnel Registration';
+            const form = document.getElementById('add-trainee-form');
+            form.reset();
+            form.querySelector('input[name="firebaseId"]').value = '';
+            form.querySelector('input[name="id"]').value = '';
+            document.getElementById('modal-backdrop').classList.remove('hidden');
+            document.getElementById('add-trainee-modal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        window.showEditModal = function(id) {
+            const emp = window.employees.find(e => e.id == id);
+            if (!emp) return;
+            document.getElementById('trainee-modal-title').innerText = 'Update Personnel File';
+            const form = document.getElementById('add-trainee-form');
+            form.querySelector('input[name="firebaseId"]').value = emp.firebaseId || '';
+            form.querySelector('input[name="id"]').value = emp.id;
+            form.querySelector('input[name="name"]').value = emp.name;
+            form.querySelector('input[name="hireDate"]').value = emp.hireDate;
+            document.getElementById('modal-backdrop').classList.remove('hidden');
+            document.getElementById('add-trainee-modal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        window.confirmDelete = function(id) {
+            const emp = window.employees.find(e => e.id == id);
+            if (!emp) return;
+            showConfirmModal("Delete Dossier", `Permanently erase ${emp.name} from the cloud database?`, () => {
+                window.deleteEmployee(emp.firebaseId).then(() => {
+                    window.logActivity('delete', 'Record deleted', emp.name);
+                });
+            });
+        }
+
+        window.showCongrats = function(emp) {
+            document.getElementById('cert-name').innerText = emp.name;
+            document.getElementById('cert-status').innerText = emp.status;
+            document.getElementById('cert-date').innerText = emp.achievements[emp.achievements.length - 1].date;
+            document.getElementById('modal-backdrop').classList.remove('hidden');
+            document.getElementById('congrats-modal').classList.remove('hidden');
+            document.getElementById('download-cert-pdf').onclick = () => downloadPDF('cert-pdf-wrapper', `${emp.name}_Certificate.pdf`);
+            lucide.createIcons();
+        }
+
+        window.calculateNextDate = function(hireDate, monthsToAddAdjusted) {
+             if (!hireDate) return new Date().toLocaleDateString();
+             const parts = hireDate.split('-');
+             const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+             d.setMonth(d.getMonth() + monthsToAddAdjusted + 1);
+             return d.toLocaleDateString();
+        }
+
+        window.renderDashboard = function() {
+            const today = new Date(); today.setHours(0,0,0,0);
+            const searchInput = document.getElementById('trainee-search');
+            const queryText = searchInput ? searchInput.value.toLowerCase() : '';
+            const employees = window.employees || [];
+
+            let overdueCount = 0, overdueItems = [], upcomingItems = [];
+            const filtered = employees.filter(e => e.name.toLowerCase().includes(queryText));
+
+            employees.forEach(emp => {
+                if (emp.status === 'Regular' || emp.status === 'Terminated') return;
+                const nextStr = calculateNextDate(emp.hireDate, emp.evaluations.length);
+                const nextDate = new Date(nextStr);
+                if (nextDate < today) {
+                    overdueCount++;
+                    overdueItems.push({ id: emp.id, name: emp.name, date: nextStr, days: Math.ceil(Math.abs(today - nextDate) / 86400000), status: emp.status });
+                } else {
+                    upcomingItems.push({ id: emp.id, name: emp.name, date: nextStr, status: emp.status });
+                }
+            });
+
+            const stats = { 'dash-total': employees.length, 'dash-active': employees.filter(e => e.status !== 'Terminated' && e.status !== 'Regular').length, 'dash-regular': employees.filter(e => e.status === 'Regular').length, 'dash-overdue': overdueCount };
+            for (const [id, val] of Object.entries(stats)) { const el = document.getElementById(id); if (el) el.innerText = val; }
+
+            const ovList = document.getElementById('overdue-list');
+            if (ovList) ovList.innerHTML = overdueItems.length ? overdueItems.map(item => `<div onclick="viewReport(${item.id})" class="cursor-pointer hover:bg-slate-50 transition-colors glass-card p-4 rounded-2xl border-l-4 border-l-rose-500 flex justify-between items-center"><div><p class="font-black text-sm text-slate-900 truncate max-w-[120px]">${item.name}</p><p class="text-[9px] font-bold text-slate-400 uppercase">${item.status}</p></div><div class="text-right"><p class="text-[9px] font-black text-rose-600 uppercase">Late ${item.days}d</p><p class="text-[10px] font-bold text-slate-500">${item.date}</p></div></div>`).join('') : '<div class="col-span-full py-10 glass-card rounded-3xl border-dashed border-2 text-center text-xs text-slate-400 uppercase tracking-widest">No overdue assessments.</div>';
+
+            const upList = document.getElementById('upcoming-list');
+            if (upList) upList.innerHTML = upcomingItems.length ? upcomingItems.sort((a,b) => new Date(a.date) - new Date(b.date)).slice(0,4).map(item => `<div onclick="viewReport(${item.id})" class="cursor-pointer hover:bg-slate-50 transition-colors glass-card p-4 rounded-2xl border-l-4 border-l-blue-500 flex justify-between items-center"><div><p class="font-black text-sm text-slate-900 truncate max-w-[120px]">${item.name}</p><p class="text-[9px] font-bold text-slate-400 uppercase">${item.status}</p></div><div class="text-right"><p class="text-[9px] font-black text-blue-600 uppercase">Scheduled</p><p class="text-[10px] font-bold text-slate-500">${item.date}</p></div></div>`).join('') : '<div class="col-span-full py-10 glass-card rounded-3xl border-dashed border-2 text-center text-xs text-slate-400">Empty queue.</div>';
+
+            const actFeed = document.getElementById('activity-feed');
+            if (actFeed) actFeed.innerHTML = window.activityLog.slice(0,15).map(l => `<div class="p-3 bg-white border rounded-2xl flex items-start gap-3"><div class="flex-grow"><p class="text-[10px] font-black text-slate-800 uppercase truncate max-w-[150px]">${l.empName}</p><p class="text-[9px] text-slate-500 truncate max-w-[180px]">${l.message}</p></div><p class="text-[8px] text-slate-400 font-bold whitespace-nowrap">${l.date.split(',')[0]}</p></div>`).join('') || '<p class="text-xs italic text-slate-400">No logs found.</p>';
+
+            const gridIds = { 'Trainee': 'grid-trainee', 'Probationary': 'grid-probationary', 'Regular': 'grid-regular', 'Terminated': 'grid-terminated' };
+            Object.values(gridIds).forEach(id => { const el = document.getElementById(id); if(el) el.innerHTML = ''; });
+            
+            filtered.forEach(emp => {
+                const grid = document.getElementById(gridIds[emp.status]);
+                if(!grid) return;
+                const phaseEvals = emp.evaluations.slice(emp.phaseStartIdx || 0);
+                const isCycleComplete = phaseEvals.length >= (emp.phaseLimit || 3);
+                const avg = phaseEvals.length ? (phaseEvals.reduce((a,c) => a+parseFloat(c.score),0)/phaseEvals.length).toFixed(1) : 0;
+                const nextEvalDate = calculateNextDate(emp.hireDate, emp.evaluations.length);
+
+                const card = document.createElement('div');
+                // Added onclick to main container
+                card.className = 'glass-card p-6 rounded-3xl shadow-sm border-t-8 flex flex-col relative group cursor-pointer transition-transform active:scale-[0.99] ' + (emp.status === 'Trainee' ? 'border-t-blue-500' : emp.status === 'Probationary' ? 'border-t-purple-500' : emp.status === 'Regular' ? 'border-t-emerald-500' : 'border-t-rose-500');
+                // The onclick handler ensures clicking the card opens dossier
+                card.onclick = (e) => {
+                    // Prevent firing if clicked on a button
+                    if(e.target.closest('button')) return;
+                    viewReport(emp.id);
+                };
+
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-6">
+                        <div class="max-w-[70%]">
+                            <h3 class="font-black text-lg text-slate-900 break-words group-hover:text-blue-600 transition-colors">${emp.name}</h3>
+                            <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Hired ${emp.hireDate}</p>
+                            ${emp.status !== 'Regular' && emp.status !== 'Terminated' ? `<p class="text-[10px] text-blue-600 font-bold uppercase tracking-widest mt-1 flex items-center gap-1"><i data-lucide="calendar" class="w-3 h-3"></i> Next: ${nextEvalDate}</p>` : ''}
+                        </div>
+                        <div class="flex flex-col items-end gap-2">
+                             <span class="px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest ${getStatusClass(emp.status)}">${emp.status}</span>
+                             <div class="flex gap-1 no-print">
+                                <button onclick="showEditModal(${emp.id})" class="p-2 hover:bg-blue-50 text-blue-500 rounded-lg transition-all active:scale-95"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+                                <button onclick="confirmDelete(${emp.id})" class="p-2 hover:bg-rose-50 text-rose-500 rounded-lg transition-all active:scale-95"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                             </div>
+                        </div>
+                    </div>
+                    <div class="space-y-4 flex-grow">
+                        ${emp.status !== 'Regular' && emp.status !== 'Terminated' ? `
+                            <div class="space-y-1">
+                                <div class="flex justify-between text-[10px] font-black uppercase"><span class="text-slate-400">Progress</span><span class="text-blue-600">${phaseEvals.length}/${emp.phaseLimit || 3} Mos</span></div>
+                                <div class="h-2 w-full bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-blue-600 transition-all duration-500" style="width: ${(phaseEvals.length/(emp.phaseLimit||3))*100}%"></div></div>
+                            </div>
+                        ` : ''}
+                        ${isCycleComplete && emp.status !== 'Regular' && emp.status !== 'Terminated' ? `
+                            <div class="bg-blue-50 border border-blue-100 p-3 rounded-2xl">
+                                <p class="text-[9px] font-black text-blue-600 uppercase mb-2 text-center">Cycle Finished (Avg: ${avg}%)</p>
+                                <p class="text-[8px] text-slate-400 text-center italic">Action required in Dossier</p>
+                            </div>
+                        ` : emp.status === 'Terminated' ? `<p class="text-[9px] italic text-rose-800 line-clamp-2 uppercase font-bold tracking-tight bg-rose-50 p-2 rounded-xl border border-rose-100">Notice: ${emp.terminationReason}</p>` : ''}
+                    </div>
+                    <div class="mt-6 flex justify-end">
+                         <span class="text-[10px] font-black uppercase text-slate-300 group-hover:text-blue-400 flex items-center gap-1 transition-colors">View Dossier <i data-lucide="arrow-right" class="w-3 h-3"></i></span>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+            lucide.createIcons();
+        }
+
+        // EVALUATION FORM STRUCTURE
+        const EVAL_STRUCTURE_UPDATED = [
+            { category: "Part I - OBS Setup & Troubleshooting", sections: [
+                { title: "1. OBS", questions: [
+                    { q: "Parts of Livescene", ans: "Basic: Header, Sticker, Podium/Platform, Background.<br>Advance: Header/Brand Logo, Sub-Header, Header Background, Frame, Stickers (UL/UR/LL/LR), Podium." },
+                    { q: "Mostly used Source in OBS", ans: "Basic: Image, Media Source, Video Capture.<br>Advance: Image, Media Source, Video Capture, Color Source, Text." },
+                    { q: "Proper Microphone Setup", ans: "Input audio source directly on OBS settings." }
+                ]},
+                { title: "2. OBS Settings", questions: [
+                    { q: "OBS Canvas Settings", ans: "Basic: 1080x1920.<br>Advance: 1080x1920 (9:16 Aspect Ratio)." },
+                    { q: "OBS Encoder", ans: "Nvidia NVEC H264." },
+                    { q: "OBS Rate Control", ans: "Basic: CBR & VBR.<br>Advance: CBR (Constant) & VBR (Variable)." },
+                    { q: "Use of CBR & VBR", ans: "CBR: Forces specific bitrate (good for fast net, lags if drops).<br>VBR: Adapts bitrate between min/max limits (good for slow net)." }
+                ]},
+                { title: "3. OBS Source Settings", questions: [
+                    { q: "Video Capture Device", ans: "Disable Buffering; Audio output mode: DirectSound." },
+                    { q: "Media Source", ans: "Check all except 'Close File when inactive' (prevents preview issues)." }
+                ]},
+                { title: "4. OBS Chroma Key", questions: [
+                    { q: "Similarity", ans: "Controls how close pixels must be to the key color to be removed." },
+                    { q: "Smoothness", ans: "Softens edges and removes jagged artifacts." },
+                    { q: "Key Color Spill", ans: "Removes green/blue fringe from edges." }
+                ]},
+                { title: "5. OBS Chroma Key Troubleshooting", questions: [
+                    { q: "Default Settings", ans: "Similarity: Variable. Smoothness: 80. Key Color Spill: 50." },
+                    { q: "Greenline Issues", ans: "Prevention: Proper camera/lighting.<br>Fix: Adjust similarity/spill slightly, or pick exact color." }
+                ]},
+                { title: "6. Greenscreen Protection", questions: [
+                    { q: "Purpose", ans: "Maintains visibility of green items matching background (prevents transparency)." },
+                    { q: "How to Add", ans: "Duplicate camera group, add Chroma Key filter to group, crop source to host body." }
+                ]},
+                { title: "7. OBS Internet & CPU Troubleshooting", questions: [
+                    { q: "Encoder Rate Control Check", ans: "If CBR fails, switch to VBR (Min 2500, Max 4500)." },
+                    { q: "CPU Usage Preset", ans: "If rate control fails, reduce CPU Preset by one level." },
+                    { q: "ISP Issues", ans: "If all fails, bandwidth is insufficient. Request ISP change." }
+                ]}
+            ]},
+            { category: "Part II - Camera Setup & Troubleshooting", sections: [
+                { title: "Camera Setup", questions: [
+                    { q: "Power Settings Option", ans: "Save Start Time: Off. Save by Monitor: Both Linked. Auto Off Temp: High." },
+                    { q: "HDMI Setting", ans: "Res: 2160p/1080p. Output: 60p. Info Disp: Off." },
+                    { q: "Camera Cleaning", ans: "Brush body (not lens). Air pump dust. Wet/Dry wipes for lens." }
+                ]},
+                { title: "Camera Troubleshooting", questions: [
+                    { q: "True Color Camera Setup", ans: "ISO (Brightness/Grain), Shutter (Sync/No Lag), Exposure (Lighting), Focus (Clarity)." },
+                    { q: "Standard Setup of Camera", ans: "Shutter: 1/160. Aperture: 3.5 (lowest). Focal: +1.0 to +1.7." },
+                    { q: "Camera Overheating", ans: "Auto-shutdown off. Check fan. Use external fan if needed." },
+                    { q: "Camera Blackscreen/No Output", ans: "Reset Shoot Mode. Re-plug Capture Card. Restart Camera." },
+                    { q: "Robotic, Slow Motion, Lagging Camera", ans: "Cause: Super Low Shutter Speed." }
+                ]}
+            ]},
+            { category: "Part III - Skills", sections: [
+                { title: "Soft Skills", questions: [
+                    { q: "Composure", ans: "Calm under pressure; thinks clearly despite malfunctions. Emotional control." },
+                    { q: "Clear Communication", ans: "Steady voice, short direct instructions, no rushing." },
+                    { q: "Situational Awareness", ans: "Constant awareness to minimize/preempt mistakes." },
+                    { q: "Confidence", ans: "Knows tools/plans, reacts fast without overthinking." },
+                    { q: "Professional Presence", ans: "Composed, polite, respectful tone." },
+                    { q: "Controlled Pace", ans: "Avoids rushing, takes intentional steps." },
+                    { q: "Problem-Solving Mindset", ans: "Focus on solutions/recovery, not blame." },
+                    { q: "Technical Speed", ans: "Efficiency graded by trainer." }
+                ]}
+            ]}
+        ];
+
+        window.startEvaluation = function(id, evalId = null) {
+            currentEvalEmployeeId = id;
+            currentEditingEvalId = evalId;
+
+            const emp = window.employees.find(e => e.id == id);
+            if (!emp) return;
+            
+            // Check if editing existing
+            let existingData = {};
+            if (evalId) {
+                const ev = emp.evaluations.find(x => x.id == evalId);
+                if (ev && ev.details) {
+                    ev.details.forEach(d => {
+                        // Create a map key based on question content or index
+                        // Since structure is static, we can map by string
+                        existingData[d.q] = d.score;
+                    });
+                }
+            }
+
+            const container = document.getElementById('eval-form-container');
+            document.getElementById('eval-title').innerText = evalId ? `Edit Assessment: ${emp.name}` : `Assessment: ${emp.name}`;
+            container.innerHTML = '';
+            
+            // Reset live score
+            updateLiveScore(0);
+
+            EVAL_STRUCTURE_UPDATED.forEach((cat, cIdx) => {
+                const cDiv = document.createElement('div'); cDiv.className = "space-y-6"; cDiv.innerHTML = `<h3 class="text-sm font-black text-blue-600 uppercase tracking-widest border-b pb-2">${cat.category}</h3>`;
+                cat.sections.forEach((sec, sIdx) => {
+                    const sDiv = document.createElement('div'); sDiv.className = "space-y-4 ml-0 md:ml-2"; sDiv.innerHTML = `<h4 class="font-bold text-slate-800 text-sm">${sec.title}</h4>`;
+                    sec.questions.forEach((q, qIdx) => {
+                        const qId = `q_${cIdx}_${sIdx}_${qIdx}`;
+                        const existingScore = existingData[q.q] || 0;
+                        
+                        const qDiv = document.createElement('div'); qDiv.className = "p-4 md:p-5 rounded-2xl bg-white border border-slate-100 shadow-sm space-y-4 ml-0 md:ml-2";
+                        
+                        // Fix: Conditionally apply classes to prevent 'bg-white' from overriding selected state
+                        const buttonsHtml = [1,2,3,4,5].map(v => {
+                            const isSelected = existingScore === v;
+                            const baseClass = "score-btn w-8 h-8 rounded-lg border text-xs font-black transition-all active:scale-90";
+                            const stateClass = isSelected 
+                                ? "border-blue-600 bg-blue-600 text-white shadow-md" 
+                                : "border-slate-200 bg-white hover:bg-blue-50";
+                            
+                            return `<button type="button" onclick="selectScore('${qId}', ${v})" id="${qId}_btn_${v}" class="${baseClass} ${stateClass}">${v}</button>`;
+                        }).join('');
+
+                        qDiv.innerHTML = `<p class="text-sm font-semibold text-slate-700">${q.q}</p><div class="flex flex-col md:flex-row gap-4"><div class="flex-1 bg-blue-50/50 p-3 rounded-xl border border-blue-100/50"><p class="text-[10px] text-blue-800 font-medium leading-relaxed break-words">${q.ans}</p></div><div class="w-full md:w-48 flex flex-col justify-center items-center bg-slate-50 rounded-xl p-3 border border-slate-100"><p class="text-[10px] font-black text-slate-400 uppercase mb-2">Grade (1-5)</p><div class="flex gap-2">${buttonsHtml}</div><input type="hidden" id="${qId}" class="eval-input" value="${existingScore}"></div></div>`;
+                        sDiv.appendChild(qDiv);
+                    });
+                    cDiv.appendChild(sDiv);
+                });
+                container.appendChild(cDiv);
+            });
+            
+            // Calculate initial score if editing
+            if (evalId) calculateLiveScore();
+
+            const action = document.createElement('div'); action.className = "pt-10 flex justify-center pb-10"; action.innerHTML = `<button onclick="submitEvaluation()" class="w-full max-w-md bg-slate-900 text-white py-4 rounded-2xl font-black uppercase hover:bg-black transition-all shadow-xl flex items-center justify-center gap-2 active:scale-95"><i data-lucide="save"></i> ${evalId ? 'Update Record' : 'Submit Assessment'}</button>`;
+            container.appendChild(action);
+            switchView('eval');
+        }
+
+        window.selectScore = function(qId, val) {
+            const input = document.getElementById(qId); input.value = val;
+            for(let i=1; i<=5; i++) { 
+                const b = document.getElementById(`${qId}_btn_${i}`); 
+                b.className = "score-btn w-8 h-8 rounded-lg border border-slate-200 bg-white text-xs font-black transition-all hover:bg-blue-50 active:scale-90"; 
+            }
+            document.getElementById(`${qId}_btn_${val}`).className = "score-btn w-8 h-8 rounded-lg border border-blue-600 bg-blue-600 text-white text-xs font-black transition-all shadow-md";
+            
+            // Trigger live calc
+            calculateLiveScore();
+        }
+
+        window.calculateLiveScore = function() {
+            let totalS = 0;
+            let totalP = 0;
+            const inputs = document.querySelectorAll('.eval-input');
+            inputs.forEach(inp => {
+                const val = parseInt(inp.value) || 0;
+                if (val > 0) {
+                    totalS += val;
+                    totalP += 5;
+                }
+            });
+            
+            // If no inputs answered yet, show 0.0%
+            const score = totalP > 0 ? ((totalS / totalP) * 100).toFixed(1) : "0.0";
+            updateLiveScore(score);
+        }
+
+        function updateLiveScore(val) {
+            const el = document.getElementById('live-score-display');
+            if (el) {
+                el.innerText = `${val}%`;
+                // Simple color logic
+                if (parseFloat(val) >= 85) el.className = "px-4 py-2 bg-emerald-600 text-white rounded-xl font-black font-mono text-lg shadow-lg transition-colors";
+                else if (parseFloat(val) >= 70) el.className = "px-4 py-2 bg-amber-500 text-white rounded-xl font-black font-mono text-lg shadow-lg transition-colors";
+                else el.className = "px-4 py-2 bg-slate-900 text-white rounded-xl font-black font-mono text-lg shadow-lg transition-colors";
+            }
+        }
+
+        window.submitEvaluation = function() {
+            const emp = window.employees.find(e => e.id == currentEvalEmployeeId); if (!emp) return;
+            let responses = [], totalS = 0, totalP = 0, inc = false;
+            EVAL_STRUCTURE_UPDATED.forEach((cat, cIdx) => cat.sections.forEach((sec, sIdx) => sec.questions.forEach((q, qIdx) => {
+                const val = parseInt(document.getElementById(`q_${cIdx}_${sIdx}_${qIdx}`).value);
+                if(val === 0) inc = true; 
+                responses.push({ q: q.q, cat: cat.category, section: sec.title, score: val }); 
+                totalS += val; totalP += 5;
+            })));
+            if(inc) { showNotification("Form incomplete."); return; }
+            const score = ((totalS / totalP) * 100).toFixed(1);
+            
+            let updatedEvals = [...emp.evaluations];
+            
+            if (currentEditingEvalId) {
+                // Update Existing
+                updatedEvals = updatedEvals.map(ev => {
+                    if (ev.id == currentEditingEvalId) {
+                        return { ...ev, score, details: responses };
+                    }
+                    return ev;
+                });
+                window.saveEmployee({ ...emp, evaluations: updatedEvals }).then(() => { 
+                    window.logActivity('eval', `Assessment Updated: ${score}%`, emp.name); 
+                    // Go back to dossier view directly
+                    viewReport(emp.id); 
+                });
+            } else {
+                // Create New
+                const newEval = { 
+                    id: Date.now(), 
+                    phaseMonth: emp.evaluations.slice(emp.phaseStartIdx || 0).length + 1, 
+                    type: emp.status, 
+                    score, 
+                    date: new Date().toLocaleDateString(), 
+                    details: responses 
+                };
+                updatedEvals.push(newEval);
+                window.saveEmployee({ ...emp, evaluations: updatedEvals }).then(() => { 
+                    window.logActivity('eval', `Assessment Logged: ${score}%`, emp.name); 
+                    viewReport(emp.id); 
+                });
+            }
+        }
+
+        window.deleteEvaluation = function(empId, evalId) {
+            const emp = window.employees.find(e => e.id == empId);
+            if (!emp) return;
+            showConfirmModal("Delete Assessment", "This cannot be undone. Remove this score record?", () => {
+                const updatedEvals = emp.evaluations.filter(e => e.id != evalId);
+                window.saveEmployee({ ...emp, evaluations: updatedEvals }).then(() => {
+                   window.logActivity('delete', 'Assessment Removed', emp.name);
+                   viewReport(empId); 
+                });
+            });
+        }
+
+        window.handleDecision = function(id, action) {
+            const emp = window.employees.find(e => e.id == id); if (!emp) return;
+            if(action === 'promote') {
+                const oldS = emp.status, newS = oldS === 'Trainee' ? 'Probationary' : 'Regular';
+                const effectiveDate = calculateNextDate(emp.hireDate, emp.evaluations.length - 1);
+
+                const achievements = [...emp.achievements, { id: Date.now(), title: `Promoted to ${newS}`, date: effectiveDate, type: newS, fromStatus: oldS, evaluations: [...emp.evaluations.slice(emp.phaseStartIdx || 0)] }];
+                window.saveEmployee({ ...emp, status: newS, achievements, phaseStartIdx: emp.evaluations.length, phaseLimit: 3 }).then(() => { window.logActivity('promote', `Contract Advanced to ${newS}`, emp.name); showCongrats({ ...emp, status: newS }); });
+            } else {
+                window.saveEmployee({ ...emp, phaseLimit: (emp.phaseLimit || 3) + 1 }).then(() => { window.logActivity('extend', `Review Cycle Extended`, emp.name); showNotification("Review Cycle Extended."); });
+            }
+        }
+
+        window.viewReport = function(id) {
+            const emp = window.employees.find(e => e.id == id);
+            
+            // --- UPDATED DATES LOGIC (Computed) ---
+            const probAch = emp.achievements.find(a => a.type === 'Probationary');
+            const regAch = emp.achievements.find(a => a.type === 'Regular');
+
+            const parseDateLocal = (dateStr) => {
+                const parts = dateStr.split('-');
+                return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+            };
+
+            const formatDate = (dateObj) => {
+                return dateObj.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+            };
+
+            const addMonthsToHireDate = (months) => {
+                const d = parseDateLocal(emp.hireDate);
+                d.setMonth(d.getMonth() + months);
+                return formatDate(d);
+            };
+            
+            const dateHired = formatDate(parseDateLocal(emp.hireDate));
+            
+            let dateProb = 'Pending';
+            if (probAch) {
+                // Duration of Trainee phase = number of evaluations in the 'Promoted to Probationary' achievement
+                const traineeDuration = probAch.evaluations.length;
+                dateProb = addMonthsToHireDate(traineeDuration);
+            }
+
+            let dateReg = 'Pending';
+            if (regAch) {
+                // Total duration = Trainee Phase + Probationary Phase
+                const traineeDuration = probAch ? probAch.evaluations.length : 0; 
+                const probDuration = regAch.evaluations.length;
+                dateReg = addMonthsToHireDate(traineeDuration + probDuration);
+            }
+            // --------------------------------------
+
+            // Action Buttons Logic (Moved from Dashboard Card)
+            const phaseEvals = emp.evaluations.slice(emp.phaseStartIdx || 0);
+            const isCycleComplete = phaseEvals.length >= (emp.phaseLimit || 3);
+            const avg = phaseEvals.length ? (phaseEvals.reduce((a,c) => a+parseFloat(c.score),0)/phaseEvals.length).toFixed(1) : 0;
+            
+            let actionButtonsHTML = '';
+            if (emp.status !== 'Regular' && emp.status !== 'Terminated') {
+                if (isCycleComplete) {
+                     actionButtonsHTML = `
+                        <div class="bg-blue-50 border border-blue-100 p-4 rounded-2xl mb-6">
+                            <p class="text-[10px] font-black text-blue-600 uppercase mb-3 text-center">Cycle Finished (Avg: ${avg}%)</p>
+                            <div class="grid grid-cols-1 gap-2">
+                                <button onclick="handleDecision(${emp.id}, 'promote')" class="py-3 bg-emerald-600 text-white rounded-xl text-xs font-black uppercase hover:bg-emerald-700 flex items-center justify-center gap-2 shadow-lg active:scale-95"><i data-lucide="check-circle" class="w-4 h-4"></i> Promote to ${emp.status === 'Trainee' ? 'Probationary' : 'Regular'}</button>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <button onclick="handleDecision(${emp.id}, 'extend')" class="py-3 bg-amber-500 text-white rounded-xl text-xs font-black uppercase hover:bg-amber-600 flex items-center justify-center gap-2 shadow-md active:scale-95"><i data-lucide="plus" class="w-4 h-4"></i> Extend</button>
+                                    <button onclick="confirmTermination(${emp.id})" class="py-3 bg-rose-600 text-white rounded-xl text-xs font-black uppercase hover:bg-rose-700 flex items-center justify-center gap-2 shadow-md active:scale-95"><i data-lucide="user-x" class="w-4 h-4"></i> Terminate</button>
+                                </div>
+                            </div>
+                        </div>
+                     `;
+                } else {
+                     actionButtonsHTML = `
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+                            <button onclick="startEvaluation(${emp.id})" class="col-span-1 py-3 bg-slate-900 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-lg active:scale-95 flex items-center justify-center gap-2"><i data-lucide="clipboard-check" class="w-4 h-4"></i> Assess M${phaseEvals.length+1}</button>
+                            <button onclick="confirmTermination(${emp.id})" class="col-span-1 py-3 border border-rose-100 bg-rose-50 text-rose-500 rounded-xl text-xs font-black uppercase active:scale-95 hover:bg-rose-100 transition-colors">Terminate</button>
+                        </div>
+                     `;
+                }
+            }
+
+            const container = document.getElementById('report-content');
+            container.innerHTML = `
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-1 space-y-6">
+                    <div class="glass-card p-8 rounded-3xl text-center shadow-md border-b-4 border-b-blue-600">
+                        <div class="w-24 h-24 bg-blue-600 text-white rounded-3xl flex items-center justify-center mx-auto mb-6 font-black text-3xl shadow-lg uppercase">${emp.name.charAt(0)}</div>
+                        <h3 class="text-2xl font-black text-slate-900">${emp.name}</h3>
+                        <span class="px-4 py-1.5 bg-slate-100 rounded-full text-[10px] font-black uppercase tracking-widest text-slate-500 block w-fit mx-auto mt-2 mb-6">${emp.status}</span>
+                        
+                        <!-- Dates Section -->
+                        <div class="text-left space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-100 mb-6">
+                            <div class="flex justify-between items-center"><span class="text-[10px] font-bold text-slate-400 uppercase">Hired</span><span class="text-xs font-black text-slate-800">${dateHired}</span></div>
+                            <div class="flex justify-between items-center"><span class="text-[10px] font-bold text-slate-400 uppercase">Probation</span><span class="text-xs font-black ${dateProb !== 'Pending' ? 'text-purple-600' : 'text-slate-400'}">${dateProb}</span></div>
+                            <div class="flex justify-between items-center"><span class="text-[10px] font-bold text-slate-400 uppercase">Regular</span><span class="text-xs font-black ${dateReg !== 'Pending' ? 'text-emerald-600' : 'text-slate-400'}">${dateReg}</span></div>
+                        </div>
+
+                        ${actionButtonsHTML}
+
+                        ${emp.status === 'Terminated' ? `<div class="mt-4"><button onclick="generateTerminationLetter(${emp.id})" class="w-full py-2 bg-rose-600 text-white rounded-xl text-[10px] font-black uppercase shadow-lg">Notice of Termination (PDF)</button></div>` : ''}
+                    </div>
+                    
+                    <div class="glass-card p-6 rounded-3xl shadow-sm">
+                        <h4 class="font-black text-slate-900 mb-6 flex items-center gap-2 text-xs uppercase tracking-widest"><i data-lucide="award" class="w-4 h-4 text-amber-500"></i> Career Milestones</h4>
+                        <div class="space-y-4">${emp.achievements.map(a => `<div class="p-4 bg-amber-50 border border-amber-100 rounded-2xl space-y-3"><div class="flex justify-between items-start"><p class="text-xs font-black text-slate-800">${a.title}</p><p class="text-[9px] font-bold text-amber-700 bg-amber-100 px-2 py-1 rounded-md">${a.date}</p></div><div class="flex gap-2"><button onclick="viewCardFromAchievement(${emp.id}, ${a.id})" class="flex-1 py-1.5 bg-white border border-amber-200 text-amber-600 rounded-lg text-[10px] font-bold uppercase hover:bg-amber-50">Certificate</button><button onclick="generateEndorsementLetter(${emp.id}, ${a.id})" class="flex-1 py-1.5 bg-amber-500 text-white rounded-lg text-[10px] font-bold uppercase hover:bg-amber-600">Endorsement</button></div></div>`).join('') || '<p class="text-xs text-slate-400 italic">No cloud milestones logged.</p>'}</div>
+                    </div>
+                </div>
+
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="glass-card p-8 rounded-3xl shadow-sm">
+                        <div class="flex justify-between items-center mb-6">
+                            <h4 class="font-black text-slate-900 flex items-center gap-2 text-xs uppercase tracking-widest"><i data-lucide="activity" class="w-4 h-4 text-blue-500"></i> Performance Logs</h4>
+                            <span class="text-[10px] font-bold text-slate-400">Total: ${emp.evaluations.length}</span>
+                        </div>
+                        <div class="space-y-3">
+                        ${emp.evaluations.slice().reverse().map(ev => `
+                            <div class="flex flex-col md:flex-row items-center justify-between p-5 bg-slate-50/50 rounded-2xl border border-slate-100 hover:bg-white transition-all group gap-4">
+                                <div onclick="showEvalDetail(${emp.id}, ${ev.id})" class="flex items-center gap-4 flex-grow cursor-pointer w-full md:w-auto">
+                                    <div class="bg-white p-3 rounded-xl shadow-sm text-[10px] font-black uppercase text-blue-600">PH${ev.phaseMonth}</div>
+                                    <div>
+                                        <p class="text-xs font-black text-slate-700 uppercase">${ev.type}</p>
+                                        <p class="text-[10px] text-slate-400 font-bold">${ev.date}</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-6 w-full md:w-auto justify-between md:justify-end">
+                                    <div class="text-right">
+                                        <p class="text-xl font-black ${ev.score >= 80 ? 'text-emerald-600' : 'text-rose-600'}">${ev.score}%</p>
+                                        <span class="text-[8px] font-black uppercase text-blue-500 cursor-pointer" onclick="showEvalDetail(${emp.id}, ${ev.id})">View</span>
+                                    </div>
+                                    <div class="flex gap-1 border-l pl-4 border-slate-200">
+                                        <button onclick="startEvaluation(${emp.id}, ${ev.id})" class="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all" title="Edit Score"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
+                                        <button onclick="deleteEvaluation(${emp.id}, ${ev.id})" class="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all" title="Delete Record"><i data-lucide="trash" class="w-4 h-4"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('') || '<p class="text-xs italic text-slate-400 text-center py-10">No cloud records found.</p>'}
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+            switchView('report');
+            lucide.createIcons();
+        }
+
+        window.showEvalDetail = function(empId, evalId) {
+            const emp = window.employees.find(e => e.id == empId), ev = emp.evaluations.find(e => e.id == evalId); if (!ev) return;
+            
+            let tableRows = '';
+            const groupedDetails = {};
+            
+            ev.details.forEach(d => {
+                const groupKey = d.section || d.cat; 
+                if (!groupedDetails[groupKey]) groupedDetails[groupKey] = [];
+                groupedDetails[groupKey].push(d);
+            });
+
+            for (const [groupName, items] of Object.entries(groupedDetails)) {
+                tableRows += `<tr class="bg-slate-50"><td colspan="2" class="p-3 border font-black text-slate-800 text-[10px] uppercase tracking-wider">${groupName}</td></tr>`;
+                items.forEach(d => {
+                    tableRows += `<tr><td class="p-4 border font-bold text-slate-700 text-[10px]">${d.q}</td><td class="p-4 border text-right font-black text-blue-600 text-[10px]">${d.score} / 5.0</td></tr>`;
+                });
+            }
+
+            document.getElementById('eval-detail-content').innerHTML = `
+                <div class="space-y-12">
+                    <div class="no-break flex flex-col md:flex-row justify-between items-start border-b-8 border-slate-900 pb-8 uppercase font-black tracking-tighter gap-4">
+                        <div><h1 class="text-2xl">M-Commerce Corporation</h1><p class="text-sm font-bold text-blue-600 uppercase tracking-widest">Performance Evaluation Dossier</p></div>
+                        <div class="text-right"><p class="text-[10px] text-slate-400 uppercase">Weighted Final Grade</p><p class="text-7xl text-slate-900 leading-none">${ev.score}%</p></div>
+                    </div>
+                    <div class="no-break grid grid-cols-2 md:grid-cols-4 gap-6 bg-slate-50 p-6 rounded-3xl border text-[10px] uppercase font-black">
+                        <div><p class="text-slate-400 mb-1">Subject Personnel</p><p>${emp.name}</p></div>
+                        <div><p class="text-slate-400 mb-1">Date of Assessment</p><p>${ev.date}</p></div>
+                        <div><p class="text-slate-400 mb-1">Functional Group</p><p>Operations</p></div>
+                        <div><p class="text-slate-400 mb-1">Phase Hierarchy</p><p>${ev.type} | Mo. ${ev.phaseMonth}</p></div>
+                    </div>
+
+                    <div class="no-break space-y-6 text-xs text-slate-600 leading-relaxed text-justify">
+                        <h2 class="text-sm font-black uppercase tracking-widest text-slate-900 border-l-4 border-slate-900 pl-4 py-1">I. Technical Audit Summary</h2>
+                        <p>This performance dossier provides a comprehensive technical audit for <strong>${emp.name}</strong> during the <strong>${ev.type}</strong> phase. 
+                        The evaluation assessed specific grouped competencies including <strong>OBS Setup & Troubleshooting</strong>, <strong>Camera Technical Configurations</strong>, and core <strong>Operational Skills</strong>. 
+                        A final weighted score of <strong>${ev.score}%</strong> was achieved based on these categorized performance indicators.</p>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                    <h2 class="text-sm font-black uppercase tracking-widest text-slate-900 border-l-4 border-slate-900 pl-4 py-1 mb-4">II. Detailed Metric Breakdown</h2>
+                    <table class="w-full text-[10px] border-collapse border border-slate-200">
+                        <thead><tr class="bg-slate-900 text-white"><th class="p-4 border text-left uppercase w-3/4">Assessment Indicator</th><th class="p-4 border text-right uppercase w-1/4">Score</th></tr></thead>
+                        <tbody>${tableRows}</tbody>
+                    </table>
+                    </div>
+                    
+                    <div class="no-break pt-24 grid grid-cols-1 md:grid-cols-2 gap-y-24 gap-x-12 px-6 font-black text-[8px] text-center uppercase tracking-[0.2em] text-black">
+                        <div class="border-t-2 border-black pt-4">Live Operator Trainee</div>
+                        <div class="border-t-2 border-black pt-4">Live Operator Trainer</div>
+                        <div class="border-t-2 border-black pt-4">Live Operator Lead</div>
+                        <div class="border-t-2 border-black pt-4">Technical Support Supervisor</div>
+                    </div>
+                </div>`;
+            document.getElementById('back-to-report-btn').onclick = () => viewReport(empId);
+            document.getElementById('download-eval-pdf').onclick = () => downloadPDF('eval-detail-content', `${emp.name}_Evaluation_Report.pdf`);
+            switchView('eval-detail');
+        }
+
+        window.generateEndorsementLetter = function(empId, achievementId) {
+            const emp = window.employees.find(e => e.id == empId), a = emp.achievements.find(ach => ach.id == achievementId); if (!a) return;
+            
+            // Fix: Retrieve latest version of evaluations from the main list to reflect edits/updates
+            const currentPhaseEvaluations = a.evaluations.map(snapshotEval => {
+                const liveEval = emp.evaluations.find(e => e.id === snapshotEval.id);
+                return liveEval || snapshotEval; 
+            }).filter(e => e); // Filter out potential nulls if records were somehow completely purged
+
+            const avg = (currentPhaseEvaluations.reduce((acc, curr) => acc + parseFloat(curr.score), 0) / currentPhaseEvaluations.length).toFixed(1);
+            
+            // 1. Calculate months spent in PREVIOUS phases to determine the start date of THIS phase.
+            let monthsPriorToThisPhase = 0;
+            for (const ach of emp.achievements) {
+                if (ach.id === achievementId) break; // Stop BEFORE adding current phase length
+                monthsPriorToThisPhase += ach.evaluations.length;
+            }
+
+            // 2. Parse Hire Date
+            const hParts = emp.hireDate.split('-');
+            // JS Date Month is 0-11
+            const baseDateObj = new Date(parseInt(hParts[0]), parseInt(hParts[1]) - 1, parseInt(hParts[2]));
+            
+            // 3. Shift Base Date to the start of THIS phase
+            // For Trainee -> Probationary, monthsPriorToThisPhase is 0, so Base Date = Hire Date.
+            // For Probationary -> Regular, monthsPriorToThisPhase is (Trainee Duration), so Base Date = Hire Date + Trainee Months.
+            baseDateObj.setMonth(baseDateObj.getMonth() + monthsPriorToThisPhase);
+
+            // 4. Calculate Effective Date of Promotion (Base + Length of this phase)
+            // This ensures the effective date is exactly at the end of the current cycle
+            const effectiveDateObj = new Date(baseDateObj);
+            effectiveDateObj.setMonth(effectiveDateObj.getMonth() + currentPhaseEvaluations.length);
+            const effectiveDateStr = effectiveDateObj.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+            
+            const today = new Date(); today.setHours(0,0,0,0);
+            const isOverdue = today > effectiveDateObj;
+            
+            const apologyHTML = isOverdue ? `<div class="no-break mt-8 p-4 bg-slate-50 border-l-4 border-slate-300 text-xs italic text-slate-500 text-justify"><strong>Trainer Note:</strong> This document is formally issued today to finalize the assessment records. Please note that the effective date of the promotion is retroactive to <strong>${effectiveDateStr}</strong>, reflecting the candidate's actual completion of the evaluation phase.</div>` : '';
+
+            // Helper to get Evaluation Date specific to this phase
+            // Logic: Phase Start Date + Phase Month Index
+            const getScheduledEvalDate = (phaseMonth) => {
+                const d = new Date(baseDateObj); // Start from the adjusted base date (Start of this phase)
+                d.setMonth(d.getMonth() + phaseMonth); 
+                return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            };
+
+            // --- Generate Detailed Log HTML for all included evaluations ---
+            let allDetailsHTML = '';
+            currentPhaseEvaluations.forEach(ev => {
+                const evalDateDisplay = getScheduledEvalDate(ev.phaseMonth);
+                let tableRows = '';
+                const groupedDetails = {};
+                
+                // Group by Section
+                if(ev.details) {
+                    ev.details.forEach(d => {
+                        const groupKey = d.section || d.cat; 
+                        if (!groupedDetails[groupKey]) groupedDetails[groupKey] = [];
+                        groupedDetails[groupKey].push(d);
+                    });
+
+                    // Build Rows
+                    for (const [groupName, items] of Object.entries(groupedDetails)) {
+                        tableRows += `<tr class="bg-slate-50"><td colspan="2" class="p-2 border font-black text-slate-800 text-[9px] uppercase tracking-wider">${groupName}</td></tr>`;
+                        items.forEach(d => {
+                            tableRows += `<tr class="bg-white"><td class="p-2 border font-medium text-slate-700 text-[9px]">${d.q}</td><td class="p-2 border text-right font-black text-blue-600 text-[9px]">${d.score}</td></tr>`;
+                        });
+                    }
+                }
+
+                // Added 'no-break' class to the outer container of each log to prevent cutting inside the log block
+                allDetailsHTML += `
+                    <div class="mt-6 no-break bg-slate-50/50 p-4 rounded-xl border border-slate-100" style="page-break-inside: avoid;">
+                        <div class="flex justify-between items-center mb-3 border-b border-slate-200 pb-2">
+                            <div>
+                                <h4 class="font-black text-[10px] uppercase text-slate-900">Evaluation Date: ${evalDateDisplay}</h4>
+                                <p class="text-[8px] text-slate-400 font-bold uppercase">Phase Month ${ev.phaseMonth}</p>
+                            </div>
+                            <div class="text-right">
+                                <span class="font-black text-xs text-blue-600 block">${ev.score}%</span>
+                                <span class="text-[8px] text-slate-400 font-bold uppercase">Cycle Score</span>
+                            </div>
+                        </div>
+                        <table class="w-full text-[10px] border-collapse border border-slate-200 bg-white">
+                            <tbody>${tableRows}</tbody>
+                        </table>
+                    </div>
+                `;
+            });
+
+            document.getElementById('endorsement-content').innerHTML = `
+                <div class="space-y-8">
+                    <div class="no-break flex justify-between items-start border-b-2 pb-6">
+                        <div><h1 class="text-xl md:text-2xl font-black uppercase text-slate-900">M-Commerce Corporation</h1><p class="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-1">Operation Department</p></div>
+                        <div class="text-right"><p class="text-[10px] font-bold uppercase">Date: ${new Date().toLocaleDateString()}</p></div>
+                    </div>
+                    
+                    <div class="space-y-6 text-slate-800">
+                        <div class="no-break font-black text-xs uppercase tracking-wider text-slate-900"><p>Formal Endorsement for Professional Advancement</p></div>
+                        
+                        <div class="no-break space-y-4 text-[11px] text-justify text-slate-700 leading-relaxed">
+                            <p>I am writing to formally submit the professional endorsement of <strong>${emp.name}</strong> for advancement to <strong>${a.type}</strong> within the M-Commerce Corporation operational hierarchy. 
+                            This recommendation follows a comprehensive review of performance data gathering during the <strong>${a.fromStatus}</strong> assessment cycle.</p>
+                            
+                            <p>Internal metrics demonstrate that the candidate achieved a weighted achievement average of <strong>${avg}%</strong>. The personnel has shown technical mastery in OBS environment configurations, camera hardware calibrations, and 
+                            real-time system maintenance. Beyond technical skills, their professional integrity and alignment with corporate communication standards have been exemplary.</p>
+
+                            <p>Based on these consistent performance benchmarks, we have total confidence in their ability to assume the increased technical and operational responsibilities of a <strong>${a.type}</strong>. We request administrative updates to formalize this promotion.</p>
+                        </div>
+                    </div>
+
+                    <div class="no-break pt-4 overflow-x-auto">
+                        <h5 class="text-[9px] font-black uppercase text-slate-400 mb-2 pl-1">I. Phase Summary</h5>
+                        <table class="w-full text-left text-[10px] border-collapse border">
+                            <thead>
+                                <tr class="bg-slate-900 text-white">
+                                    <th class="p-3 border uppercase">Evaluation Date</th>
+                                    <th class="p-3 border uppercase">Category</th>
+                                    <th class="p-3 border text-right uppercase">Metric</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${currentPhaseEvaluations.map(ev => `
+                                    <tr class="bg-white">
+                                        <td class="p-3 border font-bold">${getScheduledEvalDate(ev.phaseMonth)}</td>
+                                        <td class="p-3 border uppercase">${ev.type}</td>
+                                        <td class="p-3 border text-right font-black text-blue-600">${ev.score}%</td>
+                                    </tr>
+                                `).join('')}
+                                <tr class="bg-slate-50 font-black">
+                                    <td colspan="2" class="p-3 border text-right uppercase tracking-widest text-slate-600">Weighted Phase Average</td>
+                                    <td class="p-3 border text-right text-blue-600 text-lg">${avg}%</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="pt-4">
+                         <div class="no-break"><h5 class="text-[9px] font-black uppercase text-slate-400 mb-2 pl-1">II. Detailed Assessment Logs</h5></div>
+                         ${allDetailsHTML}
+                    </div>
+
+                    <div class="space-y-4 text-[11px] text-justify text-slate-700 leading-relaxed mt-4">
+                         <div class="no-break"><p>Based on these consistent performance benchmarks, we request the immediate formalization of this promotion, effective as of <strong>${effectiveDateStr}</strong>.</p></div>
+                         ${apologyHTML}
+                    </div>
+
+                    <div class="no-break pt-16 grid grid-cols-1 md:grid-cols-2 gap-y-16 gap-x-12 px-6 font-black text-[7px] text-center uppercase tracking-[0.2em] text-black">
+                        <div class="border-t-2 border-black pt-4">Live Operator Trainee</div>
+                        <div class="border-t-2 border-black pt-4">Live Operator Trainer</div>
+                        <div class="border-t-2 border-black pt-4">Live Operator Lead</div>
+                        <div class="border-t-2 border-black pt-4">Technical Support Supervisor</div>
+                    </div>
+                </div>`;
+            document.getElementById('back-to-report-from-endorse').onclick = () => viewReport(empId);
+            document.getElementById('download-endorse-pdf').onclick = () => downloadPDF('endorsement-content', `${emp.name}_Endorsement.pdf`);
+            switchView('endorsement');
+        }
+
+        window.generateTerminationLetter = function(id) {
+            const emp = window.employees.find(e => e.id == id);
+            document.getElementById('termination-content').innerHTML = `
+                <div class="space-y-12">
+                    <div class="no-break flex justify-between items-start border-b-2 pb-10">
+                        <div><h1 class="text-2xl font-black uppercase text-slate-900">M-Commerce Corporation</h1><p class="text-xs text-slate-500 font-black uppercase tracking-widest mt-1">Operational Integrity Oversight</p></div>
+                        <div class="text-right"><p class="text-sm font-bold uppercase text-rose-600">Effective: ${emp.terminationDate}</p></div>
+                    </div>
+                    <div class="space-y-8 text-slate-800">
+                        <div class="no-break font-black text-sm uppercase tracking-wider text-slate-900"><p>Notice of Formal Contract Termination</p></div>
+                        
+                        <div class="no-break space-y-6 text-sm text-justify text-slate-700 leading-relaxed">
+                            <p>Dear <strong>${emp.name}</strong>,</p>
+                            
+                            <p>This correspondence serves as a formal notification regarding the termination of your employment relationship with M-Commerce Corporation, effective immediately as of <strong>${emp.terminationDate}</strong>. 
+                            This action follows an exhaustive review of technical performance trajectories which failed to align with department benchmarks.</p>
+
+                            <div class="p-10 bg-rose-50 border-l-8 border-rose-500 rounded-r-[32px] italic text-rose-900 text-xs font-medium leading-relaxed">
+                                "${emp.terminationReason}"
+                            </div>
+
+                            <p>Digital credentials and functional authorizations are revoked effective immediately. We wish you professional success in your future endeavors.</p>
+                        </div>
+                    </div>
+
+                    <div class="no-break pt-32 grid grid-cols-1 md:grid-cols-2 gap-y-24 gap-x-12 px-6 font-black text-[8px] text-center uppercase tracking-[0.2em] text-black">
+                        <div class="border-t-2 border-black pt-4">Issuing Manager</div>
+                        <div class="border-t-2 border-black pt-4">HR Oversight</div>
+                        <div class="border-t-2 border-black pt-4">Witness Signature</div>
+                        <div class="border-t-2 border-black pt-4">Recipient Acknowledgment</div>
+                    </div>
+                </div>`;
+            document.getElementById('back-to-report-from-term').onclick = () => viewReport(id);
+            document.getElementById('download-term-pdf').onclick = () => downloadPDF('termination-content', `${emp.name}_Termination_Notice.pdf`);
+            switchView('termination');
+        }
+
+        window.downloadPDF = async function(elId, filename) {
+            const el = document.getElementById(elId);
+            const opt = { 
+                margin: [0.5, 0.5, 0.5, 0.5], 
+                filename, 
+                image: { type: 'jpeg', quality: 0.98 }, 
+                html2canvas: { scale: 2, useCORS: true, letterRendering: true, scrollY: 0 }, 
+                jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
+                pagebreak: { mode: ['css', 'legacy'] } 
+            };
+            showNotification("Processing formal export...");
+            try { await html2pdf().set(opt).from(el).save(); } catch (e) { showNotification("Export failed."); }
+        }
+
+        window.viewCardFromAchievement = function(empId, achId) {
+            const emp = window.employees.find(e => e.id == empId);
+            const a = emp.achievements.find(ach => ach.id == achId);
+            if (!a) return;
+            document.getElementById('cert-name').innerText = emp.name;
+            document.getElementById('cert-status').innerText = a.type;
+            document.getElementById('cert-date').innerText = a.date;
+            document.getElementById('download-cert-pdf').onclick = () => downloadPDF('cert-pdf-wrapper', `${emp.name}_Certificate.pdf`);
+            document.getElementById('modal-backdrop').classList.remove('hidden');
+            document.getElementById('congrats-modal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        window.confirmTermination = function(id) {
+            const emp = window.employees.find(e => e.id == id); if (!emp) return;
+            document.getElementById('modal-backdrop').classList.remove('hidden');
+            document.getElementById('terminate-modal').classList.remove('hidden');
+            document.getElementById('confirm-terminate-btn').onclick = () => {
+                const r = document.getElementById('terminate-reason').value;
+                if(!r.trim()) { showNotification("Grounds required."); return; }
+                window.saveEmployee({ ...emp, status: 'Terminated', terminationReason: r, terminationDate: new Date().toLocaleDateString() })
+                    .then(() => { window.logActivity('term', `Personnel Separation logged`, emp.name); closeModal(); });
+            };
+            lucide.createIcons();
+        }
+
+        window.backupData = function() {
+            const data = { employees: window.employees, activityLog: window.activityLog, version: "Cloud-Pro-3.5", ts: Date.now() };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = `MCorp_Tracker_Backup_${new Date().toISOString().split('T')[0]}.json`;
+            a.click(); URL.revokeObjectURL(url);
+            showNotification("Dossier Backup Created.");
+        }
+
+        window.restoreData = function(event) {
+            const file = event.target.files[0]; if(!file) return;
+            showConfirmModal("Restore Data", "Proceeding will overwrite cloud records from the file. Continue?", () => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        if(data.employees) data.employees.forEach(emp => { const { firebaseId, ...clean } = emp; window.saveEmployee(clean); });
+                        showNotification("Syncing Backup...");
+                    } catch (err) { showNotification("Format Error."); }
+                };
+                reader.readAsText(file);
+            });
+        }
+
+        window.showNotification = function(text) {
+            const div = document.createElement('div');
+            div.className = "no-print fixed bottom-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-8 py-4 rounded-2xl shadow-2xl z-[100] font-black uppercase text-xs tracking-widest flex items-center gap-3 animate-bounce";
+            div.innerHTML = `<i data-lucide="bell" class="w-4 h-4 text-blue-400"></i> ${text}`;
+            document.body.appendChild(div);
+            lucide.createIcons();
+            setTimeout(() => div.remove(), 4000);
+        }
+
+        window.getStatusClass = function(s) {
+            switch(s) {
+                case 'Trainee': return 'bg-blue-50 text-blue-600 border border-blue-100';
+                case 'Probationary': return 'bg-purple-50 text-purple-600 border border-purple-100';
+                case 'Regular': return 'bg-emerald-50 text-emerald-600 border border-emerald-100';
+                default: return 'bg-rose-50 text-rose-600 border border-rose-100';
+            }
+        }
+        
+        // --- End of Core UI Logic ---
+
+        // Firebase Configuration
+        const userProvidedConfig = {
+          	 apiKey: "",
+ 		 authDomain: "traineetracker-91496.firebaseapp.com",
+  		 projectId: "traineetracker-91496",
+ 		 storageBucket: "traineetracker-91496.firebasestorage.app",
+ 		 messagingSenderId: "930372715628",
+ 		 appId: "1:930372715628:web:e76cbce93faf492b494449",
+ 		 measurementId: "G-YXB1YTESWG"
+        };
+
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : userProvidedConfig;
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : firebaseConfig.projectId;
+
+        // Shared Global State
+        window.db = db;
+        window.auth = auth;
+        window.appId = appId;
+        
+        // Attach form handler manually since module script scope is different
+        document.getElementById('add-trainee-form').onsubmit = (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const firebaseId = formData.get('firebaseId');
+            const id = formData.get('id') || Date.now();
+            const name = formData.get('name');
+            const hireDate = formData.get('hireDate');
+
+            if (firebaseId) {
+                const emp = window.employees.find(e => e.firebaseId == firebaseId);
+                if (emp) {
+                    window.saveEmployee({
+                        firebaseId, id: parseInt(id), name, hireDate,
+                        status: emp.status, evaluations: emp.evaluations,
+                        achievements: emp.achievements, phaseStartIdx: emp.phaseStartIdx, phaseLimit: emp.phaseLimit
+                    }).then(() => window.logActivity('edit', 'Updated personnel details', name));
+                }
+            } else {
+                window.saveEmployee({
+                    id: parseInt(id), name, hireDate, status: 'Trainee',
+                    evaluations: [], achievements: [], phaseStartIdx: 0, phaseLimit: 3
+                }).then(() => window.logActivity('new_hire', 'New personnel registered', name));
+            }
+            closeModal();
+        };
+
+        // Auth Logic with Error Handling
+        async function startSystem() {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    try {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } catch (e) {
+                        console.warn("Custom token failed, falling back to anonymous.");
+                        await signInAnonymously(auth);
+                    }
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Auth Error:", error);
+                showNotification("Database Auth Failed.");
+            }
+        }
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                console.log("Session Active:", user.uid);
+                setupRealtimeSync();
+            }
+        });
+
+        // Data Sync
+        function setupRealtimeSync() {
+            if (!auth.currentUser) return;
+            const employeesRef = collection(db, 'artifacts', appId, 'public', 'data', 'employees');
+            const activityRef = collection(db, 'artifacts', appId, 'public', 'data', 'activity');
+
+            onSnapshot(employeesRef, (snapshot) => {
+                window.employees = snapshot.docs.map(doc => ({ firebaseId: doc.id, ...doc.data() }));
+                renderDashboard();
+            }, (error) => {
+                if (error.code === 'permission-denied') showNotification("Permission Denied: Check Rules.");
+            });
+
+            onSnapshot(activityRef, (snapshot) => {
+                window.activityLog = snapshot.docs.map(doc => doc.data())
+                    .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                renderDashboard();
+            });
+        }
+
+        // Global Handlers
+        window.logActivity = async function(type, message, empName) {
+            if (!auth.currentUser) return;
+            try {
+                const activityRef = collection(db, 'artifacts', appId, 'public', 'data', 'activity');
+                await addDoc(activityRef, { type, message, empName, date: new Date().toLocaleString(), timestamp: Date.now() });
+            } catch (e) { console.error("Log failed", e); }
+        };
+
+        window.saveEmployee = async function(empData) {
+            if (!auth.currentUser) return;
+            const employeesRef = collection(db, 'artifacts', appId, 'public', 'data', 'employees');
+            try {
+                if (empData.firebaseId) {
+                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'employees', empData.firebaseId);
+                    const { firebaseId, ...cleanData } = empData;
+                    await updateDoc(docRef, cleanData);
+                } else {
+                    await addDoc(employeesRef, empData);
+                }
+                showNotification("Record Saved.");
+            } catch (e) { showNotification("Save Failed."); }
+        };
+
+        window.deleteEmployee = async function(firebaseId) {
+            if (!auth.currentUser) return;
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'employees', firebaseId);
+                await deleteDoc(docRef);
+                showNotification("Record Deleted.");
+            } catch (e) { console.error(e); }
+        };
+
+        window.factoryResetDB = async function() {
+            if (!auth.currentUser) return;
+            try {
+                const employeesRef = collection(db, 'artifacts', appId, 'public', 'data', 'employees');
+                const activityRef = collection(db, 'artifacts', appId, 'public', 'data', 'activity');
+                const [empSnap, actSnap] = await Promise.all([getDocs(employeesRef), getDocs(activityRef)]);
+                const deletions = [];
+                empSnap.forEach(d => deletions.push(deleteDoc(d.ref)));
+                actSnap.forEach(d => deletions.push(deleteDoc(d.ref)));
+                await Promise.all(deletions);
+                location.reload();
+            } catch (e) { console.error(e); }
+        };
+
+        startSystem();
+    </script>
+</body>
+</html>
