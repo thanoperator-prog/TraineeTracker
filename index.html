@@ -6,7 +6,6 @@
     <title>M-Commerce Corporation | Trainee Tracking System</title>
     
     <!-- PWA Metadata -->
-    <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2563eb">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -69,280 +68,222 @@
 </head>
 <body class="min-h-screen text-slate-800 pb-safe">
 
-    <!-- LOGIN SCREEN -->
-    <div id="login-view" class="fixed inset-0 z-[100] bg-slate-100 flex items-center justify-center p-6">
-        <div class="bg-white w-full max-w-sm p-8 rounded-[32px] shadow-2xl border border-white/50 relative overflow-hidden">
-            <!-- Decorative Background Blob -->
-            <div class="absolute -top-20 -right-20 w-40 h-40 bg-blue-100 rounded-full blur-3xl opacity-50"></div>
-            <div class="absolute -bottom-20 -left-20 w-40 h-40 bg-purple-100 rounded-full blur-3xl opacity-50"></div>
-
-            <div class="relative z-10">
-                <div class="text-center mb-10">
-                    <div class="w-20 h-20 bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-blue-200 transform rotate-3">
-                        <i data-lucide="lock" class="w-8 h-8"></i>
-                    </div>
-                    <h1 class="text-2xl font-black text-slate-900 tracking-tight">M-Corp Tracker</h1>
-                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mt-2">Restricted Access</p>
+    <!-- Navigation -->
+    <nav class="no-print sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200 px-4 md:px-6 py-3 flex justify-between items-center shadow-sm">
+        <div class="flex items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-blue-600 p-2 rounded-lg text-white shadow-lg shadow-blue-200"><i data-lucide="monitor"></i></div>
+                <div>
+                    <h1 class="font-bold text-lg md:text-xl tracking-tight text-slate-900 leading-tight">M-Commerce</h1>
+                    <p class="text-[9px] md:text-[10px] text-slate-400 uppercase tracking-widest font-bold hidden sm:block">Operation Department</p>
                 </div>
-                
-                <form onsubmit="handleLogin(event)" class="space-y-5">
-                    <div class="space-y-1">
-                        <label class="block text-[10px] font-black text-slate-400 uppercase ml-2">Username</label>
-                        <div class="relative">
-                            <i data-lucide="user" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
-                            <input type="text" id="login-user" class="w-full pl-11 pr-4 py-3.5 rounded-xl border border-slate-200 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 font-bold text-slate-700 bg-slate-50 transition-all placeholder:text-slate-300 placeholder:font-medium" placeholder="Identity Code">
-                        </div>
-                    </div>
-                    
-                    <div class="space-y-1">
-                        <label class="block text-[10px] font-black text-slate-400 uppercase ml-2">Password</label>
-                        <div class="relative">
-                            <i data-lucide="key" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
-                            <input type="password" id="login-pass" class="w-full pl-11 pr-4 py-3.5 rounded-xl border border-slate-200 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 font-bold text-slate-700 bg-slate-50 transition-all placeholder:text-slate-300 placeholder:font-medium" placeholder="••••••••">
-                        </div>
-                    </div>
-
-                    <button type="submit" class="w-full bg-slate-900 text-white py-4 rounded-xl font-black uppercase tracking-widest text-xs hover:bg-black transition-all shadow-xl hover:shadow-2xl active:scale-[0.98] mt-4 flex items-center justify-center gap-2 group">
-                        <span>Authenticate</span>
-                        <i data-lucide="arrow-right" class="w-4 h-4 group-hover:translate-x-1 transition-transform"></i>
-                    </button>
-                </form>
             </div>
         </div>
+        
+        <!-- Desktop Nav -->
+        <div class="hidden md:flex gap-6 h-full items-center">
+            <button onclick="switchView('dashboard')" id="nav-dashboard" class="text-sm font-semibold py-1 transition-all border-b-2 border-transparent hover:text-blue-600">Dashboard</button>
+            <button onclick="switchView('trainee-list')" id="nav-trainee-list" class="text-sm font-semibold py-1 transition-all border-b-2 border-transparent hover:text-blue-600">Trainee List</button>
+            <button onclick="switchView('settings')" id="nav-settings" class="text-sm font-semibold py-1 transition-all border-b-2 border-transparent hover:text-blue-600">Settings</button>
+        </div>
+
+        <!-- Mobile Menu Button -->
+        <button onclick="toggleMobileMenu()" class="md:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-lg">
+            <i data-lucide="menu"></i>
+        </button>
+    </nav>
+
+    <!-- Mobile Nav Menu (Hidden by default) -->
+    <div id="mobile-menu" class="fixed inset-x-0 top-[60px] bg-white border-b border-slate-100 shadow-xl z-40 hidden md:hidden flex-col p-4 space-y-2 no-print">
+        <button onclick="switchView('dashboard')" class="w-full text-left p-3 rounded-xl font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-3"><i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard</button>
+        <button onclick="switchView('trainee-list')" class="w-full text-left p-3 rounded-xl font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-3"><i data-lucide="users" class="w-4 h-4"></i> Trainee List</button>
+        <button onclick="switchView('settings')" class="w-full text-left p-3 rounded-xl font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-3"><i data-lucide="settings" class="w-4 h-4"></i> Settings</button>
     </div>
 
-    <!-- MAIN APP WRAPPER (Hidden until Login) -->
-    <div id="app-layout" class="hidden">
+    <main class="w-full max-w-7xl mx-auto p-4 md:p-6 pb-24 md:pb-20">
+        <!-- Dashboard View -->
+        <div id="dashboard-view" class="space-y-6 md:space-y-8">
+            <div>
+                <h2 class="text-2xl md:text-3xl font-black text-slate-900">System Dashboard</h2>
+                <p class="text-sm md:text-base text-slate-500">Real-time cloud monitoring of operational performance.</p>
+            </div>
 
-        <!-- Navigation -->
-        <nav class="no-print sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200 px-4 md:px-6 py-3 flex justify-between items-center shadow-sm">
-            <div class="flex items-center gap-4">
-                <div class="flex items-center gap-3">
-                    <div class="bg-blue-600 p-2 rounded-lg text-white shadow-lg shadow-blue-200"><i data-lucide="monitor"></i></div>
-                    <div>
-                        <h1 class="font-bold text-lg md:text-xl tracking-tight text-slate-900 leading-tight">M-Commerce</h1>
-                        <p class="text-[9px] md:text-[10px] text-slate-400 uppercase tracking-widest font-bold hidden sm:block">Operation Department</p>
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
+                <div class="glass-card p-4 md:p-6 rounded-2xl md:rounded-3xl shadow-sm border-l-4 border-blue-500">
+                    <p class="text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Total</p>
+                    <h3 class="text-2xl md:text-3xl font-black text-slate-900" id="dash-total">0</h3>
+                </div>
+                <div class="glass-card p-4 md:p-6 rounded-2xl md:rounded-3xl shadow-sm border-l-4 border-purple-500">
+                    <p class="text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Active</p>
+                    <h3 class="text-2xl md:text-3xl font-black text-slate-900" id="dash-active">0</h3>
+                </div>
+                <div class="glass-card p-4 md:p-6 rounded-2xl md:rounded-3xl shadow-sm border-l-4 border-emerald-500">
+                    <p class="text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Regular</p>
+                    <h3 class="text-2xl md:text-3xl font-black text-slate-900" id="dash-regular">0</h3>
+                </div>
+                <div class="glass-card p-4 md:p-6 rounded-2xl md:rounded-3xl shadow-sm border-l-4 border-rose-500">
+                    <p class="text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Overdue</p>
+                    <h3 class="text-2xl md:text-3xl font-black text-rose-600" id="dash-overdue">0</h3>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+                <div class="lg:col-span-1 space-y-4">
+                    <div class="flex items-center gap-2 mb-2">
+                        <i data-lucide="activity" class="text-blue-500 w-5 h-5"></i>
+                        <h4 class="font-black text-slate-900 uppercase text-sm tracking-wider">Cloud Activity Log</h4>
+                    </div>
+                    <div id="activity-feed" class="space-y-3 max-h-[400px] md:max-h-[600px] overflow-y-auto pr-2"></div>
+                </div>
+
+                <div class="lg:col-span-2 space-y-8">
+                    <div class="space-y-4">
+                        <div class="flex items-center gap-2 mb-2">
+                            <i data-lucide="alert-triangle" class="text-rose-500 w-5 h-5"></i>
+                            <h4 class="font-black text-slate-900 uppercase text-sm tracking-wider">Overdue Evaluations</h4>
+                        </div>
+                        <div id="overdue-list" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="flex items-center gap-2 mb-2">
+                            <i data-lucide="calendar" class="text-emerald-500 w-5 h-5"></i>
+                            <h4 class="font-black text-slate-900 uppercase text-sm tracking-wider">Evaluation Queue</h4>
+                        </div>
+                        <div id="upcoming-list" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
                     </div>
                 </div>
             </div>
-            
-            <!-- Desktop Nav -->
-            <div class="hidden md:flex gap-6 h-full items-center">
-                <button onclick="switchView('dashboard')" id="nav-dashboard" class="text-sm font-semibold py-1 transition-all border-b-2 border-transparent hover:text-blue-600">Dashboard</button>
-                <button onclick="switchView('trainee-list')" id="nav-trainee-list" class="text-sm font-semibold py-1 transition-all border-b-2 border-transparent hover:text-blue-600">Trainee List</button>
-                <button onclick="switchView('settings')" id="nav-settings" class="text-sm font-semibold py-1 transition-all border-b-2 border-transparent hover:text-blue-600">Settings</button>
-            </div>
-
-            <!-- Mobile Menu Button -->
-            <button onclick="toggleMobileMenu()" class="md:hidden p-2 text-slate-600 hover:bg-slate-100 rounded-lg">
-                <i data-lucide="menu"></i>
-            </button>
-        </nav>
-
-        <!-- Mobile Nav Menu (Hidden by default) -->
-        <div id="mobile-menu" class="fixed inset-x-0 top-[60px] bg-white border-b border-slate-100 shadow-xl z-40 hidden md:hidden flex-col p-4 space-y-2 no-print">
-            <button onclick="switchView('dashboard')" class="w-full text-left p-3 rounded-xl font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-3"><i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard</button>
-            <button onclick="switchView('trainee-list')" class="w-full text-left p-3 rounded-xl font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-3"><i data-lucide="users" class="w-4 h-4"></i> Trainee List</button>
-            <button onclick="switchView('settings')" class="w-full text-left p-3 rounded-xl font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-3"><i data-lucide="settings" class="w-4 h-4"></i> Settings</button>
         </div>
 
-        <main class="w-full max-w-7xl mx-auto p-4 md:p-6 pb-24 md:pb-20">
-            <!-- Dashboard View -->
-            <div id="dashboard-view" class="space-y-6 md:space-y-8">
+        <!-- Trainee List View -->
+        <div id="trainee-list-view" class="hidden space-y-8 md:space-y-12">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
-                    <h2 class="text-2xl md:text-3xl font-black text-slate-900">System Dashboard</h2>
-                    <p class="text-sm md:text-base text-slate-500">Real-time cloud monitoring of operational performance.</p>
+                    <h2 class="text-2xl md:text-3xl font-black text-slate-900">Personnel Records</h2>
+                    <p class="text-sm md:text-base text-slate-500">Cloud-synced employee data management.</p>
                 </div>
-
-                <!-- Stats Grid -->
-                <div class="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
-                    <div class="glass-card p-4 md:p-6 rounded-2xl md:rounded-3xl shadow-sm border-l-4 border-blue-500">
-                        <p class="text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Total</p>
-                        <h3 class="text-2xl md:text-3xl font-black text-slate-900" id="dash-total">0</h3>
+                <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                    <div class="relative w-full sm:w-72">
+                        <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4"></i>
+                        <input type="text" id="trainee-search" oninput="renderDashboard()" placeholder="Search..." class="w-full pl-10 pr-4 py-3 md:py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm transition-all shadow-sm">
                     </div>
-                    <div class="glass-card p-4 md:p-6 rounded-2xl md:rounded-3xl shadow-sm border-l-4 border-purple-500">
-                        <p class="text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Active</p>
-                        <h3 class="text-2xl md:text-3xl font-black text-slate-900" id="dash-active">0</h3>
-                    </div>
-                    <div class="glass-card p-4 md:p-6 rounded-2xl md:rounded-3xl shadow-sm border-l-4 border-emerald-500">
-                        <p class="text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Regular</p>
-                        <h3 class="text-2xl md:text-3xl font-black text-slate-900" id="dash-regular">0</h3>
-                    </div>
-                    <div class="glass-card p-4 md:p-6 rounded-2xl md:rounded-3xl shadow-sm border-l-4 border-rose-500">
-                        <p class="text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Overdue</p>
-                        <h3 class="text-2xl md:text-3xl font-black text-rose-600" id="dash-overdue">0</h3>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
-                    <div class="lg:col-span-1 space-y-4">
-                        <div class="flex items-center gap-2 mb-2">
-                            <i data-lucide="activity" class="text-blue-500 w-5 h-5"></i>
-                            <h4 class="font-black text-slate-900 uppercase text-sm tracking-wider">Cloud Activity Log</h4>
-                        </div>
-                        <div id="activity-feed" class="space-y-3 max-h-[400px] md:max-h-[600px] overflow-y-auto pr-2"></div>
-                    </div>
-
-                    <div class="lg:col-span-2 space-y-8">
-                        <div class="space-y-4">
-                            <div class="flex items-center gap-2 mb-2">
-                                <i data-lucide="alert-triangle" class="text-rose-500 w-5 h-5"></i>
-                                <h4 class="font-black text-slate-900 uppercase text-sm tracking-wider">Overdue Evaluations</h4>
-                            </div>
-                            <div id="overdue-list" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
-                        </div>
-                        <div class="space-y-4">
-                            <div class="flex items-center gap-2 mb-2">
-                                <i data-lucide="calendar" class="text-emerald-500 w-5 h-5"></i>
-                                <h4 class="font-black text-slate-900 uppercase text-sm tracking-wider">Evaluation Queue</h4>
-                            </div>
-                            <div id="upcoming-list" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
-                        </div>
-                    </div>
+                    <button onclick="showAddTraineeModal()" class="bg-slate-900 text-white px-6 py-3 md:py-2 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 hover:bg-black transition-all shadow-lg active:scale-95">
+                        <i data-lucide="user-plus" class="w-4 h-4"></i> Add Trainee
+                    </button>
                 </div>
             </div>
 
-            <!-- Trainee List View -->
-            <div id="trainee-list-view" class="hidden space-y-8 md:space-y-12">
-                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                    <div>
-                        <h2 class="text-2xl md:text-3xl font-black text-slate-900">Personnel Records</h2>
-                        <p class="text-sm md:text-base text-slate-500">Cloud-synced employee data management.</p>
-                    </div>
-                    <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-                        <div class="relative w-full sm:w-72">
-                            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4"></i>
-                            <input type="text" id="trainee-search" oninput="renderDashboard()" placeholder="Search..." class="w-full pl-10 pr-4 py-3 md:py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm transition-all shadow-sm">
-                        </div>
-                        <button onclick="showAddTraineeModal()" class="bg-slate-900 text-white px-6 py-3 md:py-2 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 hover:bg-black transition-all shadow-lg active:scale-95">
-                            <i data-lucide="user-plus" class="w-4 h-4"></i> Add Trainee
-                        </button>
-                    </div>
-                </div>
+            <div id="sections-container" class="space-y-8 md:space-y-12">
+                <section id="sec-trainee">
+                    <div class="border-l-4 border-blue-500 pl-4 mb-4 md:mb-6"><h3 class="font-black text-slate-900 uppercase tracking-widest text-xs">Active Trainees</h3></div>
+                    <div id="grid-trainee" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"></div>
+                    <div id="empty-trainee" class="hidden text-center py-10 glass-card rounded-3xl border-dashed border-2"><p class="text-slate-400 italic">No records found.</p></div>
+                </section>
+                <section id="sec-probationary">
+                    <div class="border-l-4 border-purple-500 pl-4 mb-4 md:mb-6"><h3 class="font-black text-slate-900 uppercase tracking-widest text-xs">Probationary Period</h3></div>
+                    <div id="grid-probationary" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"></div>
+                    <div id="empty-probationary" class="hidden text-center py-10 glass-card rounded-3xl border-dashed border-2"><p class="text-slate-400 italic">No records found.</p></div>
+                </section>
+                <section id="sec-regular">
+                    <div class="border-l-4 border-emerald-500 pl-4 mb-4 md:mb-6"><h3 class="font-black text-slate-900 uppercase tracking-widest text-xs">Regular Staff</h3></div>
+                    <div id="grid-regular" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"></div>
+                    <div id="empty-regular" class="hidden text-center py-10 glass-card rounded-3xl border-dashed border-2"><p class="text-slate-400 italic">No records found.</p></div>
+                </section>
+                <section id="sec-terminated">
+                    <div class="border-l-4 border-rose-500 pl-4 mb-4 md:mb-6"><h3 class="font-black text-slate-900 uppercase tracking-widest text-xs text-rose-600">Terminated Records</h3></div>
+                    <div id="grid-terminated" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 opacity-75"></div>
+                    <div id="empty-terminated" class="hidden text-center py-10 glass-card rounded-3xl border-dashed border-2"><p class="text-slate-400 italic">No records found.</p></div>
+                </section>
+            </div>
+        </div>
 
-                <div id="sections-container" class="space-y-8 md:space-y-12">
-                    <section id="sec-trainee">
-                        <div class="border-l-4 border-blue-500 pl-4 mb-4 md:mb-6"><h3 class="font-black text-slate-900 uppercase tracking-widest text-xs">Active Trainees</h3></div>
-                        <div id="grid-trainee" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"></div>
-                        <div id="empty-trainee" class="hidden text-center py-10 glass-card rounded-3xl border-dashed border-2"><p class="text-slate-400 italic">No records found.</p></div>
-                    </section>
-                    <section id="sec-probationary">
-                        <div class="border-l-4 border-purple-500 pl-4 mb-4 md:mb-6"><h3 class="font-black text-slate-900 uppercase tracking-widest text-xs">Probationary Period</h3></div>
-                        <div id="grid-probationary" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"></div>
-                        <div id="empty-probationary" class="hidden text-center py-10 glass-card rounded-3xl border-dashed border-2"><p class="text-slate-400 italic">No records found.</p></div>
-                    </section>
-                    <section id="sec-regular">
-                        <div class="border-l-4 border-emerald-500 pl-4 mb-4 md:mb-6"><h3 class="font-black text-slate-900 uppercase tracking-widest text-xs">Regular Staff</h3></div>
-                        <div id="grid-regular" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6"></div>
-                        <div id="empty-regular" class="hidden text-center py-10 glass-card rounded-3xl border-dashed border-2"><p class="text-slate-400 italic">No records found.</p></div>
-                    </section>
-                    <section id="sec-terminated">
-                        <div class="border-l-4 border-rose-500 pl-4 mb-4 md:mb-6"><h3 class="font-black text-slate-900 uppercase tracking-widest text-xs text-rose-600">Terminated Records</h3></div>
-                        <div id="grid-terminated" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 opacity-75"></div>
-                        <div id="empty-terminated" class="hidden text-center py-10 glass-card rounded-3xl border-dashed border-2"><p class="text-slate-400 italic">No records found.</p></div>
-                    </section>
-                </div>
+        <!-- Settings View -->
+        <div id="settings-view" class="hidden space-y-8 max-w-2xl mx-auto">
+            <div>
+                <h2 class="text-2xl md:text-3xl font-black text-slate-900">System Settings</h2>
+                <p class="text-sm md:text-base text-slate-500">Manage cloud connectivity and data integrity.</p>
             </div>
 
-            <!-- Settings View -->
-            <div id="settings-view" class="hidden space-y-8 max-w-2xl mx-auto">
-                <div>
-                    <h2 class="text-2xl md:text-3xl font-black text-slate-900">System Settings</h2>
-                    <p class="text-sm md:text-base text-slate-500">Manage cloud connectivity and data integrity.</p>
-                </div>
-
-                <div class="grid grid-cols-1 gap-6">
-                    <!-- Session Management -->
-                    <div class="glass-card p-6 md:p-8 rounded-3xl space-y-6">
-                        <div class="flex items-center gap-3">
-                            <div class="p-2 bg-slate-900 text-white rounded-lg"><i data-lucide="shield"></i></div>
-                            <h3 class="text-xl font-bold">Admin Session</h3>
-                        </div>
-                        <p class="text-sm text-slate-500 leading-relaxed">You are currently logged in as <strong>Admin</strong>. Securely sign out when finished.</p>
-                        <button onclick="handleLogout()" class="w-full bg-slate-100 text-slate-700 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-slate-200 transition-all border border-slate-200 shadow-sm active:scale-95">
-                            <i data-lucide="log-out"></i> Sign Out
-                        </button>
+            <div class="grid grid-cols-1 gap-6">
+                <div class="glass-card p-6 md:p-8 rounded-3xl space-y-6">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2 bg-blue-100 text-blue-600 rounded-lg"><i data-lucide="database"></i></div>
+                        <h3 class="text-xl font-bold">Cloud Persistence</h3>
                     </div>
-
-                    <div class="glass-card p-6 md:p-8 rounded-3xl space-y-6">
-                        <div class="flex items-center gap-3">
-                            <div class="p-2 bg-blue-100 text-blue-600 rounded-lg"><i data-lucide="database"></i></div>
-                            <h3 class="text-xl font-bold">Cloud Persistence</h3>
-                        </div>
-                        <p class="text-sm text-slate-500 leading-relaxed">Your records are stored in Firebase Firestore. You can still export a manual backup for local archiving.</p>
-                        
-                        <div class="flex flex-col sm:flex-row gap-4 pt-2">
-                            <button onclick="backupData()" class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-blue-700 transition-all shadow-md active:scale-95">
-                                <i data-lucide="download"></i> Backup Data
+                    <p class="text-sm text-slate-500 leading-relaxed">Your records are stored in Firebase Firestore. You can still export a manual backup for local archiving.</p>
+                    
+                    <div class="flex flex-col sm:flex-row gap-4 pt-2">
+                        <button onclick="backupData()" class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-blue-700 transition-all shadow-md active:scale-95">
+                            <i data-lucide="download"></i> Backup Data
+                        </button>
+                        <div class="flex-1 relative">
+                            <input type="file" id="restore-input" onchange="restoreData(event)" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                            <button class="w-full bg-slate-100 text-slate-700 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-slate-200 transition-all border border-slate-200 shadow-sm active:scale-95">
+                                <i data-lucide="upload"></i> Restore
                             </button>
-                            <div class="flex-1 relative">
-                                <input type="file" id="restore-input" onchange="restoreData(event)" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
-                                <button class="w-full bg-slate-100 text-slate-700 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-slate-200 transition-all border border-slate-200 shadow-sm active:scale-95">
-                                    <i data-lucide="upload"></i> Restore
-                                </button>
-                            </div>
                         </div>
                     </div>
+                </div>
 
-                    <div class="glass-card p-6 md:p-8 rounded-3xl border-2 border-rose-50 space-y-6">
-                        <div class="flex items-center gap-3 text-rose-600">
-                            <div class="p-2 bg-rose-100 rounded-lg"><i data-lucide="alert-octagon"></i></div>
-                            <h3 class="text-xl font-bold">Factory Reset</h3>
-                        </div>
-                        <p class="text-sm text-slate-500 leading-relaxed">Permanently erase all personnel records and activity logs from the Firebase cloud database.</p>
-                        <button onclick="showFactoryResetModal()" class="w-full sm:w-auto bg-rose-50 text-rose-600 py-3 px-8 rounded-xl font-bold border-2 border-rose-100 hover:bg-rose-600 hover:text-white transition-all shadow-sm active:scale-95">
-                            Wipe Database Records
-                        </button>
+                <div class="glass-card p-6 md:p-8 rounded-3xl border-2 border-rose-50 space-y-6">
+                    <div class="flex items-center gap-3 text-rose-600">
+                        <div class="p-2 bg-rose-100 rounded-lg"><i data-lucide="alert-octagon"></i></div>
+                        <h3 class="text-xl font-bold">Factory Reset</h3>
                     </div>
+                    <p class="text-sm text-slate-500 leading-relaxed">Permanently erase all personnel records and activity logs from the Firebase cloud database.</p>
+                    <button onclick="showFactoryResetModal()" class="w-full sm:w-auto bg-rose-50 text-rose-600 py-3 px-8 rounded-xl font-bold border-2 border-rose-100 hover:bg-rose-600 hover:text-white transition-all shadow-sm active:scale-95">
+                        Wipe Database Records
+                    </button>
                 </div>
             </div>
+        </div>
 
-            <!-- Detail Views -->
-            <div id="eval-view" class="hidden max-w-4xl mx-auto space-y-6">
-                <div class="flex items-center justify-between gap-4 sticky top-[68px] z-30 bg-slate-50/90 backdrop-blur-md p-2 rounded-2xl shadow-sm border border-slate-200">
-                     <div class="flex items-center gap-4">
-                        <button onclick="switchView('trainee-list')" class="p-2 hover:bg-slate-100 rounded-full transition-colors"><i data-lucide="arrow-left"></i></button>
-                        <h2 class="text-lg md:text-xl font-bold" id="eval-title">Evaluation</h2>
-                     </div>
-                     <div class="px-4 py-2 bg-slate-900 text-white rounded-xl font-black font-mono text-lg shadow-lg" id="live-score-display">0.0%</div>
-                </div>
-                
-                <div class="glass-card p-6 md:p-8 rounded-3xl shadow-lg space-y-8" id="eval-form-container"></div>
-            </div>
-
-            <div id="report-view" class="hidden space-y-8">
-                <div class="flex items-center gap-4 no-print">
+        <!-- Detail Views -->
+        <div id="eval-view" class="hidden max-w-4xl mx-auto space-y-6">
+            <div class="flex items-center justify-between gap-4 sticky top-[68px] z-30 bg-slate-50/90 backdrop-blur-md p-2 rounded-2xl shadow-sm border border-slate-200">
+                 <div class="flex items-center gap-4">
                     <button onclick="switchView('trainee-list')" class="p-2 hover:bg-slate-100 rounded-full transition-colors"><i data-lucide="arrow-left"></i></button>
-                    <h2 class="text-xl md:text-2xl font-bold text-slate-900">Performance Dossier</h2>
-                </div>
-                <div id="report-content" class="overflow-x-auto"></div>
+                    <h2 class="text-lg md:text-xl font-bold" id="eval-title">Evaluation</h2>
+                 </div>
+                 <div class="px-4 py-2 bg-slate-900 text-white rounded-xl font-black font-mono text-lg shadow-lg" id="live-score-display">0.0%</div>
             </div>
+            
+            <div class="glass-card p-6 md:p-8 rounded-3xl shadow-lg space-y-8" id="eval-form-container"></div>
+        </div>
 
-            <div id="eval-detail-view" class="hidden space-y-8">
-                <div class="flex items-center justify-between no-print gap-4">
-                    <button id="back-to-report-btn" class="p-2 hover:bg-slate-100 rounded-full transition-colors"><i data-lucide="arrow-left"></i></button>
-                    <button id="download-eval-pdf" class="bg-slate-900 text-white px-4 md:px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg text-sm active:scale-95"><i data-lucide="download"></i> <span class="hidden sm:inline">Download</span> Report</button>
-                </div>
-                <div id="eval-detail-content" class="printable-report bg-white rounded-lg shadow-sm"></div>
+        <div id="report-view" class="hidden space-y-8">
+            <div class="flex items-center gap-4 no-print">
+                <button onclick="switchView('trainee-list')" class="p-2 hover:bg-slate-100 rounded-full transition-colors"><i data-lucide="arrow-left"></i></button>
+                <h2 class="text-xl md:text-2xl font-bold text-slate-900">Performance Dossier</h2>
             </div>
+            <div id="report-content" class="overflow-x-auto"></div>
+        </div>
 
-            <div id="endorsement-view" class="hidden space-y-8">
-                <div class="flex items-center justify-between no-print gap-4">
-                    <button id="back-to-report-from-endorse" class="p-2 hover:bg-slate-100 rounded-full transition-colors"><i data-lucide="arrow-left"></i></button>
-                    <button id="download-endorse-pdf" class="bg-blue-600 text-white px-4 md:px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg text-sm active:scale-95"><i data-lucide="download"></i> <span class="hidden sm:inline">Download</span> Endorsement</button>
-                </div>
-                <div id="endorsement-content" class="printable-report bg-white rounded-lg shadow-sm"></div>
+        <div id="eval-detail-view" class="hidden space-y-8">
+            <div class="flex items-center justify-between no-print gap-4">
+                <button id="back-to-report-btn" class="p-2 hover:bg-slate-100 rounded-full transition-colors"><i data-lucide="arrow-left"></i></button>
+                <button id="download-eval-pdf" class="bg-slate-900 text-white px-4 md:px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg text-sm active:scale-95"><i data-lucide="download"></i> <span class="hidden sm:inline">Download</span> Report</button>
             </div>
+            <div id="eval-detail-content" class="printable-report bg-white rounded-lg shadow-sm"></div>
+        </div>
 
-            <div id="termination-view" class="hidden space-y-8">
-                <div class="flex items-center justify-between no-print gap-4">
-                    <button id="back-to-report-from-term" class="p-2 hover:bg-slate-100 rounded-full transition-colors"><i data-lucide="arrow-left"></i></button>
-                    <button id="download-term-pdf" class="bg-rose-600 text-white px-4 md:px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg text-sm active:scale-95"><i data-lucide="download"></i> <span class="hidden sm:inline">Download</span> Notice</button>
-                </div>
-                <div id="termination-content" class="printable-report bg-white rounded-lg shadow-sm"></div>
+        <div id="endorsement-view" class="hidden space-y-8">
+            <div class="flex items-center justify-between no-print gap-4">
+                <button id="back-to-report-from-endorse" class="p-2 hover:bg-slate-100 rounded-full transition-colors"><i data-lucide="arrow-left"></i></button>
+                <button id="download-endorse-pdf" class="bg-blue-600 text-white px-4 md:px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg text-sm active:scale-95"><i data-lucide="download"></i> <span class="hidden sm:inline">Download</span> Endorsement</button>
             </div>
-        </main>
-    </div> <!-- End App Layout -->
+            <div id="endorsement-content" class="printable-report bg-white rounded-lg shadow-sm"></div>
+        </div>
+
+        <div id="termination-view" class="hidden space-y-8">
+            <div class="flex items-center justify-between no-print gap-4">
+                <button id="back-to-report-from-term" class="p-2 hover:bg-slate-100 rounded-full transition-colors"><i data-lucide="arrow-left"></i></button>
+                <button id="download-term-pdf" class="bg-rose-600 text-white px-4 md:px-6 py-2.5 rounded-xl font-bold flex items-center gap-2 shadow-lg text-sm active:scale-95"><i data-lucide="download"></i> <span class="hidden sm:inline">Download</span> Notice</button>
+            </div>
+            <div id="termination-content" class="printable-report bg-white rounded-lg shadow-sm"></div>
+        </div>
+    </main>
 
     <!-- Modals -->
     <div id="modal-backdrop" class="fixed inset-0 bg-slate-900/60 hidden z-[60] backdrop-blur-sm flex items-center justify-center p-4">
@@ -451,45 +392,6 @@
         }
 
         // --- Core UI Logic (Attached to Window for Global Access) ---
-        
-        // Login Logic
-        window.handleLogin = function(e) {
-            e.preventDefault();
-            const u = document.getElementById('login-user').value;
-            const p = document.getElementById('login-pass').value;
-            
-            if(u === 'Admin' && p === 'TraineeTracker') {
-                localStorage.setItem('mcorp_session', 'active');
-                unlockInterface();
-            } else {
-                showNotification("Access Denied: Invalid Credentials");
-                // Shake effect
-                const box = document.querySelector('#login-view > div');
-                box.classList.add('animate-[shake_0.5s_ease-in-out]');
-                setTimeout(() => box.classList.remove('animate-[shake_0.5s_ease-in-out]'), 500);
-            }
-        }
-
-        window.handleLogout = function() {
-            localStorage.removeItem('mcorp_session');
-            location.reload();
-        }
-
-        function unlockInterface() {
-            document.getElementById('login-view').classList.add('hidden');
-            document.getElementById('app-layout').classList.remove('hidden');
-            renderDashboard(); 
-            lucide.createIcons();
-        }
-
-        // Check Session on Load
-        document.addEventListener('DOMContentLoaded', () => {
-            if(localStorage.getItem('mcorp_session') === 'active') {
-                unlockInterface();
-            }
-            lucide.createIcons();
-        });
-
         window.toggleMobileMenu = function() {
             const menu = document.getElementById('mobile-menu');
             menu.classList.toggle('hidden');
@@ -1401,13 +1303,13 @@
 
         // Firebase Configuration
         const userProvidedConfig = {
-          	 apiKey: "AIzaSyAKUM3Mo91_Gm-Rj5x7EgrN43HWUpxYprU",
-  authDomain: "traineetracker-91496.firebaseapp.com",
-  projectId: "traineetracker-91496",
-  storageBucket: "traineetracker-91496.firebasestorage.app",
-  messagingSenderId: "930372715628",
-  appId: "1:930372715628:web:e76cbce93faf492b494449",
-  measurementId: "G-YXB1YTESWG"
+          	 apiKey: "",
+ 		 authDomain: "traineetracker-91496.firebaseapp.com",
+  		 projectId: "traineetracker-91496",
+ 		 storageBucket: "traineetracker-91496.firebasestorage.app",
+ 		 messagingSenderId: "930372715628",
+ 		 appId: "1:930372715628:web:e76cbce93faf492b494449",
+ 		 measurementId: "G-YXB1YTESWG"
         };
 
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : userProvidedConfig;
