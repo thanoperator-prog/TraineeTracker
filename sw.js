@@ -1,39 +1,65 @@
 const CACHE_NAME = 'mcorp-tracker-v1';
 const ASSETS_TO_CACHE = [
-  'index.html',
-  'manifest.json',
+  './index.html',
   'https://cdn.tailwindcss.com',
   'https://unpkg.com/lucide@latest',
   'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js',
   'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap',
-  'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&display=swap'
+  'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&display=swap',
+  'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'
 ];
 
-// Install Event
-self.addEventListener('install', event => {
+// Install Service Worker
+self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(ASSETS_TO_CACHE))
-      .then(() => self.skipWaiting())
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(ASSETS_TO_CACHE);
+    })
   );
 });
 
-// Activate Event
-self.addEventListener('activate', event => {
+// Activate Service Worker
+self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then(keys => {
+    caches.keys().then((keyList) => {
       return Promise.all(
-        keys.filter(key => key !== CACHE_NAME)
-          .map(key => caches.delete(key))
+        keyList.map((key) => {
+          if (key !== CACHE_NAME) {
+            return caches.delete(key);
+          }
+        })
       );
     })
   );
 });
 
-// Fetch Event (Network First, then Cache)
-self.addEventListener('fetch', event => {
+// Fetch Strategy
+self.addEventListener('fetch', (event) => {
+  // Ignore Firestore/Firebase requests (let the SDK handle persistence)
+  if (event.request.url.includes('firestore') || event.request.url.includes('googleapis') || event.request.url.includes('firebase')) {
+    return;
+  }
+
+  // Network First for HTML navigation (ensures updates are seen), fall back to cache
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(() => {
+        return caches.match('./index.html');
+      })
+    );
+    return;
+  }
+
+  // Stale-While-Revalidate for other assets
   event.respondWith(
-    fetch(event.request)
-      .catch(() => caches.match(event.request))
+    caches.match(event.request).then((cachedResponse) => {
+      const fetchPromise = fetch(event.request).then((networkResponse) => {
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(event.request, networkResponse.clone());
+        });
+        return networkResponse;
+      });
+      return cachedResponse || fetchPromise;
+    })
   );
 });
