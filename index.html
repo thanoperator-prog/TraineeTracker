@@ -142,6 +142,7 @@
             <button onclick="window.logout()" class="w-full text-left p-3 rounded-xl font-bold text-rose-600 hover:bg-rose-50 flex items-center gap-3"><i data-lucide="log-out" class="w-4 h-4"></i> Logout</button>
         </div>
 
+        <!-- ... (Main content same as before) ... -->
         <main class="w-full max-w-7xl mx-auto p-4 md:p-6 pb-24 md:pb-20">
             <!-- Dashboard View -->
             <div id="dashboard-view" class="space-y-6 md:space-y-8">
@@ -342,6 +343,7 @@
 
     <!-- Modals (unchanged HTML structure, just context) -->
     <div id="modal-backdrop" class="fixed inset-0 bg-slate-900/60 hidden z-[60] backdrop-blur-sm flex items-center justify-center p-4">
+        <!-- ... existing modals ... -->
         <!-- Question Editor Modal -->
         <div id="question-editor-modal" class="bg-white w-full max-w-4xl rounded-3xl shadow-2xl p-6 md:p-8 hidden flex flex-col h-[90vh] mx-4">
             <div class="flex justify-between items-center mb-6">
@@ -394,7 +396,9 @@
                 </div>
             </div>
         </div>
-
+        
+        <!-- ... existing security, add person, terminate modals ... -->
+        
         <!-- Security Reset Modal -->
         <div id="factory-reset-modal" class="bg-white w-full max-w-md rounded-3xl shadow-2xl p-6 md:p-8 hidden text-center border-4 border-rose-100 mx-4">
             <div class="w-16 h-16 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-4"><i data-lucide="alert-octagon" class="w-8 h-8"></i></div>
@@ -958,7 +962,8 @@
             let existingData = {};
             if (evalId) {
                 const ev = emp.evaluations.find(x => x.id == evalId);
-                if (ev && ev.details) { ev.details.forEach(d => { existingData[d.q] = d.score; }); }
+                // Updated to capture selectedAnswer if present
+                if (ev && ev.details) { ev.details.forEach(d => { existingData[d.q] = { score: d.score, selectedAnswer: d.selectedAnswer }; }); }
                 if (ev && ev.type) window.currentEvalType = ev.type;
             }
 
@@ -972,7 +977,6 @@
             const liveScoreEl = document.getElementById('live-score-display');
             if(liveScoreEl) liveScoreEl.style.display = isRefresherMode ? 'none' : 'block';
 
-            // SELECT THE CORRECT STRUCTURE FOR THE EXAM
             const structureToUse = isRefresherMode ? window.refresherStructure : window.evalStructure;
 
             structureToUse.forEach((cat, cIdx) => {
@@ -985,7 +989,10 @@
                     
                     sec.questions.forEach((q, qIdx) => {
                         const qId = `q_${cIdx}_${sIdx}_${qIdx}`;
-                        const existingScore = existingData[q.q] || 0;
+                        const existingInfo = existingData[q.q] || {};
+                        const existingScore = existingInfo.score || 0;
+                        const existingAns = existingInfo.selectedAnswer || '';
+                        
                         const useMultipleChoice = isRefresherMode && q.refresher && q.refresher.options;
                         let inputHtml = '';
 
@@ -996,9 +1003,11 @@
                                 const scoreValue = isCorrectOption ? 1 : 0;
                                 const activeClass = (existingScore === 1 && isCorrectOption) ? "border-blue-600 bg-blue-600 text-white shadow-md" : "border-slate-200 bg-white text-slate-700 hover:bg-blue-50";
                                 const textClass = (existingScore === 1 && isCorrectOption) ? "text-white" : "text-blue-600";
-                                inputHtml += `<button type="button" onclick="selectRefresherOption('${qId}', ${scoreValue}, this)" class="text-left px-4 py-3 rounded-xl border text-xs font-bold transition-all active:scale-95 focus:ring-2 focus:ring-blue-500 ${activeClass}" data-val="${scoreValue}"><span class="${textClass} mr-2">${toLetter(optIdx).toUpperCase()}.</span> ${opt}</button>`;
+                                const safeOpt = opt.replace(/'/g, "\\'");
+                                inputHtml += `<button type="button" onclick="selectRefresherOption('${qId}', ${scoreValue}, '${safeOpt}', this)" class="text-left px-4 py-3 rounded-xl border text-xs font-bold transition-all active:scale-95 focus:ring-2 focus:ring-blue-500 ${activeClass}" data-val="${scoreValue}"><span class="${textClass} mr-2">${toLetter(optIdx).toUpperCase()}.</span> ${opt}</button>`;
                             });
-                            inputHtml += `</div><input type="hidden" id="${qId}" class="eval-input" value="${existingScore}">`;
+                            // Added hidden input for selected answer text
+                            inputHtml += `</div><input type="hidden" id="${qId}" class="eval-input" value="${existingScore}"><input type="hidden" id="${qId}_text" value="${existingAns}">`;
                         } else {
                             const buttonsHtml = [1,2,3,4,5].map(v => {
                                 const isSelected = existingScore === v;
@@ -1029,8 +1038,9 @@
             switchView('eval');
         }
 
-        window.selectRefresherOption = function(qId, score, btnEl) {
+        window.selectRefresherOption = function(qId, score, text, btnEl) {
             document.getElementById(qId).value = score;
+            document.getElementById(qId + '_text').value = text;
             const parent = btnEl.parentElement;
             const buttons = parent.querySelectorAll('button');
             buttons.forEach(b => {
@@ -1088,7 +1098,15 @@
                         if(isNaN(val) || val === 0 && !isRefresher) inc = true; 
                         const isRefresherMC = isRefresher && q.refresher && q.refresher.options;
                         const maxPoints = isRefresherMC ? 1 : 5;
-                        responses.push({ q: q.q, cat: cat.category, section: sec.title, score: val }); 
+                        
+                        // Capture selected answer text
+                        let selectedText = '';
+                        if (isRefresherMC) {
+                            const hiddenInput = document.getElementById(`q_${cIdx}_${sIdx}_${qIdx}_text`);
+                            selectedText = hiddenInput ? hiddenInput.value : '';
+                        }
+                        
+                        responses.push({ q: q.q, cat: cat.category, section: sec.title, score: val, selectedAnswer: selectedText }); 
                         totalS += val; totalP += maxPoints;
                     });
                 });
@@ -1290,7 +1308,6 @@
                 breakdown[cat].sections[sec].max += qMax;
             });
 
-            // Use the stored structure to maintain order in report
             const structureToUse = isRefresher ? window.refresherStructure : window.evalStructure;
 
             let tableRows = '';
@@ -1320,10 +1337,63 @@
                 catIndex++;
             }
             breakdownHTML += `</div></div>`;
+            
             ev.details.forEach(d => {
                  let maxP = (isRefresher && !d.cat.includes('Skills')) ? 1 : 5;
                  const scoreDisp = maxP === 1 ? `${d.score} / 1` : `${d.score} / 5.0`;
-                 tableRows += `<tr><td class="p-4 border font-bold text-slate-700 text-[10px]">${d.q}</td><td class="p-4 border text-right font-black text-blue-600 text-[10px]">${scoreDisp}</td></tr>`;
+                 
+                 // If refresher, determine if correct or wrong
+                 let rowContent = `<td class="p-4 border font-bold text-slate-700 text-[10px]">${d.q}</td><td class="p-4 border text-right font-black text-blue-600 text-[10px]">${scoreDisp}</td>`;
+                 
+                 if(isRefresher && maxP === 1) {
+                     // Find the question in structure to get correct answer text
+                     let correctOptionText = "N/A";
+                     let found = false;
+                     
+                     // Search through structure
+                     for(const cat of structureToUse) {
+                         if(cat.category === d.cat) {
+                             for(const sec of cat.sections) {
+                                 if(sec.title === d.section) {
+                                     for(const q of sec.questions) {
+                                         if(q.q === d.q && q.refresher) {
+                                             correctOptionText = q.refresher.options[q.refresher.correct];
+                                             found = true;
+                                             break;
+                                         }
+                                     }
+                                 }
+                                 if(found) break;
+                             }
+                         }
+                         if(found) break;
+                     }
+
+                     // If score is 0, it means Wrong.
+                     if(d.score === 0) {
+                         // Check for stored selectedAnswer (new records), or show generic 'Incorrect' (legacy)
+                         const wrongText = d.selectedAnswer || 'Incorrect';
+                         rowContent = `
+                            <td class="p-4 border font-bold text-slate-700 text-[10px]">
+                                <div>${d.q}</div>
+                                <div class="mt-1 text-rose-600 font-black"><span class="line-through">Selected: ${wrongText}</span></div>
+                                <div class="mt-0.5 text-emerald-600 font-bold">Correct: ${correctOptionText}</div>
+                            </td>
+                            <td class="p-4 border text-right font-black text-rose-600 text-[10px]">0 / 1</td>
+                         `;
+                     } else {
+                         // Correct
+                         rowContent = `
+                            <td class="p-4 border font-bold text-slate-700 text-[10px]">
+                                <div>${d.q}</div>
+                                <div class="mt-1 text-slate-400 italic">Answer: ${correctOptionText}</div>
+                            </td>
+                            <td class="p-4 border text-right font-black text-emerald-600 text-[10px]">1 / 1</td>
+                         `;
+                     }
+                 }
+                 
+                 tableRows += `<tr>${rowContent}</tr>`;
             });
 
             let finalScoreDisplay = isRefresher ? (ev.totalScore !== undefined ? `${ev.totalScore} / ${ev.maxScore}` : `${ev.score}`) : `${ev.score}%`;
