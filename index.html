@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>M-Commerce Corporation | Live Operator Tracking System</title>
+    <title>Live Operator Tracker</title>
     
     <!-- PWA Metadata -->
     <meta name="theme-color" content="#2563eb">
@@ -68,7 +68,7 @@
             <div class="flex items-center gap-3">
                 <div class="bg-blue-600 p-2 rounded-lg text-white shadow-lg shadow-blue-200"><i data-lucide="monitor"></i></div>
                 <div>
-                    <h1 class="font-bold text-lg md:text-xl tracking-tight text-slate-900 leading-tight">M-Commerce</h1>
+                    <h1 class="font-bold text-lg md:text-xl tracking-tight text-slate-900 leading-tight">M-Commerce Corporation</h1>
                     <p class="text-[9px] md:text-[10px] text-slate-400 uppercase tracking-widest font-bold hidden sm:block">Live Operator Tracking System</p>
                 </div>
             </div>
@@ -150,7 +150,7 @@
             </div>
         </div>
 
-        <!-- Trainee List View (Renamed in UI to Employee List) -->
+        <!-- Trainee List View -->
         <div id="trainee-list-view" class="hidden space-y-8 md:space-y-12">
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
@@ -206,7 +206,7 @@
                         <div class="p-2 bg-blue-100 text-blue-600 rounded-lg"><i data-lucide="file-text"></i></div>
                         <h3 class="text-xl font-bold">Assessment Configuration</h3>
                     </div>
-                    <p class="text-sm text-slate-500 leading-relaxed">Customize the questionnaire, add new items, or update the Refresher multiple-choice options.</p>
+                    <p class="text-sm text-slate-500 leading-relaxed">Customize the questionnaires independently. Switch between Standard/LOL Evaluation and Refresher Evaluation modes.</p>
                     <button onclick="window.openQuestionManager()" class="w-full bg-slate-900 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-black transition-all shadow-md active:scale-95">
                         <i data-lucide="edit"></i> Manage Assessment Questions
                     </button>
@@ -258,7 +258,6 @@
             <div class="glass-card p-6 md:p-8 rounded-3xl shadow-lg space-y-8" id="eval-form-container"></div>
         </div>
         
-        <!-- ... existing report views ... -->
         <div id="report-view" class="hidden space-y-8">
             <div class="flex items-center gap-4 no-print">
                 <button onclick="switchView('trainee-list')" class="p-2 hover:bg-slate-100 rounded-full transition-colors"><i data-lucide="arrow-left"></i></button>
@@ -306,18 +305,42 @@
                     <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600 p-2"><i data-lucide="x"></i></button>
                 </div>
             </div>
+            
+            <!-- Structure Selector -->
+            <div class="mb-4">
+                <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Editing Mode</label>
+                <select id="editor-mode-select" class="w-full p-3 rounded-xl border-2 border-slate-200 text-sm font-bold outline-none focus:border-blue-500 bg-slate-50 text-slate-800" onchange="window.switchEditorMode()">
+                    <option value="standard">Standard & LOL Evaluation (Grades 1-5)</option>
+                    <option value="refresher">Refresher Evaluation (Multiple Choice)</option>
+                </select>
+            </div>
+
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 flex-grow overflow-hidden">
                 <!-- Sidebar -->
                 <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex flex-col gap-4">
+                     <!-- Category Control -->
                      <div>
                          <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Category</label>
-                         <select id="editor-category-select" class="w-full p-3 rounded-xl border border-slate-200 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500" onchange="window.renderEditorSections()"></select>
+                         <div class="flex gap-2 mb-2">
+                             <select id="editor-category-select" class="w-full p-2 rounded-xl border border-slate-200 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500 bg-white" onchange="window.renderEditorSections()"></select>
+                             <button onclick="window.renameCategory()" class="p-2 bg-white border border-slate-200 rounded-lg text-blue-600 hover:bg-blue-50"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+                             <button onclick="window.deleteCategory()" class="p-2 bg-white border border-slate-200 rounded-lg text-rose-500 hover:bg-rose-50"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                         </div>
+                         <button onclick="window.addCategory()" class="w-full py-2 bg-blue-100 text-blue-700 rounded-lg text-xs font-bold hover:bg-blue-200 flex items-center justify-center gap-1"><i data-lucide="plus" class="w-3 h-3"></i> Add Category</button>
                      </div>
+                     
+                     <!-- Section Control -->
                      <div>
                          <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Section</label>
-                         <select id="editor-section-select" class="w-full p-3 rounded-xl border border-slate-200 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500" onchange="window.renderEditorQuestions()"></select>
+                         <div class="flex gap-2 mb-2">
+                            <select id="editor-section-select" class="w-full p-2 rounded-xl border border-slate-200 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-500 bg-white" onchange="window.renderEditorQuestions()"></select>
+                            <button onclick="window.renameSection()" class="p-2 bg-white border border-slate-200 rounded-lg text-blue-600 hover:bg-blue-50"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+                            <button onclick="window.deleteSection()" class="p-2 bg-white border border-slate-200 rounded-lg text-rose-500 hover:bg-rose-50"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                         </div>
+                         <button onclick="window.addSection()" class="w-full py-2 bg-blue-100 text-blue-700 rounded-lg text-xs font-bold hover:bg-blue-200 flex items-center justify-center gap-1"><i data-lucide="plus" class="w-3 h-3"></i> Add Section</button>
                      </div>
-                     <div class="mt-auto">
+
+                     <div class="mt-auto pt-4 border-t border-slate-200">
                          <button onclick="window.addQuestion()" class="w-full py-3 bg-blue-600 text-white rounded-xl text-sm font-bold hover:bg-blue-700 flex items-center justify-center gap-2 shadow-md active:scale-95"><i data-lucide="plus-circle" class="w-4 h-4"></i> Add Question</button>
                      </div>
                 </div>
@@ -325,17 +348,6 @@
                 <div class="md:col-span-2 overflow-y-auto pr-2 space-y-4" id="editor-questions-list">
                     <p class="text-center text-slate-400 italic mt-10">Select a category and section to edit questions.</p>
                 </div>
-            </div>
-        </div>
-
-        <!-- Confirmation Modal -->
-        <div id="confirm-modal" class="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-6 md:p-8 hidden text-center mx-4">
-            <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4"><i data-lucide="help-circle" class="w-8 h-8"></i></div>
-            <h3 class="text-xl font-bold mb-2" id="confirm-modal-title">Confirm</h3>
-            <p class="text-sm text-slate-500 mb-8 px-2" id="confirm-modal-message">Are you sure?</p>
-            <div class="flex gap-3">
-                <button onclick="closeModal()" class="flex-1 py-3 text-slate-500 font-bold hover:bg-slate-50 rounded-xl transition-all active:scale-95">Cancel</button>
-                <button id="generic-confirm-btn" class="flex-1 py-3 bg-blue-600 text-white font-bold rounded-xl shadow-lg transition-all active:scale-95">Proceed</button>
             </div>
         </div>
 
@@ -351,7 +363,6 @@
             </div>
         </div>
         
-        <!-- ... existing modals ... -->
         <!-- Add Personnel Modal -->
         <div id="add-trainee-modal" class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6 md:p-8 hidden mx-4 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-6">
@@ -431,6 +442,33 @@
         </div>
     </div>
 
+    <!-- INDEPENDENT CONFIRM OVERLAY -->
+    <div id="confirm-overlay" class="fixed inset-0 bg-slate-900/60 hidden z-[70] backdrop-blur-sm flex items-center justify-center p-4">
+        <!-- Confirmation Modal -->
+        <div id="confirm-modal" class="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-6 md:p-8 text-center mx-4">
+            <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4"><i data-lucide="help-circle" class="w-8 h-8"></i></div>
+            <h3 class="text-xl font-bold mb-2" id="confirm-modal-title">Confirm</h3>
+            <p class="text-sm text-slate-500 mb-8 px-2" id="confirm-modal-message">Are you sure?</p>
+            <div class="flex gap-3">
+                <button onclick="closeConfirmModal()" class="flex-1 py-3 text-slate-500 font-bold hover:bg-slate-50 rounded-xl transition-all active:scale-95">Cancel</button>
+                <button id="generic-confirm-btn" class="flex-1 py-3 bg-blue-600 text-white font-bold rounded-xl shadow-lg transition-all active:scale-95">Proceed</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NEW PROMPT OVERLAY (For Adding/Renaming) -->
+    <div id="prompt-overlay" class="fixed inset-0 bg-slate-900/60 hidden z-[80] backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-6 md:p-8 text-center mx-4">
+            <h3 class="text-xl font-bold mb-2" id="prompt-modal-title">Input Required</h3>
+            <p class="text-sm text-slate-500 mb-4" id="prompt-modal-message">Please enter a value:</p>
+            <input type="text" id="prompt-input" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500 font-bold mb-6">
+            <div class="flex gap-3">
+                <button onclick="closePromptModal()" class="flex-1 py-3 text-slate-500 font-bold hover:bg-slate-50 rounded-xl transition-all active:scale-95">Cancel</button>
+                <button id="prompt-confirm-btn" class="flex-1 py-3 bg-blue-600 text-white font-bold rounded-xl shadow-lg transition-all active:scale-95">Save</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -441,11 +479,9 @@
         window.activityLog = [];
         window.currentEvalType = null;
         let currentEvalEmployeeId = null;
-        let currentEditingEvalId = null; // Track if we are editing
+        let currentEditingEvalId = null; 
 
-        // Initialize default structure logic will be handled below
-        
-        // --- Core UI Logic (Attached to Window for Global Access) ---
+        // --- Core UI Logic ---
         window.toggleMobileMenu = function() {
             const menu = document.getElementById('mobile-menu');
             menu.classList.toggle('hidden');
@@ -455,24 +491,39 @@
         window.showConfirmModal = function(title, message, onConfirm) {
             document.getElementById('confirm-modal-title').innerText = title;
             document.getElementById('confirm-modal-message').innerText = message;
-            document.getElementById('modal-backdrop').classList.remove('hidden');
-            document.getElementById('confirm-modal').classList.remove('hidden');
-            document.getElementById('generic-confirm-btn').onclick = () => { onConfirm(); closeModal(); };
+            document.getElementById('confirm-overlay').classList.remove('hidden');
+            document.getElementById('generic-confirm-btn').onclick = () => { onConfirm(); closeConfirmModal(); };
             lucide.createIcons();
         }
 
-        // ... existing functions ...
+        window.closeConfirmModal = function() { document.getElementById('confirm-overlay').classList.add('hidden'); }
+
+        window.showPromptModal = function(title, message, initialValue, onConfirm) {
+            document.getElementById('prompt-modal-title').innerText = title;
+            document.getElementById('prompt-modal-message').innerText = message;
+            const input = document.getElementById('prompt-input');
+            input.value = initialValue || '';
+            document.getElementById('prompt-overlay').classList.remove('hidden');
+            input.focus();
+            const confirmBtn = document.getElementById('prompt-confirm-btn');
+            const newBtn = confirmBtn.cloneNode(true);
+            confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
+            newBtn.onclick = () => {
+                const val = document.getElementById('prompt-input').value.trim();
+                if(val) { onConfirm(val); closePromptModal(); }
+            };
+        }
+
+        window.closePromptModal = function() { document.getElementById('prompt-overlay').classList.add('hidden'); }
+
         window.showFactoryResetModal = function() {
             document.getElementById('reset-verify-input').value = '';
             document.getElementById('modal-backdrop').classList.remove('hidden');
             document.getElementById('factory-reset-modal').classList.remove('hidden');
             document.getElementById('confirm-reset-btn').onclick = () => {
                 const keyword = document.getElementById('reset-verify-input').value.trim();
-                if (keyword === 'RESET') {
-                    window.factoryResetDB().then(() => { showNotification("Cloud System Reset."); closeModal(); });
-                } else {
-                    showNotification("Invalid Security Key.");
-                }
+                if (keyword === 'RESET') { window.factoryResetDB().then(() => { showNotification("Cloud System Reset."); closeModal(); }); } 
+                else { showNotification("Invalid Security Key."); }
             };
             lucide.createIcons();
         }
@@ -481,16 +532,11 @@
             document.querySelectorAll('main > div').forEach(el => el.classList.add('hidden'));
             const target = document.getElementById(`${view}-view`);
             if (target) target.classList.remove('hidden');
-            
-            // Highlight Nav Desktop
             document.querySelectorAll('nav button[id^="nav-"]').forEach(btn => btn.classList.remove('nav-link-active'));
             const navBtn = document.getElementById(`nav-${view}`);
             if (navBtn) navBtn.classList.add('nav-link-active');
-            
-            // Close mobile menu if open
             document.getElementById('mobile-menu').classList.add('hidden');
             document.getElementById('mobile-menu').classList.remove('flex');
-
             renderDashboard(); lucide.createIcons(); window.scrollTo(0,0);
         }
 
@@ -499,14 +545,12 @@
             document.querySelectorAll('#modal-backdrop > div').forEach(el => el.classList.add('hidden'));
         }
 
-        // ... existing showAddTraineeModal, showEditModal, confirmDelete ...
         window.showAddTraineeModal = function() {
             document.getElementById('trainee-modal-title').innerText = 'Personnel Registration';
             const form = document.getElementById('add-trainee-form');
             form.reset();
             form.querySelector('input[name="firebaseId"]').value = '';
             form.querySelector('input[name="id"]').value = '';
-            // Default to Trainee
             form.querySelector('select[name="status"]').value = 'Trainee'; 
             document.getElementById('modal-backdrop').classList.remove('hidden');
             document.getElementById('add-trainee-modal').classList.remove('hidden');
@@ -522,7 +566,6 @@
             form.querySelector('input[name="id"]').value = emp.id;
             form.querySelector('input[name="name"]').value = emp.name;
             form.querySelector('input[name="hireDate"]').value = emp.hireDate;
-            // Set current status
             form.querySelector('select[name="status"]').value = emp.status;
             document.getElementById('modal-backdrop').classList.remove('hidden');
             document.getElementById('add-trainee-modal').classList.remove('hidden');
@@ -533,103 +576,63 @@
             const emp = window.employees.find(e => e.id == id);
             if (!emp) return;
             showConfirmModal("Delete Dossier", `Permanently erase ${emp.name} from the cloud database?`, () => {
-                window.deleteEmployee(emp.firebaseId).then(() => {
-                    window.logActivity('delete', 'Record deleted', emp.name);
-                });
+                window.deleteEmployee(emp.firebaseId).then(() => { window.logActivity('delete', 'Record deleted', emp.name); });
             });
         }
 
         window.showCongrats = function(emp) {
             document.getElementById('cert-name').innerText = emp.name;
             document.getElementById('cert-status').innerText = emp.status;
-
-            // Updated Safe Access Logic
-            if (emp.achievements && emp.achievements.length > 0) {
-                // Format the certificate date as well
-                document.getElementById('cert-date').innerText = formatDateStandard(emp.achievements[emp.achievements.length - 1].date);
-            } else {
-                document.getElementById('cert-date').innerText = formatDateStandard(new Date());
-            }
-
+            if (emp.achievements && emp.achievements.length > 0) { document.getElementById('cert-date').innerText = formatDateStandard(emp.achievements[emp.achievements.length - 1].date); } 
+            else { document.getElementById('cert-date').innerText = formatDateStandard(new Date()); }
             document.getElementById('modal-backdrop').classList.remove('hidden');
             document.getElementById('congrats-modal').classList.remove('hidden');
-            
-            // Use the specific Landscape downloader
             document.getElementById('download-cert-pdf').onclick = () => window.downloadCertificatePDF(`${emp.name}_Certificate.pdf`);
-            
             lucide.createIcons();
         }
 
-        // --- NEW HELPER FUNCTION FOR DATE FORMATTING ---
         window.formatDateStandard = function(dateInput) {
             if (!dateInput || dateInput === 'Pending') return 'Pending';
-            
-            // Handle YYYY-MM-DD specifically to avoid timezone issues
             if (typeof dateInput === 'string' && dateInput.match(/^\d{4}-\d{2}-\d{2}$/)) {
                  const parts = dateInput.split('-');
                  const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
                  return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
             }
-            
             const d = new Date(dateInput);
-            if (isNaN(d.getTime())) return dateInput; // Return original if parsing fails
+            if (isNaN(d.getTime())) return dateInput; 
             return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
         }
 
-        // --- UPDATED DATE CALCULATOR ---
         window.calculateNextDueDate = function(emp) {
              if (emp.status === 'Terminated') return 'N/A';
-             
              const parts = emp.hireDate.split('-');
              const hireDay = parseInt(parts[2]);
-             const hireMonth = parseInt(parts[1]) - 1;
              const hireYear = parseInt(parts[0]);
-             
              if (emp.status === 'Regular') {
-                 // Refresher Logic: Start Feb, Repeat Monthly, Day = Hire Day
                  const today = new Date();
                  const currentYear = today.getFullYear();
-                 
-                 // Get latest Refresher
                  const refreshers = (emp.evaluations || []).filter(e => e.type === 'Refresher').sort((a,b) => new Date(a.date) - new Date(b.date));
                  const lastRefresher = refreshers.length ? refreshers[refreshers.length-1] : null;
-                 
                  if (!lastRefresher) {
-                     // No refresher yet. Target is Feb of current year.
                      let targetYear = currentYear;
-                     const target = new Date(targetYear, 1, hireDay); // Month 1 = Feb
+                     const target = new Date(targetYear, 1, hireDay); 
                      return formatDateStandard(target);
                  } else {
-                     // Has previous refresher
                      const lastDate = new Date(lastRefresher.date);
-                     
-                     // Next due is 1 month after last one
                      let nextYear = lastDate.getFullYear();
                      let nextMonth = lastDate.getMonth() + 1;
-                     
-                     // Handle year rollover
-                     if (nextMonth > 11) {
-                         nextMonth = 0;
-                         nextYear++;
-                     }
-                     
-                     // Logic: "Starting month is February". If calculation lands on Jan, skip to Feb.
-                     if (nextMonth === 0) { // January
-                         nextMonth = 1; // Skip to Feb
-                     }
-                     
+                     if (nextMonth > 11) { nextMonth = 0; nextYear++; }
+                     if (nextMonth === 0) { nextMonth = 1; }
                      const nextDate = new Date(nextYear, nextMonth, hireDay);
                      return formatDateStandard(nextDate);
                  }
              } else {
-                 // Trainee/Probation Logic: HireDate + (Total Evals + 1) months
-                 const d = new Date(hireYear, hireMonth, hireDay);
+                 const d = new Date(hireYear, parseInt(parts[1]) - 1, hireDay);
                  d.setMonth(d.getMonth() + (emp.evaluations || []).length + 1);
                  return formatDateStandard(d);
              }
         }
 
-        // ... existing compatibility helper ...
         window.calculateNextDate = function(hireDate, monthsToAddAdjusted) {
              if (!hireDate) return formatDateStandard(new Date());
              const parts = hireDate.split('-');
@@ -639,24 +642,18 @@
         }
 
         window.renderDashboard = function() {
-            // ... existing renderDashboard logic ...
             const today = new Date(); today.setHours(0,0,0,0);
             const searchInput = document.getElementById('trainee-search');
             const queryText = searchInput ? searchInput.value.toLowerCase() : '';
             const employees = window.employees || [];
-
             let overdueCount = 0, overdueItems = [], upcomingItems = [];
             const filtered = employees.filter(e => e.name.toLowerCase().includes(queryText));
 
             employees.forEach(emp => {
                 if (emp.status === 'Terminated') return;
-                
-                // Use new calculator
                 const nextStr = calculateNextDueDate(emp);
                 if (nextStr === 'N/A') return;
-
                 const nextDate = new Date(nextStr);
-                
                 if (nextDate < today) {
                     overdueCount++;
                     overdueItems.push({ id: emp.id, name: emp.name, date: nextStr, days: Math.ceil(Math.abs(today - nextDate) / 86400000), status: emp.status });
@@ -685,26 +682,15 @@
                 if(!grid) return;
                 const phaseEvals = emp.evaluations.slice(emp.phaseStartIdx || 0);
                 const isCycleComplete = phaseEvals.length >= (emp.phaseLimit || 3);
-                const avg = phaseEvals.length ? (phaseEvals.reduce((a,c) => a+parseFloat(c.score),0)/phaseEvals.length).toFixed(1) : 0;
-                
-                // Use new calculator for Next Date on card
                 const nextEvalDate = calculateNextDueDate(emp);
-
-                // --- Date Retrieval Logic ---
                 const probAch = emp.achievements?.find(a => a.type === 'Probationary');
                 const regAch = emp.achievements?.find(a => a.type === 'Regular');
-                
-                // Use format helper for these dates
                 const probDate = probAch ? formatDateStandard(probAch.date) : 'Pending';
                 const regDate = regAch ? formatDateStandard(regAch.date) : 'Pending';
-                // ---------------------------
 
                 const card = document.createElement('div');
-                // Added onclick to main container
                 card.className = 'glass-card p-6 rounded-3xl shadow-sm border-t-8 flex flex-col relative group cursor-pointer transition-transform active:scale-[0.99] ' + (emp.status === 'Trainee' ? 'border-t-blue-500' : emp.status === 'Probationary' ? 'border-t-purple-500' : emp.status === 'Regular' ? 'border-t-emerald-500' : 'border-t-rose-500');
-                // The onclick handler ensures clicking the card opens dossier
                 card.onclick = (e) => {
-                    // Prevent firing if clicked on a button
                     if(e.target.closest('button')) return;
                     viewReport(emp.id);
                 };
@@ -755,585 +741,147 @@
             lucide.createIcons();
         }
 
-        // EVALUATION FORM STRUCTURE - Now a variable so it can be edited
-        window.evalStructure = [
-            // ... existing structure ...
-            { 
-                category: "OBS Setup & Troubleshooting", 
-                sections: [
-                    { 
-                        title: "OBS", 
-                        questions: [
-                            { 
-                                q: "Parts of Livescene", 
-                                ans: "Basic: Header, Sticker, Podium/Platform, Background.<br>Advance: Header/Brand Logo, Sub-Header, Header Background, Frame, Stickers (UL/UR/LL/LR), Podium.",
-                                refresher: {
-                                    options: [
-                                        "Header/Brand Logo, Sub-Header, Header Background, Frame, Stickers (UL/UR/LL/LR), Podium", // Updated to Advance
-                                        "Webcam, Microphone, Light, Monitor",
-                                        "Header, Footer, Sidebar, Menu",
-                                        "Scene, Source, Audio Mixer, Controls"
-                                    ],
-                                    correct: 0 // Points to the updated Advance answer
-                                }
-                            },
-                            { 
-                                q: "Mostly used Source in OBS", 
-                                ans: "Basic: Image, Media Source, Video Capture.<br>Advance: Image, Media Source, Video Capture, Color Source, Text.",
-                                refresher: {
-                                    options: [
-                                        "Display Capture, Window Capture, Browser",
-                                        "Image, Media Source, Video Capture, Color Source, Text", // Updated to Advance
-                                        "Text (GDI+), Color Source, Group",
-                                        "Audio Input, Audio Output, Game Capture"
-                                    ],
-                                    correct: 1 // Points to the updated Advance answer
-                                }
-                            },
-                            { 
-                                q: "Proper Microphone Setup", 
-                                ans: "Input audio source directly on OBS settings.",
-                                refresher: {
-                                    options: [
-                                        "Use Desktop Audio as primary input",
-                                        "Input audio source directly on OBS settings",
-                                        "Route audio through Windows settings only",
-                                        "Use Monitor Output as input"
-                                    ],
-                                    correct: 1
-                                }
-                            }
-                        ]
-                    },
-                    { 
-                        title: "OBS Settings", 
-                        questions: [
-                            { 
-                                q: "OBS Canvas Settings", 
-                                ans: "Basic: 1080x1920.<br>Advance: 1080x1920 (9:16 Aspect Ratio).",
-                                refresher: {
-                                    options: [
-                                        "1920x1080 (16:9)",
-                                        "1280x720 (16:9)",
-                                        "1080x1920 (9:16 Aspect Ratio)",
-                                        "720x1280 (9:16)"
-                                    ],
-                                    correct: 2
-                                }
-                            },
-                            { 
-                                q: "OBS Encoder", 
-                                ans: "Nvidia NVEC H264.",
-                                refresher: {
-                                    options: [
-                                        "Software (x264)",
-                                        "Nvidia NVEC H264",
-                                        "QuickSync H.264",
-                                        "AOM AV1"
-                                    ],
-                                    correct: 1
-                                }
-                            },
-                            { 
-                                q: "OBS Rate Control", 
-                                ans: "Basic: CBR & VBR.<br>Advance: CBR (Constant) & VBR (Variable).",
-                                refresher: {
-                                    options: [
-                                        "CQP & Lossless",
-                                        "CBR (Constant) & VBR (Variable)", // Updated to Advance
-                                        "VBR & CQP",
-                                        "CBR & Lossless"
-                                    ],
-                                    correct: 1
-                                }
-                            },
-                            { 
-                                q: "Use of CBR & VBR", 
-                                ans: "CBR: Forces specific bitrate (good for fast net, lags if drops).<br>VBR: Adapts bitrate between min/max limits (good for slow net).",
-                                refresher: {
-                                    options: [
-                                        "CBR for slow net, VBR for fast net",
-                                        "CBR forces bitrate (fast net), VBR adapts (slow net)",
-                                        "Both perform exactly the same",
-                                        "VBR is only for recording, CBR is for streaming"
-                                    ],
-                                    correct: 1
-                                }
-                            }
-                        ]
-                    },
-                    { 
-                        title: "OBS Source Settings", 
-                        questions: [
-                            { 
-                                q: "Video Capture Device", 
-                                ans: "Disable Buffering; Audio output mode: DirectSound.",
-                                refresher: {
-                                    options: [
-                                        "Enable Buffering; Audio: Capture only",
-                                        "Disable Buffering; Audio: DirectSound",
-                                        "Auto-detect settings",
-                                        "Buffering On; Audio: WaveOut"
-                                    ],
-                                    correct: 1
-                                }
-                            },
-                            { 
-                                q: "Media Source", 
-                                ans: "Check all except 'Close File when inactive' (prevents preview issues).",
-                                refresher: {
-                                    options: [
-                                        "Check 'Close File when inactive'",
-                                        "Uncheck 'Loop'",
-                                        "Check all except 'Close File when inactive'",
-                                        "Use hardware decoding only"
-                                    ],
-                                    correct: 2
-                                }
-                            }
-                        ]
-                    },
-                    { 
-                        title: "OBS Chroma Key", 
-                        questions: [
-                            { 
-                                q: "Similarity", 
-                                ans: "Controls how close pixels must be to the key color to be removed.",
-                                refresher: {
-                                    options: [
-                                        "Controls edge softness",
-                                        "Controls how close pixels must be to key color",
-                                        "Reduces green spill",
-                                        "Adjusts brightness of the source"
-                                    ],
-                                    correct: 1
-                                }
-                            },
-                            { 
-                                q: "Smoothness", 
-                                ans: "Softens edges and removes jagged artifacts.",
-                                refresher: {
-                                    options: [
-                                        "Softens edges and removes artifacts",
-                                        "Selects the key color",
-                                        "Changes opacity",
-                                        "Increases contrast"
-                                    ],
-                                    correct: 0
-                                }
-                            },
-                            { 
-                                q: "Key Color Spill", 
-                                ans: "Removes green/blue fringe from edges.",
-                                refresher: {
-                                    options: [
-                                        "Makes the image sharper",
-                                        "Removes green/blue fringe from edges",
-                                        "Changes the background color",
-                                        "Increases saturation"
-                                    ],
-                                    correct: 1
-                                }
-                            }
-                        ]
-                    },
-                    { 
-                        title: "OBS Chroma Key Troubleshooting", 
-                        questions: [
-                            { 
-                                q: "Default Settings", 
-                                ans: "Similarity: Variable. Smoothness: 80. Key Color Spill: 50.",
-                                refresher: {
-                                    options: [
-                                        "All values at 100",
-                                        "Sim: Var, Smooth: 80, Spill: 50",
-                                        "Sim: 400, Smooth: 80, Spill: 50",
-                                        "All values at 0"
-                                    ],
-                                    correct: 1
-                                }
-                            },
-                            { 
-                                q: "Greenline Issues", 
-                                ans: "Prevention: Proper camera/lighting.<br>Fix: Adjust similarity/spill slightly, or pick exact color.",
-                                refresher: {
-                                    options: [
-                                        "Fix: Restart OBS",
-                                        "Fix: Adjust similarity/spill slightly",
-                                        "Fix: Change background image",
-                                        "Fix: Apply color correction filter"
-                                    ],
-                                    correct: 1
-                                }
-                            }
-                        ]
-                    },
-                    { 
-                        title: "Greenscreen Protection", 
-                        questions: [
-                            { 
-                                q: "Purpose", 
-                                ans: "Maintains visibility of green items matching background (prevents transparency).",
-                                refresher: {
-                                    options: [
-                                        "To hide green items",
-                                        "Maintains visibility of green items matching background",
-                                        "To protect the physical screen",
-                                        "To improve lighting"
-                                    ],
-                                    correct: 1
-                                }
-                            },
-                            { 
-                                q: "How to Add", 
-                                ans: "Duplicate camera group, add Chroma Key filter to group, crop source to host body.",
-                                refresher: {
-                                    options: [
-                                        "Add Color Key filter directly",
-                                        "Duplicate cam group, add Chroma to group, crop to host",
-                                        "Use a physical blocker",
-                                        "Change shirt color"
-                                    ],
-                                    correct: 1
-                                }
-                            }
-                        ]
-                    },
-                    { 
-                        title: "OBS Internet & CPU Troubleshooting", 
-                        questions: [
-                            { 
-                                q: "Encoder Rate Control Check", 
-                                ans: "If CBR fails, switch to VBR (Min 2500, Max 4500).",
-                                refresher: {
-                                    options: [
-                                        "Switch VBR to CBR",
-                                        "Switch CBR to VBR (Min 2500, Max 4500)",
-                                        "Disable Encoder",
-                                        "Increase Bitrate"
-                                    ],
-                                    correct: 1
-                                }
-                            },
-                            { 
-                                q: "CPU Usage Preset", 
-                                ans: "If rate control fails, reduce CPU Preset by one level.",
-                                refresher: {
-                                    options: [
-                                        "Increase to Max Quality",
-                                        "Reduce CPU Preset by one level",
-                                        "Switch to Software Encoding",
-                                        "Turn off Preview"
-                                    ],
-                                    correct: 1
-                                }
-                            },
-                            { 
-                                q: "ISP Issues", 
-                                ans: "If all fails, bandwidth is insufficient. Request ISP change.",
-                                refresher: {
-                                    options: [
-                                        "Use VPN",
-                                        "Restart Router only",
-                                        "Request ISP change",
-                                        "Use Wi-Fi instead of LAN"
-                                    ],
-                                    correct: 2
-                                }
-                            }
-                        ]
-                    }
-                ]
-            },
-            { 
-                category: "Camera Setup & Troubleshooting", 
-                sections: [
-                    { 
-                        title: "Camera Setup", 
-                        questions: [
-                            { 
-                                q: "Power Settings Option", 
-                                ans: "Save Start Time: Off. Save by Monitor: Both Linked. Auto Off Temp: High.",
-                                refresher: {
-                                    options: [
-                                        "Save Start: On, Monitor: Off",
-                                        "Save Start: Off, Monitor: Both Linked, Temp: High",
-                                        "Auto Off Temp: Standard",
-                                        "Power Saving: Enabled"
-                                    ],
-                                    correct: 1
-                                }
-                            },
-                            { 
-                                q: "HDMI Setting", 
-                                ans: "Res: 2160p/1080p. Output: 60p. Info Disp: Off.",
-                                refresher: {
-                                    options: [
-                                        "Res: 720p, 30p, Info: On",
-                                        "Res: 2160p/1080p, 60p, Info: Off",
-                                        "Res: 4k, 24p, Info: Off",
-                                        "Output: Interlaced"
-                                    ],
-                                    correct: 1
-                                }
-                            },
-                            { 
-                                q: "Camera Cleaning", 
-                                ans: "Brush body (not lens). Air pump dust. Wet/Dry wipes for lens.",
-                                refresher: {
-                                    options: [
-                                        "Water and soap on lens",
-                                        "Brush body, Air pump, Wet/Dry wipes for lens",
-                                        "Paper towel and alcohol",
-                                        "Finger smudge removal"
-                                    ],
-                                    correct: 1
-                                }
-                            }
-                        ]
-                    },
-                    { 
-                        title: "Camera Troubleshooting", 
-                        questions: [
-                            { 
-                                q: "True Color Camera Setup", 
-                                ans: "ISO (Brightness/Grain), Shutter (Sync/No Lag), Exposure (Lighting), Focus (Clarity).",
-                                refresher: {
-                                    options: [
-                                        "Saturation, Contrast, Hue, Tint",
-                                        "ISO, Shutter, Exposure, Focus",
-                                        "Zoom, Pan, Tilt, Roll",
-                                        "White Balance, Style, filter"
-                                    ],
-                                    correct: 1
-                                }
-                            },
-                            { 
-                                q: "Standard Setup of Camera", 
-                                ans: "Shutter: 1/160. Aperture: 3.5 (lowest). Focal: +1.0 to +1.7.",
-                                refresher: {
-                                    options: [
-                                        "Shutter: 1/50, Aperture: 22",
-                                        "Shutter: 1/160, Aperture: 3.5, Focal: +1.0 to +1.7",
-                                        "Auto Mode",
-                                        "Shutter: 1/1000, Aperture: 1.8"
-                                    ],
-                                    correct: 1
-                                }
-                            },
-                            { 
-                                q: "Camera Overheating", 
-                                ans: "Auto-shutdown off. Check fan. Use external fan if needed.",
-                                refresher: {
-                                    options: [
-                                        "Put in refrigerator",
-                                        "Auto-shutdown off, Check fan, External fan",
-                                        "Turn off fan to save power",
-                                        "Lower resolution to 480p"
-                                    ],
-                                    correct: 1
-                                }
-                            },
-                            { 
-                                q: "Camera Blackscreen/No Output", 
-                                ans: "Reset Shoot Mode. Re-plug Capture Card. Restart Camera.",
-                                refresher: {
-                                    options: [
-                                        "Buy a new camera",
-                                        "Reset Shoot Mode, Re-plug Capture Card, Restart",
-                                        "Change the lens",
-                                        "Update Windows"
-                                    ],
-                                    correct: 1
-                                }
-                            },
-                            { 
-                                q: "Robotic, Slow Motion, Lagging Camera", 
-                                ans: "Cause: Super Low Shutter Speed.",
-                                refresher: {
-                                    options: [
-                                        "High ISO",
-                                        "Super Low Shutter Speed",
-                                        "Wrong Aperture",
-                                        "Bad HDMI Cable"
-                                    ],
-                                    correct: 1
-                                }
-                            }
-                        ]
-                    }
-                ]
-            },
-            { 
-                category: "Skills", 
-                sections: [
-                    { 
-                        title: "Soft Skills", 
-                        questions: [
-                            { q: "Composure", ans: "Calm under pressure; thinks clearly despite malfunctions. Emotional control." },
-                            { q: "Clear Communication", ans: "Steady voice, short direct instructions, no rushing." },
-                            { q: "Situational Awareness", ans: "Constant awareness to minimize/preempt mistakes." },
-                            { q: "Confidence", ans: "Knows tools/plans, reacts fast without overthinking." },
-                            { q: "Professional Presence", ans: "Composed, polite, respectful tone." },
-                            { q: "Controlled Pace", ans: "Avoids rushing, takes intentional steps." },
-                            { q: "Problem-Solving Mindset", ans: "Focus on solutions/recovery, not blame." },
-                            { q: "Technical Speed", ans: "Efficiency graded by trainer." }
-                        ]
-                    }
-                ]
-            }
+        // --- DUAL CONFIGURATION STRUCTURE ---
+        const BASE_QUESTIONS = [
+            { category: "OBS Setup & Troubleshooting", sections: [{ title: "OBS Basic", questions: [
+                { q: "Parts of Livescene", ans: "Basic: Header, Sticker, Podium, Background. Advance: Header/Brand Logo, Sub-Header, Frame, Stickers (UL/UR/LL/LR), Podium.", refresher: { options: ["Header/Brand Logo...", "Webcam...", "Header...", "Scene..."], correct: 0 } },
+                { q: "Mostly Used Source in OBS", ans: "Basic: Image, Media Source, Video Capture. Advance: Image, Media Source, Video Capture, Color Source, Text Source.", refresher: { options: ["Display Capture...", "Image, Media Source...", "Text...", "Audio Input..."], correct: 1 } },
+                { q: "Proper & Improper Microphone Setup", ans: "Proper: Input Audio Source Directly on OBS Settings. Improper: Input in every Scene.", refresher: { options: ["Use Desktop Audio...", "Input audio source...", "Route audio...", "Use Monitor Output..."], correct: 1 } }
+            ]}, { title: "OBS Settings", questions: [
+                { q: "OBS Canvas Settings", ans: "Basic: 1080x1920. Advance: 1080x1920 & Aspect Ratio 9:16.", refresher: { options: ["1920x1080", "1280x720", "1080x1920", "720x1280"], correct: 2 } },
+                { q: "OBS Encoder", ans: "Nvidia NVEC H.264", refresher: { options: ["Software", "Nvidia NVEC H264", "QuickSync", "AOM AV1"], correct: 1 } },
+                { q: "OBS Rate Control", ans: "CBR (Constant) & VBR (Variable).", refresher: { options: ["CQP & Lossless", "CBR & VBR", "VBR & CQP", "CBR & Lossless"], correct: 1 } },
+                { q: "Use of CBR & VBR", ans: "CBR: Forces specific bitrate (good for fast net, lags if drops). VBR: Adapts to min/max limits (good for slow net).", refresher: { options: ["CBR for slow...", "CBR forces bitrate...", "Both perform same", "VBR for recording"], correct: 1 } }
+            ]}, { title: "OBS Source Settings", questions: [
+                { q: "Video Capture Device", ans: "Disable buffering. Audio output mode: DirectSound.", refresher: { options: ["Enable Buffering...", "Disable Buffering...", "Auto-detect...", "Buffering On..."], correct: 1 } },
+                { q: "Media Source", ans: "Check all except 'Close File when Inactive'.", refresher: { options: ["Check 'Close File'...", "Uncheck 'Loop'...", "Check all except...", "Hardware decoding only"], correct: 2 } }
+            ]}, { title: "OBS Chroma Key", questions: [
+                { q: "Similarity", ans: "Controls how close pixels must be to the key color to be removed.", refresher: { options: ["Edge softness", "Pixel closeness to key color", "Green spill", "Brightness"], correct: 1 } },
+                { q: "Smoothness", ans: "Softens edges and removes jagged edges.", refresher: { options: ["Softens edges...", "Selects color", "Opacity", "Contrast"], correct: 0 } },
+                { q: "Key Color Spill", ans: "Removes green outlines from edges.", refresher: { options: ["Sharpen image", "Removes green outlines", "Change BG color", "Saturation"], correct: 1 } }
+            ]}, { title: "OBS Chroma Key Troubleshooting", questions: [
+                { q: "Default Settings", ans: "Similarity: Depends on color. Smoothness: 80. Spill: 50.", refresher: { options: ["All 100", "Sim: Var, Smooth: 80, Spill: 50", "Sim: 400...", "All 0"], correct: 1 } },
+                { q: "Greenline Issue", ans: "Setup: Proper lighting/camera. Live: Adjust similarity/spill slightly, or pick right color.", refresher: { options: ["Restart OBS", "Adjust similarity/spill", "Change BG", "Color correction"], correct: 1 } }
+            ]}, { title: "Greenscreen Protection", questions: [
+                { q: "Purpose of Greenscreen Protection", ans: "Maintains visibility of green items matching background (prevents transparency).", refresher: { options: ["Hide green items", "Maintain visibility of green items", "Protect screen", "Improve lighting"], correct: 1 } },
+                { q: "Adding Greenscreen Protection", ans: "Copy camera group, add Chroma Key filter to group, crop source to host's body.", refresher: { options: ["Add Color Key filter", "Duplicate group, add Chroma, crop", "Physical blocker", "Change shirt"], correct: 1 } }
+            ]}, { title: "OBS Internet & CPU Troubleshooting", questions: [
+                { q: "Encoder Rate Control Check", ans: "If CBR fails, switch to VBR (Min 2500, Max 4500).", refresher: { options: ["Switch VBR to CBR", "Switch CBR to VBR...", "Disable Encoder", "Increase Bitrate"], correct: 1 } },
+                { q: "CPU Usage Preset", ans: "Reduce CPU usage Preset by one level.", refresher: { options: ["Increase Quality", "Reduce CPU Preset", "Software Encoding", "Turn off Preview"], correct: 1 } },
+                { q: "Switching to another ISP", ans: "If all fails, request ISP change (insufficient bandwidth).", refresher: { options: ["Use VPN", "Restart Router", "Request ISP change", "Use Wi-Fi"], correct: 2 } }
+            ]}]},
+            { category: "Camera Setup & Troubleshooting", sections: [{ title: "Camera Setup", questions: [
+                { q: "Power Settings Option", ans: "Save Start Time: Off. Save by Monitor: Both Linked. Auto Off Temp: High.", refresher: { options: ["Save Start: On...", "Save Start: Off...", "Auto Off Temp...", "Power Saving..."], correct: 1 } },
+                { q: "HDMI Settings", ans: "Res: 2160p/1080p. Output: 60p. Info Disp: Off.", refresher: { options: ["720p...", "2160p/1080p...", "4k, 24p...", "Interlaced"], correct: 1 } }
+            ]}, { title: "Camera Cleaning", questions: [
+                { q: "Brush", ans: "Brush outer part, avoid lens.", refresher: { options: ["Use soap", "Brush body, avoid lens", "Paper towel", "Finger smudge"], correct: 1 } },
+                { q: "Air Pump", ans: "Pump air to remove dust after brushing.", refresher: { options: ["Blow with mouth", "Pump air", "Vacuum", "None"], correct: 1 } },
+                { q: "Wet and Dry Wipes", ans: "Use wet on display/lens, then dry with dry wipes.", refresher: { options: ["Dry only", "Wet then dry", "Shirt", "Water"], correct: 1 } }
+            ]}, { title: "Camera Troubleshooting", questions: [
+                { q: "Functions: ISO, Shutter, Exposure, Focus", ans: "ISO: Brightness/Grain. Shutter: Sync/No Lag. Exposure: Lighting balance. Focus: Clarity.", refresher: { options: ["Saturation...", "ISO, Shutter, Exposure, Focus", "Zoom...", "White Balance..."], correct: 1 } },
+                { q: "Standard Setup of Camera", ans: "Shutter: 1/160. Aperture: 3.5 (lowest). Focal: +1.0 to +1.7.", refresher: { options: ["Shutter: 1/50...", "Shutter: 1/160...", "Auto", "Shutter: 1/1000..."], correct: 1 } },
+                { q: "Camera Overheating", ans: "Check Power Settings (Auto-off Temp High). Check Fan. Use external fan.", refresher: { options: ["Fridge", "Check Power/Fan", "Turn off fan", "Lower res"], correct: 1 } },
+                { q: "Camera Blackscreen / No Output", ans: "Check Shoot Mode. Re-plug Capture Card. Restart Camera.", refresher: { options: ["New camera", "Check Shoot Mode/Capture Card", "Change lens", "Update Windows"], correct: 1 } },
+                { q: "Robotic, Slow Motion, Lagging", ans: "Cause: Super Low Shutter Speed.", refresher: { options: ["High ISO", "Super Low Shutter Speed", "Aperture", "HDMI Cable"], correct: 1 } }
+            ]}]}
         ];
 
-        // --- Helpers for Formatting ---
-        window.toRoman = function(num) {
-            const lookup = {M:1000,CM:900,D:500,CD:400,C:100,XC:90,L:50,XL:40,X:10,IX:9,V:5,IV:4,I:1};
-            let roman = '', i;
-            for ( i in lookup ) {
-                while ( num >= lookup[i] ) {
-                    roman += i;
-                    num -= lookup[i];
-                }
-            }
-            return roman;
-        }
+        // Structure 1: Standard / LOL (Includes Skills)
+        window.evalStructure = JSON.parse(JSON.stringify(BASE_QUESTIONS));
+        window.evalStructure.push({
+            category: "Soft Skills",
+            sections: [{
+                title: "Core Competencies",
+                questions: [
+                    { q: "Calm Under Pressure", ans: "Remains composed and thinks clearly, irrespective of technical malfunctions." },
+                    { q: "Emotional Control", ans: "Does not let frustration, panic, or excitement affect decision-making." },
+                    { q: "Focused Attention", ans: "Listens, observes, and reacts based only on facts and the live situation." },
+                    { q: "Clear Communication", ans: "Maintains a steady voice and provides short, direct instructions." },
+                    { q: "Situational Awareness", ans: "Maintains constant awareness to minimize and preempt mistakes." },
+                    { q: "Confidence Through Preparation", ans: "Knows tools/plans, allowing fast reactions without overthinking." },
+                    { q: "Professional Presence", ans: "Maintains composed demeanor, polite behavior, and respectful tone." },
+                    { q: "Controlled Pace", ans: "Avoids rushing; takes actions with intention, step-by-step." },
+                    { q: "Problem-Solving Mindset", ans: "Focus is on solutions/recovery rather than assigning blame." },
+                    { q: "Technical Speed", ans: "Efficiency graded by trainer." }
+                ]
+            }]
+        });
 
-        window.toLetter = function(num) {
-            return String.fromCharCode(97 + num); // 0 -> a, 1 -> b
-        }
+        // Structure 2: Refresher (Excludes Skills by default)
+        window.refresherStructure = JSON.parse(JSON.stringify(BASE_QUESTIONS));
 
-        // ... existing startEvaluation, selectRefresherOption, selectScore, calculateLiveScore, updateLiveScore, submitEvaluation, deleteEvaluation, handleDecision, viewReport, showEvalDetail, downloadCertificatePDF, viewCardFromAchievement, downloadPDF, backupData, restoreData, showNotification, getStatusClass ...
+        window.toRoman = function(num) { const lookup = {M:1000,CM:900,D:500,CD:400,C:100,XC:90,L:50,XL:40,X:10,IX:9,V:5,IV:4,I:1}; let roman = '', i; for ( i in lookup ) { while ( num >= lookup[i] ) { roman += i; num -= lookup[i]; } } return roman; }
+        window.toLetter = function(num) { return String.fromCharCode(97 + num); }
+
         window.startEvaluation = function(id, evalId = null, forceType = null) {
             currentEvalEmployeeId = id;
             currentEditingEvalId = evalId;
-            window.currentEvalType = forceType; // Store type context
+            window.currentEvalType = forceType; 
 
             const emp = window.employees.find(e => e.id == id);
             if (!emp) return;
             
-            // Check if editing existing
             let existingData = {};
             if (evalId) {
                 const ev = emp.evaluations.find(x => x.id == evalId);
-                if (ev && ev.details) {
-                    ev.details.forEach(d => {
-                        existingData[d.q] = d.score;
-                    });
-                }
-                // If editing, use existing type
+                if (ev && ev.details) { ev.details.forEach(d => { existingData[d.q] = d.score; }); }
                 if (ev && ev.type) window.currentEvalType = ev.type;
             }
 
             const container = document.getElementById('eval-form-container');
-            const titlePrefix = window.currentEvalType === 'Refresher' ? 'Refresher Assessment' : 'Assessment';
+            const titlePrefix = window.currentEvalType === 'Refresher' ? 'Refresher Assessment' : (window.currentEvalType === 'LOL Evaluation' ? 'LOL Evaluation' : 'Assessment');
             document.getElementById('eval-title').innerText = evalId ? `Edit ${titlePrefix}: ${emp.name}` : `${titlePrefix}: ${emp.name}`;
             container.innerHTML = '';
             
-            // Reset live score
             window.updateLiveScore(0);
-
             const isRefresherMode = window.currentEvalType === 'Refresher';
-
-            // Custom header for form to include score display only if NOT refresher
             const liveScoreEl = document.getElementById('live-score-display');
-            if(liveScoreEl) {
-                liveScoreEl.style.display = isRefresherMode ? 'none' : 'block';
-            }
+            if(liveScoreEl) liveScoreEl.style.display = isRefresherMode ? 'none' : 'block';
 
-            // USE window.evalStructure here instead of constant
-            window.evalStructure.forEach((cat, cIdx) => {
+            // SELECT THE CORRECT STRUCTURE FOR THE EXAM
+            const structureToUse = isRefresherMode ? window.refresherStructure : window.evalStructure;
+
+            structureToUse.forEach((cat, cIdx) => {
                 const cDiv = document.createElement('div'); cDiv.className = "space-y-6"; 
-                // Using Dynamic Roman Numerals
                 cDiv.innerHTML = `<h3 class="text-sm font-black text-blue-600 uppercase tracking-widest border-b pb-2">Part ${toRoman(cIdx+1)} - ${cat.category}</h3>`;
                 
                 cat.sections.forEach((sec, sIdx) => {
                     const sDiv = document.createElement('div'); sDiv.className = "space-y-4 ml-0 md:ml-2"; 
-                    // Using Dynamic Numbers
                     sDiv.innerHTML = `<h4 class="font-bold text-slate-800 text-sm">${sIdx + 1}. ${sec.title}</h4>`;
                     
                     sec.questions.forEach((q, qIdx) => {
                         const qId = `q_${cIdx}_${sIdx}_${qIdx}`;
                         const existingScore = existingData[q.q] || 0;
-                        
                         const useMultipleChoice = isRefresherMode && q.refresher && q.refresher.options;
-
                         let inputHtml = '';
 
                         if (useMultipleChoice) {
-                            // Multiple Choice Rendering
                             inputHtml = `<div class="grid grid-cols-1 gap-2 w-full">`;
                             q.refresher.options.forEach((opt, optIdx) => {
                                 const isCorrectOption = optIdx === q.refresher.correct;
-                                // REFRESHER SCORING: 1 point for Parts I & II
                                 const scoreValue = isCorrectOption ? 1 : 0;
-                                
-                                // Determine visual state based on existing score
-                                const isSelected = existingScore === scoreValue && (existingScore !== 0 || existingData[q.q] !== undefined); 
-                                
-                                // Hack for edit mode visual: If it's correct (1), highlight it.
-                                const activeClass = (existingScore === 1 && isCorrectOption) 
-                                    ? "border-blue-600 bg-blue-600 text-white shadow-md" 
-                                    : "border-slate-200 bg-white text-slate-700 hover:bg-blue-50";
-                                
+                                const activeClass = (existingScore === 1 && isCorrectOption) ? "border-blue-600 bg-blue-600 text-white shadow-md" : "border-slate-200 bg-white text-slate-700 hover:bg-blue-50";
                                 const textClass = (existingScore === 1 && isCorrectOption) ? "text-white" : "text-blue-600";
-
-                                inputHtml += `
-                                    <button type="button" 
-                                        onclick="selectRefresherOption('${qId}', ${scoreValue}, this)" 
-                                        class="text-left px-4 py-3 rounded-xl border text-xs font-bold transition-all active:scale-95 focus:ring-2 focus:ring-blue-500 ${activeClass}"
-                                        data-val="${scoreValue}">
-                                        <span class="${textClass} mr-2">${toLetter(optIdx).toUpperCase()}.</span> ${opt}
-                                    </button>
-                                `;
+                                inputHtml += `<button type="button" onclick="selectRefresherOption('${qId}', ${scoreValue}, this)" class="text-left px-4 py-3 rounded-xl border text-xs font-bold transition-all active:scale-95 focus:ring-2 focus:ring-blue-500 ${activeClass}" data-val="${scoreValue}"><span class="${textClass} mr-2">${toLetter(optIdx).toUpperCase()}.</span> ${opt}</button>`;
                             });
                             inputHtml += `</div><input type="hidden" id="${qId}" class="eval-input" value="${existingScore}">`;
                         } else {
-                            // Standard 1-5 Rendering (Part III is trainer graded, remains 1-5)
                             const buttonsHtml = [1,2,3,4,5].map(v => {
                                 const isSelected = existingScore === v;
                                 const baseClass = "score-btn w-8 h-8 rounded-lg border text-xs font-black transition-all active:scale-90";
-                                const stateClass = isSelected 
-                                    ? "border-blue-600 bg-blue-600 text-white shadow-md" 
-                                    : "border-slate-200 bg-white hover:bg-blue-50";
-                                
+                                const stateClass = isSelected ? "border-blue-600 bg-blue-600 text-white shadow-md" : "border-slate-200 bg-white hover:bg-blue-50";
                                 return `<button type="button" onclick="selectScore('${qId}', ${v})" id="${qId}_btn_${v}" class="${baseClass} ${stateClass}">${v}</button>`;
                             }).join('');
-                            
-                            inputHtml = `
-                                <div class="w-full md:w-48 flex flex-col justify-center items-center bg-slate-50 rounded-xl p-3 border border-slate-100">
-                                    <p class="text-[10px] font-black text-slate-400 uppercase mb-2">Grade (1-5)</p>
-                                    <div class="flex gap-2">${buttonsHtml}</div>
-                                    <input type="hidden" id="${qId}" class="eval-input" value="${existingScore}">
-                                </div>
-                            `;
+                            inputHtml = `<div class="w-full md:w-48 flex flex-col justify-center items-center bg-slate-50 rounded-xl p-3 border border-slate-100"><p class="text-[10px] font-black text-slate-400 uppercase mb-2">Grade (1-5)</p><div class="flex gap-2">${buttonsHtml}</div><input type="hidden" id="${qId}" class="eval-input" value="${existingScore}"></div>`;
                         }
 
                         const qDiv = document.createElement('div'); 
                         qDiv.className = "p-4 md:p-5 rounded-2xl bg-white border border-slate-100 shadow-sm space-y-4 ml-0 md:ml-2";
-                        
-                        // HIDE ANSWER KEY IN REFRESHER MODE
                         if (useMultipleChoice) {
-                            qDiv.innerHTML = `
-                                <div class="flex items-start gap-2 mb-2">
-                                    <span class="font-bold text-slate-400 text-sm pt-0.5">${toLetter(qIdx)}.</span>
-                                    <p class="text-sm font-semibold text-slate-700">${q.q}</p>
-                                </div>
-                                ${inputHtml}
-                            `;
+                            qDiv.innerHTML = `<div class="flex items-start gap-2 mb-2"><span class="font-bold text-slate-400 text-sm pt-0.5">${toLetter(qIdx)}.</span><p class="text-sm font-semibold text-slate-700">${q.q}</p></div>${inputHtml}`;
                         } else {
-                            // For standard mode or Part III in Refresher (which is manually graded), show the guide
-                            qDiv.innerHTML = `
-                                <div class="flex items-start gap-2">
-                                    <span class="font-bold text-slate-400 text-sm pt-0.5">${toLetter(qIdx)}.</span>
-                                    <p class="text-sm font-semibold text-slate-700">${q.q}</p>
-                                </div>
-                                <div class="flex flex-col md:flex-row gap-4">
-                                    <div class="flex-1 bg-blue-50/50 p-3 rounded-xl border border-blue-100/50">
-                                        <p class="text-[10px] text-blue-800 font-medium leading-relaxed break-words">${q.ans}</p>
-                                    </div>
-                                    ${inputHtml}
-                                </div>`;
+                            qDiv.innerHTML = `<div class="flex items-start gap-2"><span class="font-bold text-slate-400 text-sm pt-0.5">${toLetter(qIdx)}.</span><p class="text-sm font-semibold text-slate-700">${q.q}</p></div><div class="flex flex-col md:flex-row gap-4"><div class="flex-1 bg-blue-50/50 p-3 rounded-xl border border-blue-100/50"><p class="text-[10px] text-blue-800 font-medium leading-relaxed break-words">${q.ans}</p></div>${inputHtml}</div>`;
                         }
-                        
                         sDiv.appendChild(qDiv);
                     });
                     cDiv.appendChild(sDiv);
@@ -1341,9 +889,7 @@
                 container.appendChild(cDiv);
             });
             
-            // Calculate initial score if editing
             if (evalId) calculateLiveScore();
-
             const action = document.createElement('div'); action.className = "pt-10 flex justify-center pb-10"; action.innerHTML = `<button onclick="submitEvaluation()" class="w-full max-w-md bg-slate-900 text-white py-4 rounded-2xl font-black uppercase hover:bg-black transition-all shadow-xl flex items-center justify-center gap-2 active:scale-95"><i data-lucide="save"></i> ${evalId ? 'Update Record' : 'Submit Assessment'}</button>`;
             container.appendChild(action);
             switchView('eval');
@@ -1370,24 +916,16 @@
                 b.className = "score-btn w-8 h-8 rounded-lg border border-slate-200 bg-white text-xs font-black transition-all hover:bg-blue-50 active:scale-90"; 
             }
             document.getElementById(`${qId}_btn_${val}`).className = "score-btn w-8 h-8 rounded-lg border border-blue-600 bg-blue-600 text-white text-xs font-black transition-all shadow-md";
-            
-            // Trigger live calc
             calculateLiveScore();
         }
 
         window.calculateLiveScore = function() {
-            let totalS = 0;
-            let totalP = 0;
+            let totalS = 0, totalP = 0;
             const inputs = document.querySelectorAll('.eval-input');
             inputs.forEach(inp => {
                 const val = parseInt(inp.value) || 0;
-                if (val > 0) {
-                    totalS += val;
-                    totalP += 5;
-                }
+                if (val > 0) { totalS += val; totalP += 5; }
             });
-            
-            // If no inputs answered yet, show 0.0%
             const score = totalP > 0 ? ((totalS / totalP) * 100).toFixed(1) : "0.0";
             window.updateLiveScore(score);
         }
@@ -1396,7 +934,6 @@
             const el = document.getElementById('live-score-display');
             if (el) {
                 el.innerText = `${val}%`;
-                // Simple color logic
                 if (parseFloat(val) >= 85) el.className = "px-4 py-2 bg-emerald-600 text-white rounded-xl font-black font-mono text-lg shadow-lg transition-colors";
                 else if (parseFloat(val) >= 70) el.className = "px-4 py-2 bg-amber-500 text-white rounded-xl font-black font-mono text-lg shadow-lg transition-colors";
                 else el.className = "px-4 py-2 bg-slate-900 text-white rounded-xl font-black font-mono text-lg shadow-lg transition-colors";
@@ -1407,72 +944,37 @@
             const emp = window.employees.find(e => e.id == currentEvalEmployeeId); if (!emp) return;
             let responses = [], totalS = 0, totalP = 0, inc = false;
             
-            window.evalStructure.forEach((cat, cIdx) => {
+            const isRefresher = window.currentEvalType === 'Refresher';
+            const structureToUse = isRefresher ? window.refresherStructure : window.evalStructure;
+
+            structureToUse.forEach((cat, cIdx) => {
                 cat.sections.forEach((sec, sIdx) => {
                     sec.questions.forEach((q, qIdx) => {
                         const val = parseInt(document.getElementById(`q_${cIdx}_${sIdx}_${qIdx}`).value);
-                        
-                        // Validation logic
-                        // If it's standard, 0 is invalid.
-                        // If it's refresher, we allow 0 (wrong answer) but practically user should click something. 
-                        // For simplicity, we enforce selection for all.
-                        if(isNaN(val) || val === 0 && window.currentEvalType !== 'Refresher') {
-                             inc = true; 
-                        }
-                        
-                        // Refresher handling: determine max points per question type
-                        const isRefresherMC = window.currentEvalType === 'Refresher' && q.refresher && q.refresher.options;
+                        if(isNaN(val) || val === 0 && !isRefresher) inc = true; 
+                        const isRefresherMC = isRefresher && q.refresher && q.refresher.options;
                         const maxPoints = isRefresherMC ? 1 : 5;
-
                         responses.push({ q: q.q, cat: cat.category, section: sec.title, score: val }); 
-                        totalS += val; 
-                        totalP += maxPoints;
+                        totalS += val; totalP += maxPoints;
                     });
                 });
             });
             
-            // Standard validation
             if(inc) { showNotification("Form incomplete."); return; }
             
             const scorePct = totalP > 0 ? ((totalS / totalP) * 100).toFixed(1) : "0.0";
-            
             let updatedEvals = [...emp.evaluations];
-            const evalData = {
-                score: scorePct,
-                totalScore: totalS, // Save Raw
-                maxScore: totalP,   // Save Max
-                details: responses
-            };
+            const evalData = { score: scorePct, totalScore: totalS, maxScore: totalP, details: responses };
             
-            // ... save logic ...
             if (currentEditingEvalId) {
-                updatedEvals = updatedEvals.map(ev => {
-                    if (ev.id == currentEditingEvalId) {
-                        return { ...ev, ...evalData };
-                    }
-                    return ev;
-                });
-                window.saveEmployee({ ...emp, evaluations: updatedEvals }).then(() => { 
-                    window.logActivity('eval', `Assessment Updated`, emp.name); 
-                    viewReport(emp.id); 
-                });
+                updatedEvals = updatedEvals.map(ev => { if (ev.id == currentEditingEvalId) return { ...ev, ...evalData }; return ev; });
+                window.saveEmployee({ ...emp, evaluations: updatedEvals }).then(() => { window.logActivity('eval', `Assessment Updated`, emp.name); viewReport(emp.id); });
             } else {
-                const isRefresher = window.currentEvalType === 'Refresher';
                 const refresherCount = isRefresher ? (updatedEvals.filter(e => e.type === 'Refresher').length + 1) : 0;
                 const standardPhaseMonth = updatedEvals.slice(emp.phaseStartIdx || 0).length + 1;
-                
-                const newEval = { 
-                    id: Date.now(), 
-                    phaseMonth: isRefresher ? refresherCount : standardPhaseMonth, 
-                    type: window.currentEvalType || emp.status, 
-                    date: new Date().toLocaleDateString(), 
-                    ...evalData
-                };
+                const newEval = { id: Date.now(), phaseMonth: isRefresher ? refresherCount : standardPhaseMonth, type: window.currentEvalType || emp.status, date: new Date().toLocaleDateString(), ...evalData };
                 updatedEvals.push(newEval);
-                window.saveEmployee({ ...emp, evaluations: updatedEvals }).then(() => { 
-                    window.logActivity('eval', `Assessment Logged`, emp.name); 
-                    viewReport(emp.id); 
-                });
+                window.saveEmployee({ ...emp, evaluations: updatedEvals }).then(() => { window.logActivity('eval', `Assessment Logged`, emp.name); viewReport(emp.id); });
             }
         }
 
@@ -1481,10 +983,7 @@
             if (!emp) return;
             showConfirmModal("Delete Assessment", "This cannot be undone. Remove this score record?", () => {
                 const updatedEvals = emp.evaluations.filter(e => e.id != evalId);
-                window.saveEmployee({ ...emp, evaluations: updatedEvals }).then(() => {
-                   window.logActivity('delete', 'Assessment Removed', emp.name);
-                   viewReport(empId); 
-                });
+                window.saveEmployee({ ...emp, evaluations: updatedEvals }).then(() => { window.logActivity('delete', 'Assessment Removed', emp.name); viewReport(empId); });
             });
         }
 
@@ -1492,82 +991,37 @@
             const emp = window.employees.find(e => e.id == id); if (!emp) return;
             if(action === 'promote') {
                 const oldS = emp.status, newS = oldS === 'Trainee' ? 'Probationary' : 'Regular';
-                const effectiveDate = calculateNextDueDate(emp); // Use new calculator for consistent date logic
-
+                const effectiveDate = calculateNextDueDate(emp);
                 const newAchievements = [...(emp.achievements || []), { id: Date.now(), title: `Promoted to ${newS}`, date: effectiveDate, type: newS, fromStatus: oldS, evaluations: [...emp.evaluations.slice(emp.phaseStartIdx || 0)] }];
-                
                 const updatedEmp = { ...emp, status: newS, achievements: newAchievements, phaseStartIdx: emp.evaluations.length, phaseLimit: 3 };
-
-                window.saveEmployee(updatedEmp).then(() => { 
-                    window.logActivity('promote', `Contract Advanced to ${newS}`, emp.name); 
-                    
-                    // Manually update local state to reflect changes immediately in UI
-                    const idx = window.employees.findIndex(e => e.id === id);
-                    if(idx !== -1) window.employees[idx] = updatedEmp;
-                    viewReport(id);
-
-                    showCongrats({ ...updatedEmp }); 
-                });
+                window.saveEmployee(updatedEmp).then(() => { window.logActivity('promote', `Contract Advanced to ${newS}`, emp.name); const idx = window.employees.findIndex(e => e.id === id); if(idx !== -1) window.employees[idx] = updatedEmp; viewReport(id); showCongrats({ ...updatedEmp }); });
             } else {
                 const updatedEmp = { ...emp, phaseLimit: (emp.phaseLimit || 3) + 1 };
-                window.saveEmployee(updatedEmp).then(() => { 
-                    window.logActivity('extend', `Review Cycle Extended`, emp.name); 
-                    
-                    // Manually update local state to reflect changes immediately in UI
-                    const idx = window.employees.findIndex(e => e.id === id);
-                    if(idx !== -1) window.employees[idx] = updatedEmp;
-                    viewReport(id);
-
-                    showNotification("Review Cycle Extended."); 
-                });
+                window.saveEmployee(updatedEmp).then(() => { window.logActivity('extend', `Review Cycle Extended`, emp.name); const idx = window.employees.findIndex(e => e.id === id); if(idx !== -1) window.employees[idx] = updatedEmp; viewReport(id); showNotification("Review Cycle Extended."); });
             }
         }
 
         window.viewReport = function(id) {
             const emp = window.employees.find(e => e.id == id);
-            
-            // --- UPDATED DATES LOGIC (Computed) ---
-            const probAch = emp.achievements.find(a => a.type === 'Probationary');
-            const regAch = emp.achievements.find(a => a.type === 'Regular');
-
-            const parseDateLocal = (dateStr) => {
-                const parts = dateStr.split('-');
-                return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-            };
-
-            const formatDate = (dateObj) => {
-                return dateObj.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-            };
-
-            const addMonthsToHireDate = (months) => {
-                const d = parseDateLocal(emp.hireDate);
-                d.setMonth(d.getMonth() + months);
-                return formatDate(d);
-            };
+            const parseDateLocal = (dateStr) => { const parts = dateStr.split('-'); return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2])); };
+            const formatDate = (dateObj) => { return dateObj.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }); };
+            const addMonthsToHireDate = (months) => { const d = parseDateLocal(emp.hireDate); d.setMonth(d.getMonth() + months); return formatDate(d); };
             
             const dateHired = formatDate(parseDateLocal(emp.hireDate));
-            
-            let dateProb = 'Pending';
-            if (probAch) {
-                const traineeDuration = probAch.evaluations.length;
-                dateProb = addMonthsToHireDate(traineeDuration);
-            }
+            const probAch = emp.achievements.find(a => a.type === 'Probationary');
+            const regAch = emp.achievements.find(a => a.type === 'Regular');
+            let dateProb = probAch ? addMonthsToHireDate(probAch.evaluations.length) : 'Pending';
+            let dateReg = regAch ? addMonthsToHireDate((probAch ? probAch.evaluations.length : 0) + regAch.evaluations.length) : 'Pending';
 
-            let dateReg = 'Pending';
-            if (regAch) {
-                const traineeDuration = probAch ? probAch.evaluations.length : 0; 
-                const probDuration = regAch.evaluations.length;
-                dateReg = addMonthsToHireDate(traineeDuration + probDuration);
-            }
-            // --------------------------------------
-
-            // Action Buttons Logic
             const phaseEvals = emp.evaluations.slice(emp.phaseStartIdx || 0);
             const isCycleComplete = phaseEvals.length >= (emp.phaseLimit || 3);
             const avg = phaseEvals.length ? (phaseEvals.reduce((a,c) => a+parseFloat(c.score),0)/phaseEvals.length).toFixed(1) : 0;
             
             let actionButtonsHTML = '';
             
+            // Common LOL Button for everyone
+            const lolButton = `<button onclick="startEvaluation(${emp.id}, null, 'LOL Evaluation')" class="col-span-1 w-full py-3 border-2 border-slate-900 bg-transparent text-slate-900 rounded-xl text-xs font-black uppercase tracking-wider shadow-sm hover:bg-slate-50 flex items-center justify-center gap-2"><i data-lucide="star" class="w-4 h-4"></i> Conduct LOL Evaluation</button>`;
+
             if (emp.status === 'Regular') {
                 const nextRefresher = calculateNextDueDate(emp);
                 actionButtonsHTML = `
@@ -1576,9 +1030,12 @@
                             <p class="text-[10px] font-black text-emerald-600 uppercase">Regular Status Active</p>
                             <p class="text-[9px] font-bold text-slate-400 uppercase">Next Refresher: <span class="text-slate-700">${nextRefresher}</span></p>
                         </div>
-                        <button onclick="startEvaluation(${emp.id}, null, 'Refresher')" class="w-full py-3 bg-slate-900 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-lg active:scale-95 flex items-center justify-center gap-2">
-                            <i data-lucide="refresh-cw" class="w-4 h-4"></i> Add Monthly Refresher
-                        </button>
+                        <div class="space-y-2">
+                            <button onclick="startEvaluation(${emp.id}, null, 'Refresher')" class="w-full py-3 bg-slate-900 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-lg active:scale-95 flex items-center justify-center gap-2">
+                                <i data-lucide="refresh-cw" class="w-4 h-4"></i> Add Monthly Refresher
+                            </button>
+                            ${lolButton}
+                        </div>
                     </div>
                 `;
             } else if (emp.status !== 'Terminated') {
@@ -1600,6 +1057,7 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
                             <button onclick="startEvaluation(${emp.id})" class="col-span-1 py-3 bg-slate-900 text-white rounded-xl text-xs font-black uppercase tracking-wider shadow-lg active:scale-95 flex items-center justify-center gap-2"><i data-lucide="clipboard-check" class="w-4 h-4"></i> Assess M${phaseEvals.length+1}</button>
                             <button onclick="confirmTermination(${emp.id})" class="col-span-1 py-3 border border-rose-100 bg-rose-50 text-rose-500 rounded-xl text-xs font-black uppercase active:scale-95 hover:bg-rose-100 transition-colors">Terminate</button>
+                            <div class="col-span-1 sm:col-span-2">${lolButton}</div>
                         </div>
                      `;
                 }
@@ -1613,24 +1071,19 @@
                         <div class="w-24 h-24 bg-blue-600 text-white rounded-3xl flex items-center justify-center mx-auto mb-6 font-black text-3xl shadow-lg uppercase">${emp.name.charAt(0)}</div>
                         <h3 class="text-2xl font-black text-slate-900">${emp.name}</h3>
                         <span class="px-4 py-1.5 bg-slate-100 rounded-full text-[10px] font-black uppercase tracking-widest text-slate-500 block w-fit mx-auto mt-2 mb-6">${emp.status}</span>
-                        
                         <div class="text-left space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-100 mb-6">
                             <div class="flex justify-between items-center"><span class="text-[10px] font-bold text-slate-400 uppercase">Hired</span><span class="text-xs font-black text-slate-800">${dateHired}</span></div>
                             <div class="flex justify-between items-center"><span class="text-[10px] font-bold text-slate-400 uppercase">Probation</span><span class="text-xs font-black ${dateProb !== 'Pending' ? 'text-purple-600' : 'text-slate-400'}">${dateProb}</span></div>
                             <div class="flex justify-between items-center"><span class="text-[10px] font-bold text-slate-400 uppercase">Regular</span><span class="text-xs font-black ${dateReg !== 'Pending' ? 'text-emerald-600' : 'text-slate-400'}">${dateReg}</span></div>
                         </div>
-
                         ${actionButtonsHTML}
-
                         ${emp.status === 'Terminated' ? `<div class="mt-4"><button onclick="generateTerminationLetter(${emp.id})" class="w-full py-2 bg-rose-600 text-white rounded-xl text-[10px] font-black uppercase shadow-lg">Notice of Termination (PDF)</button></div>` : ''}
                     </div>
-                    
                     <div class="glass-card p-6 rounded-3xl shadow-sm">
                         <h4 class="font-black text-slate-900 mb-6 flex items-center gap-2 text-xs uppercase tracking-widest"><i data-lucide="award" class="w-4 h-4 text-amber-500"></i> Career Milestones</h4>
                         <div class="space-y-4">${emp.achievements.map(a => `<div class="p-4 bg-amber-50 border border-amber-100 rounded-2xl space-y-3"><div class="flex justify-between items-start"><p class="text-xs font-black text-slate-800">${a.title}</p><p class="text-[9px] font-bold text-amber-700 bg-amber-100 px-2 py-1 rounded-md">${a.date}</p></div><div class="flex gap-2"><button onclick="viewCardFromAchievement(${emp.id}, ${a.id})" class="flex-1 py-1.5 bg-white border border-amber-200 text-amber-600 rounded-lg text-[10px] font-bold uppercase hover:bg-amber-50">Certificate</button><button onclick="generateEndorsementLetter(${emp.id}, ${a.id})" class="flex-1 py-1.5 bg-amber-500 text-white rounded-lg text-[10px] font-bold uppercase hover:bg-amber-600">Endorsement</button></div></div>`).join('') || '<p class="text-xs text-slate-400 italic">No cloud milestones logged.</p>'}</div>
                     </div>
                 </div>
-
                 <div class="lg:col-span-2 space-y-6">
                     <div class="glass-card p-8 rounded-3xl shadow-sm">
                         <div class="flex justify-between items-center mb-6">
@@ -1640,24 +1093,15 @@
                         <div class="space-y-3">
                         ${emp.evaluations.slice().reverse().map(ev => {
                             const isRefresher = ev.type === 'Refresher';
-                            // DISPLAY LOGIC: If Refresher, show Raw Score (e.g. 45/50). If Standard, show %.
-                            // We check if totalScore exists (new format), else use score% (old format).
-                            let scoreDisplay = '';
-                            if (isRefresher) {
-                                if (ev.totalScore !== undefined) {
-                                    scoreDisplay = `${ev.totalScore}/${ev.maxScore}`;
-                                } else {
-                                    // Fallback for old refresher records if any
-                                    scoreDisplay = `${ev.score}`; // Raw number without %
-                                }
-                            } else {
-                                scoreDisplay = `${ev.score}%`;
-                            }
+                            const isLOL = ev.type === 'LOL Evaluation';
+                            let scoreDisplay = isRefresher ? (ev.totalScore !== undefined ? `${ev.totalScore}/${ev.maxScore}` : `${ev.score}`) : `${ev.score}%`;
+                            let labelColor = isRefresher ? 'text-blue-600' : (isLOL ? 'text-amber-500' : 'text-blue-600');
+                            let labelText = isRefresher ? 'REF' : (isLOL ? 'LOL' : `PH${ev.phaseMonth}`);
 
                             return `
                             <div class="flex flex-col md:flex-row items-center justify-between p-5 bg-slate-50/50 rounded-2xl border border-slate-100 hover:bg-white transition-all group gap-4">
                                 <div onclick="showEvalDetail(${emp.id}, ${ev.id})" class="flex items-center gap-4 flex-grow cursor-pointer w-full md:w-auto">
-                                    <div class="bg-white p-3 rounded-xl shadow-sm text-[10px] font-black uppercase text-blue-600">${isRefresher ? 'REF' : 'PH'}${ev.phaseMonth}</div>
+                                    <div class="bg-white p-3 rounded-xl shadow-sm text-[10px] font-black uppercase ${labelColor}">${labelText}</div>
                                     <div>
                                         <p class="text-xs font-black text-slate-700 uppercase">${ev.type}</p>
                                         <p class="text-[10px] text-slate-400 font-bold">${ev.date}</p>
@@ -1685,136 +1129,56 @@
 
         window.showEvalDetail = function(empId, evalId) {
             const emp = window.employees.find(e => e.id == empId), ev = emp.evaluations.find(e => e.id == evalId); if (!ev) return;
-            
             const isRefresher = ev.type === 'Refresher';
-
-            // --- Logic for Breakdown Calculation ---
             const breakdown = {};
-            
             ev.details.forEach(d => {
-                const cat = d.cat;
-                const sec = d.section;
-                const score = parseFloat(d.score);
-                
-                if (!breakdown[cat]) {
-                    breakdown[cat] = { total: 0, max: 0, sections: {} };
-                }
-                
-                if (!breakdown[cat].sections[sec]) {
-                    breakdown[cat].sections[sec] = { total: 0, max: 0 };
-                }
-                
+                const cat = d.cat; const sec = d.section; const score = parseFloat(d.score);
+                if (!breakdown[cat]) breakdown[cat] = { total: 0, max: 0, sections: {} };
+                if (!breakdown[cat].sections[sec]) breakdown[cat].sections[sec] = { total: 0, max: 0 };
                 breakdown[cat].total += score;
-                
-                // Determine max points based on category
-                let qMax = 5;
-                if (isRefresher) {
-                    if (cat.includes('Skills')) qMax = 5;
-                    else qMax = 1;
-                }
-                
+                let qMax = (isRefresher && !d.cat.includes('Skills')) ? 1 : 5;
                 breakdown[cat].max += qMax; 
-                
                 breakdown[cat].sections[sec].total += score;
                 breakdown[cat].sections[sec].max += qMax;
             });
 
+            // Use the stored structure to maintain order in report
+            const structureToUse = isRefresher ? window.refresherStructure : window.evalStructure;
+
             let tableRows = '';
             let breakdownHTML = `<div class="mt-8 mb-8 no-break"><h2 class="text-sm font-black uppercase tracking-widest text-slate-900 border-l-4 border-slate-900 pl-4 py-1 mb-4">II. Detailed Score Breakdown</h2><div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
-
             let catIndex = 1;
-            // Use saved structure if possible, but fallback to saved details categories
-            // Better to iterate the breakdown object keys actually, to ensure we show what was saved
-            // But preserving order requires structure. We'll use window.evalStructure.
-            for (const structCat of window.evalStructure) {
+            for (const structCat of structureToUse) {
                 const catName = structCat.category;
                 const data = breakdown[catName];
-                
                 if (data) {
-                     const catPct = ((data.total / data.max) * 100).toFixed(1);
-                     // Refresher: Show Raw score like 15/15
+                     const catPct = data.max > 0 ? ((data.total / data.max) * 100).toFixed(1) : 0;
                      const catScoreDisplay = isRefresher ? `${data.total} / ${data.max}` : `${catPct}%`;
-
                      let secHTML = '';
-                     
                      let secIndex = 1;
                      for (const structSec of structCat.sections) {
                          const secName = structSec.title;
                          const sData = data.sections[secName];
                          if (sData) {
-                             const sPct = ((sData.total / sData.max) * 100).toFixed(1);
+                             const sPct = sData.max > 0 ? ((sData.total / sData.max) * 100).toFixed(1) : 0;
                              const sScoreDisplay = isRefresher ? `${sData.total}/${sData.max}` : `${sPct}%`;
                              const sSubDisplay = isRefresher ? '' : `(${sData.total}/${sData.max})`; 
-
-                             secHTML += `
-                                <div class="flex justify-between items-center text-[10px] py-1 border-b border-slate-100 last:border-0">
-                                    <span class="text-slate-600 font-bold">${secIndex}. ${secName}</span>
-                                    <span class="font-black text-slate-900">${sScoreDisplay} <span class="text-slate-400 font-normal">${sSubDisplay}</span></span>
-                                </div>
-                             `;
+                             secHTML += `<div class="flex justify-between items-center text-[10px] py-1 border-b border-slate-100 last:border-0"><span class="text-slate-600 font-bold">${secIndex}. ${secName}</span><span class="font-black text-slate-900">${sScoreDisplay} <span class="text-slate-400 font-normal">${sSubDisplay}</span></span></div>`;
                          }
                          secIndex++;
                      }
-
-                     breakdownHTML += `
-                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 no-break">
-                            <div class="flex justify-between items-center mb-3 border-b-2 border-slate-200 pb-2">
-                                <span class="font-black text-xs uppercase text-blue-900">Part ${toRoman(catIndex)}: ${catName}</span>
-                                <span class="font-black text-lg text-blue-600">${catScoreDisplay}</span>
-                            </div>
-                            <div class="space-y-1">
-                                ${secHTML}
-                            </div>
-                        </div>
-                     `;
+                     breakdownHTML += `<div class="bg-slate-50 p-4 rounded-xl border border-slate-200 no-break"><div class="flex justify-between items-center mb-3 border-b-2 border-slate-200 pb-2"><span class="font-black text-xs uppercase text-blue-900">Part ${toRoman(catIndex)}: ${catName}</span><span class="font-black text-lg text-blue-600">${catScoreDisplay}</span></div><div class="space-y-1">${secHTML}</div></div>`;
                 }
                 catIndex++;
             }
             breakdownHTML += `</div></div>`;
-
-            // Legacy Detail Table Generation
-            const groupedDetails = {};
             ev.details.forEach(d => {
-                const groupKey = d.cat; 
-                if (!groupedDetails[groupKey]) groupedDetails[groupKey] = [];
-                groupedDetails[groupKey].push(d);
+                 let maxP = (isRefresher && !d.cat.includes('Skills')) ? 1 : 5;
+                 const scoreDisp = maxP === 1 ? `${d.score} / 1` : `${d.score} / 5.0`;
+                 tableRows += `<tr><td class="p-4 border font-bold text-slate-700 text-[10px]">${d.q}</td><td class="p-4 border text-right font-black text-blue-600 text-[10px]">${scoreDisp}</td></tr>`;
             });
 
-            for (const [groupName, items] of Object.entries(groupedDetails)) {
-                const cIdx = window.evalStructure.findIndex(c => c.category === groupName);
-                const prefix = cIdx !== -1 ? `Part ${toRoman(cIdx+1)} - ` : '';
-                
-                tableRows += `<tr class="bg-slate-50"><td colspan="2" class="p-3 border font-black text-slate-800 text-[10px] uppercase tracking-wider">${prefix}${groupName}</td></tr>`;
-                
-                items.forEach(d => {
-                    // --- FIX: Logic for displaying 1/1 vs 1/5.0 ---
-                    let maxP = 5;
-                    // Check if refresher and not skills category (assuming standard structure naming or checking content)
-                    // If Refresher AND category is NOT Skills => Max 1
-                    if (isRefresher && !d.cat.includes('Skills')) {
-                        maxP = 1;
-                    }
-                    
-                    // Display formatting
-                    const scoreDisp = maxP === 1 ? `${d.score} / 1` : `${d.score} / 5.0`;
-                    
-                    tableRows += `<tr><td class="p-4 border font-bold text-slate-700 text-[10px]">${d.q}</td><td class="p-4 border text-right font-black text-blue-600 text-[10px]">${scoreDisp}</td></tr>`;
-                });
-            }
-
-            // Report Header Score Display
-            // If new format with totalScore exists, use it. Else fallback.
-            let finalScoreDisplay = '';
-            if (isRefresher) {
-                if(ev.totalScore !== undefined) {
-                    finalScoreDisplay = `${ev.totalScore} / ${ev.maxScore}`;
-                } else {
-                    finalScoreDisplay = `${ev.score}`; // Raw number fallback
-                }
-            } else {
-                finalScoreDisplay = `${ev.score}%`;
-            }
-            
+            let finalScoreDisplay = isRefresher ? (ev.totalScore !== undefined ? `${ev.totalScore} / ${ev.maxScore}` : `${ev.score}`) : `${ev.score}%`;
             const scoreLabel = isRefresher ? "Total Score" : "Weighted Final Grade";
 
             document.getElementById('eval-detail-content').innerHTML = `
@@ -1829,31 +1193,18 @@
                         <div><p class="text-slate-400 mb-1">Functional Group</p><p>Operations</p></div>
                         <div><p class="text-slate-400 mb-1">Phase Hierarchy</p><p>${ev.type} | Mo. ${ev.phaseMonth}</p></div>
                     </div>
-
                     <div class="no-break space-y-6 text-xs text-slate-600 leading-relaxed text-justify">
                         <h2 class="text-sm font-black uppercase tracking-widest text-slate-900 border-l-4 border-slate-900 pl-4 py-1">I. Technical Audit Summary</h2>
                         <p>This performance dossier provides a comprehensive technical audit for <strong>${emp.name}</strong> during the <strong>${ev.type}</strong> phase. 
                         The evaluation assessed specific grouped competencies including <strong>OBS Setup & Troubleshooting</strong>, <strong>Camera Technical Configurations</strong>, and core <strong>Operational Skills</strong>. 
                         A final result of <strong>${finalScoreDisplay}</strong> was achieved based on these categorized performance indicators.</p>
                     </div>
-
-                    <!-- Insert Breakdown Here -->
                     ${breakdownHTML}
-
                     <div class="overflow-x-auto no-break">
                     <h2 class="text-sm font-black uppercase tracking-widest text-slate-900 border-l-4 border-slate-900 pl-4 py-1 mb-4">III. Complete Itemized Response Log</h2>
-                    <table class="w-full text-[10px] border-collapse border border-slate-200">
-                        <thead><tr class="bg-slate-900 text-white"><th class="p-4 border text-left uppercase w-3/4">Assessment Indicator</th><th class="p-4 border text-right uppercase w-1/4">Score</th></tr></thead>
-                        <tbody>${tableRows}</tbody>
-                    </table>
+                    <table class="w-full text-[10px] border-collapse border border-slate-200"><thead><tr class="bg-slate-900 text-white"><th class="p-4 border text-left uppercase w-3/4">Assessment Indicator</th><th class="p-4 border text-right uppercase w-1/4">Score</th></tr></thead><tbody>${tableRows}</tbody></table>
                     </div>
-                    
-                    <div class="no-break pt-24 grid grid-cols-1 md:grid-cols-2 gap-y-24 gap-x-12 px-6 font-black text-[8px] text-center uppercase tracking-[0.2em] text-black">
-                        <div class="border-t-2 border-black pt-4">Live Operator Trainee</div>
-                        <div class="border-t-2 border-black pt-4">Live Operator Trainer</div>
-                        <div class="border-t-2 border-black pt-4">Live Operator Lead</div>
-                        <div class="border-t-2 border-black pt-4">Technical Support Supervisor</div>
-                    </div>
+                    <div class="no-break pt-24 grid grid-cols-1 md:grid-cols-2 gap-y-24 gap-x-12 px-6 font-black text-[8px] text-center uppercase tracking-[0.2em] text-black"><div class="border-t-2 border-black pt-4">Live Operator Trainee</div><div class="border-t-2 border-black pt-4">Live Operator Trainer</div><div class="border-t-2 border-black pt-4">Live Operator Lead</div><div class="border-t-2 border-black pt-4">Technical Support Supervisor</div></div>
                 </div>`;
             document.getElementById('back-to-report-btn').onclick = () => viewReport(empId);
             document.getElementById('download-eval-pdf').onclick = () => downloadPDF('eval-detail-content', `${emp.name}_Evaluation_Report.pdf`);
@@ -1862,31 +1213,19 @@
 
         window.downloadCertificatePDF = async function(filename) {
             const el = document.getElementById('cert-pdf-wrapper');
-            const opt = { 
-                margin: 0, // No margin for full frame
-                filename: filename, 
-                image: { type: 'jpeg', quality: 0.98 }, 
-                html2canvas: { scale: 2, useCORS: true, letterRendering: true, scrollY: 0 }, 
-                jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }, // FORCE LANDSCAPE
-                pagebreak: { mode: ['css', 'legacy'] } 
-            };
+            const opt = { margin: 0, filename: filename, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true, letterRendering: true, scrollY: 0 }, jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }, pagebreak: { mode: ['css', 'legacy'] } };
             showNotification("Generating Landscape Certificate...");
             try { await html2pdf().set(opt).from(el).save(); } catch (e) { console.error(e); showNotification("Export failed."); }
         }
-
+        
         window.viewCardFromAchievement = function(empId, achId) {
             const emp = window.employees.find(e => e.id == empId);
             const a = emp.achievements.find(ach => ach.id == achId);
             if (!a) return;
             document.getElementById('cert-name').innerText = emp.name;
             document.getElementById('cert-status').innerText = a.type;
-            
-            // Apply standard formatting to date
             document.getElementById('cert-date').innerText = formatDateStandard(a.date);
-            
-            // Use the specific Landscape downloader
             document.getElementById('download-cert-pdf').onclick = () => window.downloadCertificatePDF(`${emp.name}_Certificate.pdf`);
-            
             document.getElementById('modal-backdrop').classList.remove('hidden');
             document.getElementById('congrats-modal').classList.remove('hidden');
             lucide.createIcons();
@@ -1894,20 +1233,13 @@
 
         window.downloadPDF = async function(elId, filename) {
             const el = document.getElementById(elId);
-            const opt = { 
-                margin: [0.5, 0.5, 0.5, 0.5], 
-                filename, 
-                image: { type: 'jpeg', quality: 0.98 }, 
-                html2canvas: { scale: 2, useCORS: true, letterRendering: true, scrollY: 0 }, 
-                jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' },
-                pagebreak: { mode: ['css', 'legacy'] } 
-            };
+            const opt = { margin: [0.5, 0.5, 0.5, 0.5], filename, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true, letterRendering: true, scrollY: 0 }, jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }, pagebreak: { mode: ['css', 'legacy'] } };
             showNotification("Processing formal export...");
             try { await html2pdf().set(opt).from(el).save(); } catch (e) { showNotification("Export failed."); }
         }
 
         window.backupData = function() {
-            const data = { employees: window.employees, activityLog: window.activityLog, evalStructure: window.evalStructure, version: "Cloud-Pro-3.5", ts: Date.now() };
+            const data = { employees: window.employees, activityLog: window.activityLog, evalStructure: window.evalStructure, refresherStructure: window.refresherStructure, version: "Cloud-Pro-3.5", ts: Date.now() };
             const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a'); a.href = url; a.download = `MCorp_Tracker_Backup_${new Date().toISOString().split('T')[0]}.json`;
@@ -1917,11 +1249,8 @@
 
         window.restoreData = function(event) {
             const file = event.target.files[0]; 
-            // Clear input value to ensure 'change' event fires even if the same file is selected again
             event.target.value = '';
-            
             if(!file) return;
-            
             showConfirmModal("Restore Data", "This will merge backup data into the cloud. Existing IDs will be updated. Continue?", () => {
                 const reader = new FileReader();
                 reader.onload = async (e) => {
@@ -1929,43 +1258,25 @@
                         const data = JSON.parse(e.target.result);
                         if(data.employees && Array.isArray(data.employees)) {
                             showNotification("Processing Restore...");
-                            
-                            // Map existing employees by internal ID for deduplication/updating
                             const existingMap = new Map();
                             window.employees.forEach(emp => existingMap.set(emp.id, emp.firebaseId));
-
                             let count = 0;
-                            // Process sequentially
                             for (const backupEmp of data.employees) {
-                                // Strip the old firebaseId from the backup file
                                 const { firebaseId: oldFbId, ...empData } = backupEmp;
-                                
-                                // Check if this employee exists in current live DB
                                 if (existingMap.has(empData.id)) {
-                                    // Update existing record using current live firebaseId
                                     empData.firebaseId = existingMap.get(empData.id);
-                                    await window.saveEmployee(empData, true); // Silent save
-                                } else {
-                                    // Create new record
-                                    await window.saveEmployee(empData, true); // Silent save
-                                }
+                                    await window.saveEmployee(empData, true);
+                                } else { await window.saveEmployee(empData, true); }
                                 count++;
                             }
-
-                            // Restore structure if present
-                            if(data.evalStructure) {
-                                window.evalStructure = data.evalStructure;
-                                await window.saveEvalStructure(true);
-                            }
+                            // Restore Structures
+                            if(data.evalStructure) window.evalStructure = data.evalStructure;
+                            if(data.refresherStructure) window.refresherStructure = data.refresherStructure;
+                            if(data.evalStructure || data.refresherStructure) await window.saveEvalStructure(true);
                             
                             showNotification(`Sync Complete: ${count} Records.`);
-                        } else {
-                            showNotification("Invalid Backup File.");
-                        }
-                    } catch (err) { 
-                        console.error("Restore Error:", err);
-                        showNotification("Corrupt Data File."); 
-                    }
+                        } else { showNotification("Invalid Backup File."); }
+                    } catch (err) { console.error("Restore Error:", err); showNotification("Corrupt Data File."); }
                 };
                 reader.readAsText(file);
             });
@@ -1990,22 +1301,36 @@
         }
         
         // --- EDITOR LOGIC ---
+        // Helper to get the array we are currently editing
+        window.getCurrentStructure = function() {
+            const mode = document.getElementById('editor-mode-select').value;
+            return mode === 'refresher' ? window.refresherStructure : window.evalStructure;
+        }
+
+        window.switchEditorMode = function() {
+            // Re-render based on selection
+            const catSelect = document.getElementById('editor-category-select');
+            const structure = window.getCurrentStructure();
+            catSelect.innerHTML = structure.map((c, i) => `<option value="${i}">${c.category}</option>`).join('');
+            window.renderEditorSections();
+        }
+
         window.openQuestionManager = function() {
              document.getElementById('modal-backdrop').classList.remove('hidden');
              document.getElementById('question-editor-modal').classList.remove('hidden');
              document.getElementById('question-editor-modal').classList.add('flex');
-             
-             // Populate Categories
-             const catSelect = document.getElementById('editor-category-select');
-             catSelect.innerHTML = window.evalStructure.map((c, i) => `<option value="${i}">${c.category}</option>`).join('');
-             
-             renderEditorSections();
+             // Initialize view
+             window.switchEditorMode();
         }
 
         window.renderEditorSections = function() {
             const cIdx = document.getElementById('editor-category-select').value;
             const secSelect = document.getElementById('editor-section-select');
-            const cat = window.evalStructure[cIdx];
+            const structure = window.getCurrentStructure();
+            
+            if (!structure[cIdx]) { secSelect.innerHTML = ""; return; }
+            
+            const cat = structure[cIdx];
             secSelect.innerHTML = cat.sections.map((s, i) => `<option value="${i}">${s.title}</option>`).join('');
             renderEditorQuestions();
         }
@@ -2013,100 +1338,133 @@
         window.renderEditorQuestions = function() {
              const cIdx = document.getElementById('editor-category-select').value;
              const sIdx = document.getElementById('editor-section-select').value;
-             const section = window.evalStructure[cIdx].sections[sIdx];
              const container = document.getElementById('editor-questions-list');
+             const structure = window.getCurrentStructure();
              
+             if (!structure[cIdx] || !structure[cIdx].sections[sIdx]) { container.innerHTML = '<p class="text-center text-slate-400 italic mt-10">Select a category and section to edit questions.</p>'; return; }
+             
+             const section = structure[cIdx].sections[sIdx];
+             const isRefresherMode = document.getElementById('editor-mode-select').value === 'refresher';
+
              container.innerHTML = section.questions.map((q, qIdx) => {
-                 // Render HTML for question card
                  const hasRefresher = !!(q.refresher && q.refresher.options);
                  let refresherHtml = '';
-                 
-                 if(hasRefresher) {
+                 // Show MC editor if we are in refresher mode OR if the question has legacy MC data
+                 if(isRefresherMode) {
+                     // Ensure refresher object exists if missing (auto-fix for new questions in refresher mode)
+                     if(!q.refresher) {
+                         q.refresher = { options: ["Option A", "Option B", "Option C", "Option D"], correct: 0 };
+                     }
                      refresherHtml = `
-                        <div class="mt-4 bg-slate-100 p-3 rounded-lg border border-slate-200">
-                            <p class="text-[10px] font-black uppercase text-blue-600 mb-2">Refresher Choices</p>
-                            <div class="grid grid-cols-1 gap-2">
-                                ${q.refresher.options.map((opt, oIdx) => `
-                                    <div class="flex gap-2 items-center">
-                                        <input type="radio" name="correct_${cIdx}_${sIdx}_${qIdx}" ${q.refresher.correct === oIdx ? 'checked' : ''} onchange="window.updateQuestionCorrect(${cIdx}, ${sIdx}, ${qIdx}, ${oIdx})">
-                                        <input type="text" class="w-full text-xs p-2 border rounded" value="${opt}" oninput="window.updateQuestionOption(${cIdx}, ${sIdx}, ${qIdx}, ${oIdx}, this.value)">
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </div>
+                        <div class="mt-4 bg-slate-100 p-3 rounded-lg border border-slate-200"><p class="text-[10px] font-black uppercase text-blue-600 mb-2">Multiple Choice Options</p><div class="grid grid-cols-1 gap-2">${q.refresher.options.map((opt, oIdx) => `<div class="flex gap-2 items-center"><input type="radio" name="correct_${cIdx}_${sIdx}_${qIdx}" ${q.refresher.correct === oIdx ? 'checked' : ''} onchange="window.updateQuestionCorrect(${cIdx}, ${sIdx}, ${qIdx}, ${oIdx})"><input type="text" class="w-full text-xs p-2 border rounded" value="${opt}" oninput="window.updateQuestionOption(${cIdx}, ${sIdx}, ${qIdx}, ${oIdx}, this.value)"></div>`).join('')}</div></div>
                      `;
-                 } else {
-                     refresherHtml = `<div class="mt-2 text-xs text-slate-400 italic">Standard scoring (1-5)</div>`;
-                 }
+                 } else { refresherHtml = `<div class="mt-2 text-xs text-slate-400 italic">Standard scoring (1-5)</div>`; }
 
                  return `
-                    <div class="bg-white border border-slate-200 p-4 rounded-xl shadow-sm group">
-                        <div class="flex justify-between items-start mb-2">
-                            <span class="font-black text-slate-300 text-xs">Q${qIdx+1}</span>
-                            <button onclick="window.deleteQuestion(${cIdx}, ${sIdx}, ${qIdx})" class="text-rose-400 hover:text-rose-600"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                        </div>
-                        <div class="space-y-2">
-                            <div>
-                                <label class="text-[10px] uppercase font-bold text-slate-400">Question</label>
-                                <input type="text" class="w-full font-bold text-slate-800 border-b border-slate-200 focus:border-blue-500 outline-none py-1" value="${q.q}" oninput="window.updateQuestionText(${cIdx}, ${sIdx}, ${qIdx}, 'q', this.value)">
-                            </div>
-                            <div>
-                                <label class="text-[10px] uppercase font-bold text-slate-400">Answer Guide</label>
-                                <textarea class="w-full text-xs text-slate-600 border rounded-lg p-2 focus:ring-1 focus:ring-blue-500 outline-none" rows="2" oninput="window.updateQuestionText(${cIdx}, ${sIdx}, ${qIdx}, 'ans', this.value)">${q.ans}</textarea>
-                            </div>
-                            ${refresherHtml}
-                        </div>
-                    </div>
+                    <div class="bg-white border border-slate-200 p-4 rounded-xl shadow-sm group"><div class="flex justify-between items-start mb-2"><span class="font-black text-slate-300 text-xs">Q${qIdx+1}</span><button onclick="window.deleteQuestion(${cIdx}, ${sIdx}, ${qIdx})" class="text-rose-400 hover:text-rose-600"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div><div class="space-y-2"><div><label class="text-[10px] uppercase font-bold text-slate-400">Question</label><input type="text" class="w-full font-bold text-slate-800 border-b border-slate-200 focus:border-blue-500 outline-none py-1" value="${q.q}" oninput="window.updateQuestionText(${cIdx}, ${sIdx}, ${qIdx}, 'q', this.value)"></div><div><label class="text-[10px] uppercase font-bold text-slate-400">Answer Guide</label><textarea class="w-full text-xs text-slate-600 border rounded-lg p-2 focus:ring-1 focus:ring-blue-500 outline-none" rows="2" oninput="window.updateQuestionText(${cIdx}, ${sIdx}, ${qIdx}, 'ans', this.value)">${q.ans}</textarea></div>${refresherHtml}</div></div>
                  `;
              }).join('');
              lucide.createIcons();
         }
 
-        // Live Update Functions
-        window.updateQuestionText = function(cIdx, sIdx, qIdx, field, val) {
-            window.evalStructure[cIdx].sections[sIdx].questions[qIdx][field] = val;
-            // Removed auto-save
+        window.updateQuestionText = function(cIdx, sIdx, qIdx, field, val) { 
+            const structure = window.getCurrentStructure();
+            structure[cIdx].sections[sIdx].questions[qIdx][field] = val; 
         }
-
-        window.updateQuestionOption = function(cIdx, sIdx, qIdx, oIdx, val) {
-            window.evalStructure[cIdx].sections[sIdx].questions[qIdx].refresher.options[oIdx] = val;
-            // Removed auto-save
+        window.updateQuestionOption = function(cIdx, sIdx, qIdx, oIdx, val) { 
+            const structure = window.getCurrentStructure();
+            structure[cIdx].sections[sIdx].questions[qIdx].refresher.options[oIdx] = val; 
         }
-
-        window.updateQuestionCorrect = function(cIdx, sIdx, qIdx, correctIdx) {
-            window.evalStructure[cIdx].sections[sIdx].questions[qIdx].refresher.correct = correctIdx;
-            // Removed auto-save
+        window.updateQuestionCorrect = function(cIdx, sIdx, qIdx, correctIdx) { 
+            const structure = window.getCurrentStructure();
+            structure[cIdx].sections[sIdx].questions[qIdx].refresher.correct = correctIdx; 
         }
-
+        
         window.addQuestion = function() {
              const cIdx = document.getElementById('editor-category-select').value;
              const sIdx = document.getElementById('editor-section-select').value;
-             
-             // Check if category implies refresher format (Parts 1 & 2)
-             const catName = window.evalStructure[cIdx].category;
-             const isRefresherCat = !catName.includes("Skills");
+             const structure = window.getCurrentStructure();
+             const isRefresherMode = document.getElementById('editor-mode-select').value === 'refresher';
 
-             const newQ = {
-                 q: "New Question",
-                 ans: "Answer Guide",
-                 refresher: isRefresherCat ? {
-                     options: ["Option A", "Option B", "Option C", "Option D"],
-                     correct: 0
-                 } : null
-             };
+             if(!structure[cIdx] || !structure[cIdx].sections[sIdx]) return;
              
-             window.evalStructure[cIdx].sections[sIdx].questions.push(newQ);
-             // Removed auto-save
+             const newQ = { q: "New Question", ans: "Answer Guide", refresher: isRefresherMode ? { options: ["Option A", "Option B", "Option C", "Option D"], correct: 0 } : null };
+             structure[cIdx].sections[sIdx].questions.push(newQ);
              renderEditorQuestions();
         }
 
         window.deleteQuestion = function(cIdx, sIdx, qIdx) {
             showConfirmModal("Delete Question", "Are you sure you want to remove this item?", () => {
-                window.evalStructure[cIdx].sections[sIdx].questions.splice(qIdx, 1);
+                const structure = window.getCurrentStructure();
+                structure[cIdx].sections[sIdx].questions.splice(qIdx, 1);
                 renderEditorQuestions();
             });
         }
-        // --- End Editor Logic ---
+        
+        // --- Structure Management (Add/Edit/Delete Categories & Sections) ---
+        window.addCategory = function() {
+            showPromptModal("Add Category", "Enter new category name:", "", (val) => {
+                const structure = window.getCurrentStructure();
+                structure.push({ category: val, sections: [] });
+                window.switchEditorMode(); // Refresh dropdown
+                // Select new
+                document.getElementById('editor-category-select').value = structure.length - 1;
+                window.renderEditorSections();
+            });
+        }
+        
+        window.renameCategory = function() {
+            const cIdx = document.getElementById('editor-category-select').value;
+            const structure = window.getCurrentStructure();
+            const currentName = structure[cIdx].category;
+            showPromptModal("Rename Category", "Enter new name:", currentName, (val) => {
+                structure[cIdx].category = val;
+                document.getElementById('editor-category-select').options[cIdx].text = val;
+            });
+        }
+        
+        window.deleteCategory = function() {
+             const cIdx = document.getElementById('editor-category-select').value;
+             showConfirmModal("Delete Category", "Remove entire category and all contained sections?", () => {
+                 const structure = window.getCurrentStructure();
+                 structure.splice(cIdx, 1);
+                 window.switchEditorMode();
+             });
+        }
+
+        window.addSection = function() {
+             const cIdx = document.getElementById('editor-category-select').value;
+             showPromptModal("Add Section", "Enter new section name:", "", (val) => {
+                 const structure = window.getCurrentStructure();
+                 structure[cIdx].sections.push({ title: val, questions: [] });
+                 window.renderEditorSections();
+                 document.getElementById('editor-section-select').value = structure[cIdx].sections.length - 1;
+                 renderEditorQuestions();
+             });
+        }
+        
+        window.renameSection = function() {
+             const cIdx = document.getElementById('editor-category-select').value;
+             const sIdx = document.getElementById('editor-section-select').value;
+             const structure = window.getCurrentStructure();
+             const currentName = structure[cIdx].sections[sIdx].title;
+             showPromptModal("Rename Section", "Enter new name:", currentName, (val) => {
+                 structure[cIdx].sections[sIdx].title = val;
+                 document.getElementById('editor-section-select').options[sIdx].text = val;
+             });
+        }
+        
+        window.deleteSection = function() {
+             const cIdx = document.getElementById('editor-category-select').value;
+             const sIdx = document.getElementById('editor-section-select').value;
+             showConfirmModal("Delete Section", "Remove section and all its questions?", () => {
+                 const structure = window.getCurrentStructure();
+                 structure[cIdx].sections.splice(sIdx, 1);
+                 renderEditorSections();
+             });
+        }
+        
+        // --- End Structure Management ---
 
         // Firebase Configuration
         const userProvidedConfig = {
@@ -2191,7 +1549,6 @@
             if (!auth.currentUser) return;
             const employeesRef = collection(db, 'artifacts', appId, 'public', 'data', 'employees');
             const activityRef = collection(db, 'artifacts', appId, 'public', 'data', 'activity');
-            // Settings Sync
             const settingsRef = collection(db, 'artifacts', appId, 'public', 'data', 'settings');
 
             onSnapshot(employeesRef, (snapshot) => {
@@ -2210,8 +1567,10 @@
             onSnapshot(settingsRef, (snapshot) => {
                 snapshot.forEach(doc => {
                     if(doc.id === 'structure') {
-                        // Update structure from cloud if it exists
-                        window.evalStructure = doc.data().data;
+                        const d = doc.data();
+                        // Sync both structures
+                        if(d.data) window.evalStructure = d.data;
+                        if(d.refresherData) window.refresherStructure = d.refresherData;
                     }
                 });
             });
@@ -2248,7 +1607,8 @@
             if (!auth.currentUser) return;
             try {
                 const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'structure');
-                await setDoc(docRef, { data: window.evalStructure });
+                // Save both standard and refresher structures
+                await setDoc(docRef, { data: window.evalStructure, refresherData: window.refresherStructure });
                 if(!silent) showNotification("Questions Updated.");
             } catch(e) {
                 console.error("Save Structure Failed", e);

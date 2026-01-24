@@ -1,6 +1,7 @@
-const CACHE_NAME = 'mcorp-tracker-v1';
+const CACHE_NAME = 'mcorp-tracker-v2';
 const ASSETS_TO_CACHE = [
   './index.html',
+  './manifest.json',
   'https://cdn.tailwindcss.com',
   'https://unpkg.com/lucide@latest',
   'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js',
@@ -11,6 +12,7 @@ const ASSETS_TO_CACHE = [
 
 // Install Service Worker
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(ASSETS_TO_CACHE);
@@ -31,12 +33,16 @@ self.addEventListener('activate', (event) => {
       );
     })
   );
+  self.clients.claim();
 });
 
 // Fetch Strategy
 self.addEventListener('fetch', (event) => {
   // Ignore Firestore/Firebase requests (let the SDK handle persistence)
-  if (event.request.url.includes('firestore') || event.request.url.includes('googleapis') || event.request.url.includes('firebase')) {
+  if (event.request.url.includes('firestore') || 
+      event.request.url.includes('googleapis') || 
+      event.request.url.includes('firebase') ||
+      event.request.method !== 'GET') {
     return;
   }
 
@@ -54,9 +60,13 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       const fetchPromise = fetch(event.request).then((networkResponse) => {
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, networkResponse.clone());
-        });
+        // Clone response to put in cache
+        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+           const responseToCache = networkResponse.clone();
+           caches.open(CACHE_NAME).then((cache) => {
+             cache.put(event.request, responseToCache);
+           });
+        }
         return networkResponse;
       });
       return cachedResponse || fetchPromise;
