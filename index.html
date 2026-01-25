@@ -33,14 +33,19 @@
             max-width: 8.27in; 
             margin: 0 auto;
             color: #1e293b;
-            padding: 0.5in;
+            padding: 0.25in; /* Reduced from 0.5in */
         }
 
         .no-break { page-break-inside: avoid; break-inside: avoid; }
+        .avoid-break { page-break-inside: avoid; break-inside: avoid; }
         .page-break { page-break-before: always; }
         
         /* Prevent table rows from being cut */
         tr { page-break-inside: avoid; break-inside: avoid; }
+        /* Prevent table headers from being orphaned */
+        thead { display: table-header-group; }
+        /* Prevent general block splitting */
+        .prevent-split { break-inside: avoid; page-break-inside: avoid; }
 
         .cert-title { font-family: 'Playfair Display', serif; color: #1e293b; }
         .cert-gold-text { color: #B48C36; }
@@ -63,6 +68,17 @@
             body { background: white; }
             main { padding: 0 !important; margin: 0 !important; }
             .printable-report { box-shadow: none; border: none; width: 100%; max-width: 100%; padding: 0.4in; }
+        }
+        
+        /* Certificate Preview Scaling Container */
+        #cert-preview-container {
+            width: 100%;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #f1f5f9;
+            padding: 20px;
         }
     </style>
 </head>
@@ -273,7 +289,7 @@
                                 <i data-lucide="download"></i> Backup Data
                             </button>
                             <div class="flex-1 relative">
-                                <input type="file" id="restore-input" onchange="restoreData(event)" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+                                <input type="file" id="restore-input" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
                                 <button class="w-full bg-slate-100 text-slate-700 py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-slate-200 transition-all border border-slate-200 shadow-sm active:scale-95">
                                     <i data-lucide="upload"></i> Restore
                                 </button>
@@ -446,37 +462,40 @@
         </div>
 
         <!-- Celebration Modal -->
-        <div id="congrats-modal" class="bg-white w-full max-w-5xl rounded-[30px] md:rounded-[40px] shadow-2xl p-0 overflow-hidden hidden mx-4 max-h-[90vh] overflow-y-auto">
-            <!-- Landscape Wrapper: A4 Landscape is approx 11.7 x 8.3 in -->
-            <div id="cert-pdf-wrapper" class="bg-white flex items-center justify-center p-8" style="width: 11.69in; height: 8.27in; margin: 0 auto;">
-                <!-- Frame Construction using Standard Borders for Maximum PDF Compatibility -->
-                <div class="w-full h-full border-[20px] border-[#B48C36] p-2 flex flex-col box-border">
-                    <div class="w-full h-full border-[8px] border-[#D4AF37] flex flex-col justify-center items-center p-8 text-center space-y-6 relative bg-white box-border">
-                        <!-- Decorative Corners -->
-                        <div class="absolute top-2 left-2 w-16 h-16 border-t-4 border-l-4 border-[#B48C36]"></div>
-                        <div class="absolute top-2 right-2 w-16 h-16 border-t-4 border-r-4 border-[#B48C36]"></div>
-                        <div class="absolute bottom-2 left-2 w-16 h-16 border-b-4 border-l-4 border-[#B48C36]"></div>
-                        <div class="absolute bottom-2 right-2 w-16 h-16 border-b-4 border-r-4 border-[#B48C36]"></div>
-                        <div class="space-y-3 z-10">
-                            <h4 class="text-blue-900 font-black uppercase tracking-[0.4em] text-sm">M-Commerce Corporation</h4>
-                            <p class="text-xs text-slate-400 font-bold uppercase tracking-widest">Operation Department</p>
-                        </div>
-                        <div class="space-y-4 z-10">
-                            <h2 class="cert-title text-6xl font-black text-slate-900">Certificate of Promotion</h2>
-                            <p class="text-slate-500 font-medium italic text-lg">This honor is officially awarded to</p>
-                        </div>
-                        <div class="space-y-4 z-10">
-                            <h3 class="text-6xl font-black text-[#B48C36] underline underline-offset-8 decoration-slate-200" id="cert-name"></h3>
-                            <div class="space-y-1">
-                                <p class="text-slate-500 text-lg">For demonstrating exceptional technical mastery and professionalism,</p>
-                                <p class="text-slate-500 text-lg">qualifying for advancement to the role of</p>
+        <div id="congrats-modal" class="bg-white w-full max-w-6xl rounded-[30px] shadow-2xl p-0 overflow-hidden hidden mx-4 max-h-[90vh] overflow-y-auto">
+            <!-- Scaling Wrapper for Preview -->
+            <div id="cert-preview-container">
+                <!-- Landscape Wrapper: A4 Landscape is approx 11.7 x 8.3 in -->
+                <div id="cert-pdf-wrapper" class="bg-white flex items-center justify-center p-8 origin-top-left" style="width: 11.69in; height: 8.27in; margin: 0 auto; flex-shrink: 0;">
+                    <!-- Frame Construction using Standard Borders for Maximum PDF Compatibility -->
+                    <div class="w-full h-full border-[20px] border-[#B48C36] p-2 flex flex-col box-border">
+                        <div class="w-full h-full border-[8px] border-[#D4AF37] flex flex-col justify-center items-center p-8 text-center space-y-6 relative bg-white box-border">
+                            <!-- Decorative Corners -->
+                            <div class="absolute top-2 left-2 w-16 h-16 border-t-4 border-l-4 border-[#B48C36]"></div>
+                            <div class="absolute top-2 right-2 w-16 h-16 border-t-4 border-r-4 border-[#B48C36]"></div>
+                            <div class="absolute bottom-2 left-2 w-16 h-16 border-b-4 border-l-4 border-[#B48C36]"></div>
+                            <div class="absolute bottom-2 right-2 w-16 h-16 border-b-4 border-r-4 border-[#B48C36]"></div>
+                            <div class="space-y-3 z-10">
+                                <h4 class="text-blue-900 font-black uppercase tracking-[0.4em] text-sm">M-Commerce Corporation</h4>
+                                <p class="text-xs text-slate-400 font-bold uppercase tracking-widest">Operation Department</p>
                             </div>
-                            <p class="text-4xl font-black text-blue-900 uppercase tracking-tighter mt-4" id="cert-status"></p>
-                        </div>
-                        <div class="pt-12 w-full max-w-4xl grid grid-cols-3 gap-12 items-end z-10">
-                            <div class="border-t-2 border-slate-900 pt-4"><p class="text-[10px] font-black uppercase text-slate-400 mb-1">Date of Award</p><p class="text-sm font-bold text-slate-900" id="cert-date"></p></div>
-                            <div class="flex justify-center items-center opacity-30"><i data-lucide="award" class="text-blue-900 w-16 h-16"></i></div>
-                            <div class="border-t-2 border-slate-900 pt-4"><p class="text-[10px] font-black uppercase text-slate-400 mb-1">Authorization</p><p class="text-sm font-bold text-slate-900">Live Operator Trainer</p></div>
+                            <div class="space-y-4 z-10">
+                                <h2 class="cert-title text-6xl font-black text-slate-900">Certificate of Promotion</h2>
+                                <p class="text-slate-500 font-medium italic text-lg">This honor is officially awarded to</p>
+                            </div>
+                            <div class="space-y-4 z-10">
+                                <h3 class="text-6xl font-black text-[#B48C36] underline underline-offset-8 decoration-slate-200" id="cert-name"></h3>
+                                <div class="space-y-1">
+                                    <p class="text-slate-500 text-lg">For demonstrating exceptional technical mastery and professionalism,</p>
+                                    <p class="text-slate-500 text-lg">qualifying for advancement to the role of</p>
+                                </div>
+                                <p class="text-4xl font-black text-blue-900 uppercase tracking-tighter mt-4" id="cert-status"></p>
+                            </div>
+                            <div class="pt-12 w-full max-w-4xl grid grid-cols-3 gap-12 items-end z-10">
+                                <div class="border-t-2 border-slate-900 pt-4"><p class="text-[10px] font-black uppercase text-slate-400 mb-1">Date of Award</p><p class="text-sm font-bold text-slate-900" id="cert-date"></p></div>
+                                <div class="flex justify-center items-center opacity-30"><i data-lucide="award" class="text-blue-900 w-16 h-16"></i></div>
+                                <div class="border-t-2 border-slate-900 pt-4"><p class="text-[10px] font-black uppercase text-slate-400 mb-1">Authorization</p><p class="text-sm font-bold text-slate-900">Live Operator Trainer</p></div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -717,8 +736,32 @@
             document.getElementById('cert-status').innerText = emp.status;
             if (emp.achievements && emp.achievements.length > 0) { document.getElementById('cert-date').innerText = formatDateStandard(emp.achievements[emp.achievements.length - 1].date); } 
             else { document.getElementById('cert-date').innerText = formatDateStandard(new Date()); }
+            
             document.getElementById('modal-backdrop').classList.remove('hidden');
             document.getElementById('congrats-modal').classList.remove('hidden');
+            
+            // Adjust Scale for Preview
+            const wrapper = document.getElementById('cert-pdf-wrapper');
+            const container = document.getElementById('cert-preview-container');
+            
+            // Basic reset
+            wrapper.style.transform = '';
+            
+            // Calculate scale
+            const availableWidth = Math.min(window.innerWidth * 0.9, 1100); // 90% of screen or max 1100px
+            const baseWidth = 11.69 * 96; // 1122px approx
+            const scale = availableWidth / baseWidth;
+            
+            // Apply scale
+            if (scale < 1) {
+                wrapper.style.transform = `scale(${scale})`;
+                // Adjust container height to match scaled height
+                const scaledHeight = (8.27 * 96) * scale;
+                container.style.height = `${scaledHeight + 50}px`; // +50 for padding
+            } else {
+                 container.style.height = 'auto';
+            }
+
             document.getElementById('download-cert-pdf').onclick = () => window.downloadCertificatePDF(`${emp.name}_Certificate.pdf`);
             lucide.createIcons();
         }
@@ -1293,8 +1336,8 @@
             lucide.createIcons();
         }
 
-        window.showEvalDetail = function(empId, evalId) {
-            const emp = window.employees.find(e => e.id == empId), ev = emp.evaluations.find(e => e.id == evalId); if (!ev) return;
+        // New Helper Function to Generate Evaluation Detail HTML
+        window.getEvalDetailHTML = function(emp, ev) {
             const isRefresher = ev.type === 'Refresher';
             const breakdown = {};
             ev.details.forEach(d => {
@@ -1309,9 +1352,92 @@
             });
 
             const structureToUse = isRefresher ? window.refresherStructure : window.evalStructure;
+            let groupedRows = '';
 
-            let tableRows = '';
-            let breakdownHTML = `<div class="mt-8 mb-8 no-break"><h2 class="text-sm font-black uppercase tracking-widest text-slate-900 border-l-4 border-slate-900 pl-4 py-1 mb-4">II. Detailed Score Breakdown</h2><div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
+            structureToUse.forEach((cat, cIdx) => {
+                let hasCatContent = false;
+                // Removed 'no-break' to allow large categories to split across pages
+                let catContent = `
+                    <div class="mb-8"> 
+                        <div class="bg-slate-900 text-white px-4 py-2 font-black uppercase text-xs tracking-widest rounded-t-xl flex justify-between items-center prevent-split">
+                            <span>Part ${toRoman(cIdx + 1)}: ${cat.category}</span>
+                            <span class="text-white/50 text-[10px]">Evaluation Category</span>
+                        </div>
+                        <div class="border border-slate-200 rounded-b-xl overflow-hidden bg-slate-50/50">
+                `;
+                
+                cat.sections.forEach((sec, sIdx) => {
+                    let hasSecContent = false;
+                    // Removed 'no-break' to allow sections to split if needed
+                    let secContent = `
+                        <div class="p-4 border-b border-slate-200 last:border-0 bg-white">
+                            <h4 class="font-black text-slate-700 text-[10px] uppercase mb-3 pb-2 border-b border-slate-100 flex items-center gap-2 prevent-split">
+                                <span class="bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded text-[9px]">${sIdx+1}</span>
+                                ${sec.title}
+                            </h4>
+                            <table class="w-full text-[10px] border-collapse">
+                                <tbody class="divide-y divide-slate-100">
+                    `;
+                    
+                    sec.questions.forEach((q, qIdx) => {
+                         const detail = ev.details.find(d => d.q === q.q);
+                         
+                         // Always render row regardless if detail exists
+                         hasCatContent = true;
+                         hasSecContent = true;
+
+                         let rowContent = '';
+
+                         if(detail) {
+                             // Existing detail logic
+                             let maxP = (isRefresher && !detail.cat.includes('Skills')) ? 1 : 5;
+                             const scoreDisp = maxP === 1 ? `${detail.score} / 1` : `${detail.score} / 5.0`;
+
+                             if(isRefresher && maxP === 1) {
+                                 let correctOptionText = "N/A";
+                                 if(q.refresher) { correctOptionText = q.refresher.options[q.refresher.correct]; }
+
+                                 if(detail.score === 0) {
+                                     const wrongText = detail.selectedAnswer || 'Incorrect';
+                                     rowContent = `
+                                        <td class="py-3 pr-4 align-top w-3/4 whitespace-normal break-words">
+                                            <div class="font-bold text-slate-700">${q.q}</div>
+                                            <div class="mt-1 flex flex-col gap-0.5">
+                                                <span class="text-rose-600 font-bold text-[9px]">Selected: ${wrongText}</span>
+                                                <span class="text-emerald-600 font-bold text-[9px]">Correct: ${correctOptionText}</span>
+                                            </div>
+                                        </td>
+                                        <td class="py-3 pl-4 align-top text-right font-black text-rose-600 whitespace-nowrap">${scoreDisp}</td>
+                                     `;
+                                 } else {
+                                     rowContent = `
+                                        <td class="py-3 pr-4 align-top w-3/4 whitespace-normal break-words">
+                                            <div class="font-bold text-slate-700">${q.q}</div>
+                                            <div class="mt-1 text-slate-400 italic text-[9px]">Answer: ${correctOptionText}</div>
+                                        </td>
+                                        <td class="py-3 pl-4 align-top text-right font-black text-emerald-600 whitespace-nowrap">${scoreDisp}</td>
+                                     `;
+                                 }
+                             } else {
+                                 rowContent = `<td class="py-3 pr-4 align-top w-3/4 font-medium text-slate-700 whitespace-normal break-words">${detail.q}</td><td class="py-3 pl-4 align-top text-right font-black text-blue-600 whitespace-nowrap">${scoreDisp}</td>`;
+                             }
+                         } else {
+                             // Missing detail logic (e.g. new question added after eval was saved)
+                             rowContent = `<td class="py-3 pr-4 align-top w-3/4 font-medium text-slate-400 whitespace-normal break-words">${q.q} <span class="text-[8px] italic text-slate-300 ml-1">(Not Assessed)</span></td><td class="py-3 pl-4 align-top text-right font-bold text-slate-300 whitespace-nowrap">--</td>`;
+                         }
+                         secContent += `<tr>${rowContent}</tr>`;
+                    });
+                    
+                    secContent += `</tbody></table></div>`;
+                    if(hasSecContent) catContent += secContent;
+                });
+                
+                catContent += `</div></div>`;
+                if(hasCatContent) groupedRows += catContent;
+            });
+
+            // Breakdown Logic
+            let breakdownHTML = `<div class="mt-8 mb-8 no-break avoid-break"><h2 class="text-sm font-black uppercase tracking-widest text-slate-900 border-l-4 border-slate-900 pl-4 py-1 mb-4">II. Detailed Score Breakdown</h2><div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
             let catIndex = 1;
             for (const structCat of structureToUse) {
                 const catName = structCat.category;
@@ -1332,108 +1458,259 @@
                          }
                          secIndex++;
                      }
-                     breakdownHTML += `<div class="bg-slate-50 p-4 rounded-xl border border-slate-200 no-break"><div class="flex justify-between items-center mb-3 border-b-2 border-slate-200 pb-2"><span class="font-black text-xs uppercase text-blue-900">Part ${toRoman(catIndex)}: ${catName}</span><span class="font-black text-lg text-blue-600">${catScoreDisplay}</span></div><div class="space-y-1">${secHTML}</div></div>`;
+                     breakdownHTML += `<div class="bg-slate-50 p-4 rounded-xl border border-slate-200 no-break avoid-break"><div class="flex justify-between items-center mb-3 border-b-2 border-slate-200 pb-2"><span class="font-black text-xs uppercase text-blue-900">Part ${toRoman(catIndex)}: ${catName}</span><span class="font-black text-lg text-blue-600">${catScoreDisplay}</span></div><div class="space-y-1">${secHTML}</div></div>`;
                 }
                 catIndex++;
             }
             breakdownHTML += `</div></div>`;
-            
-            ev.details.forEach(d => {
-                 let maxP = (isRefresher && !d.cat.includes('Skills')) ? 1 : 5;
-                 const scoreDisp = maxP === 1 ? `${d.score} / 1` : `${d.score} / 5.0`;
-                 
-                 // If refresher, determine if correct or wrong
-                 let rowContent = `<td class="p-4 border font-bold text-slate-700 text-[10px]">${d.q}</td><td class="p-4 border text-right font-black text-blue-600 text-[10px]">${scoreDisp}</td>`;
-                 
-                 if(isRefresher && maxP === 1) {
-                     // Find the question in structure to get correct answer text
-                     let correctOptionText = "N/A";
-                     let found = false;
-                     
-                     // Search through structure
-                     for(const cat of structureToUse) {
-                         if(cat.category === d.cat) {
-                             for(const sec of cat.sections) {
-                                 if(sec.title === d.section) {
-                                     for(const q of sec.questions) {
-                                         if(q.q === d.q && q.refresher) {
-                                             correctOptionText = q.refresher.options[q.refresher.correct];
-                                             found = true;
-                                             break;
-                                         }
-                                     }
-                                 }
-                                 if(found) break;
-                             }
-                         }
-                         if(found) break;
-                     }
-
-                     // If score is 0, it means Wrong.
-                     if(d.score === 0) {
-                         // Check for stored selectedAnswer (new records), or show generic 'Incorrect' (legacy)
-                         const wrongText = d.selectedAnswer || 'Incorrect';
-                         rowContent = `
-                            <td class="p-4 border font-bold text-slate-700 text-[10px]">
-                                <div>${d.q}</div>
-                                <div class="mt-1 text-rose-600 font-black"><span class="line-through">Selected: ${wrongText}</span></div>
-                                <div class="mt-0.5 text-emerald-600 font-bold">Correct: ${correctOptionText}</div>
-                            </td>
-                            <td class="p-4 border text-right font-black text-rose-600 text-[10px]">0 / 1</td>
-                         `;
-                     } else {
-                         // Correct
-                         rowContent = `
-                            <td class="p-4 border font-bold text-slate-700 text-[10px]">
-                                <div>${d.q}</div>
-                                <div class="mt-1 text-slate-400 italic">Answer: ${correctOptionText}</div>
-                            </td>
-                            <td class="p-4 border text-right font-black text-emerald-600 text-[10px]">1 / 1</td>
-                         `;
-                     }
-                 }
-                 
-                 tableRows += `<tr>${rowContent}</tr>`;
-            });
 
             let finalScoreDisplay = isRefresher ? (ev.totalScore !== undefined ? `${ev.totalScore} / ${ev.maxScore}` : `${ev.score}`) : `${ev.score}%`;
             const scoreLabel = isRefresher ? "Total Score" : "Weighted Final Grade";
 
-            document.getElementById('eval-detail-content').innerHTML = `
+            return `
                 <div class="space-y-12">
                     <div class="no-break flex flex-col md:flex-row justify-between items-start border-b-8 border-slate-900 pb-8 uppercase font-black tracking-tighter gap-4">
                         <div><h1 class="text-2xl">M-Commerce Corporation</h1><p class="text-sm font-bold text-blue-600 uppercase tracking-widest">Performance Evaluation Dossier</p></div>
                         <div class="text-right"><p class="text-[10px] text-slate-400 uppercase">${scoreLabel}</p><p class="text-7xl text-slate-900 leading-none">${finalScoreDisplay}</p></div>
                     </div>
-                    <div class="no-break grid grid-cols-2 md:grid-cols-4 gap-6 bg-slate-50 p-6 rounded-3xl border text-[10px] uppercase font-black">
+                    <div class="no-break avoid-break grid grid-cols-2 md:grid-cols-4 gap-6 bg-slate-50 p-6 rounded-3xl border text-[10px] uppercase font-black">
                         <div><p class="text-slate-400 mb-1">Subject Personnel</p><p>${emp.name}</p></div>
                         <div><p class="text-slate-400 mb-1">Date of Assessment</p><p>${ev.date}</p></div>
                         <div><p class="text-slate-400 mb-1">Functional Group</p><p>Operations</p></div>
                         <div><p class="text-slate-400 mb-1">Phase Hierarchy</p><p>${ev.type} | Mo. ${ev.phaseMonth}</p></div>
                     </div>
-                    <div class="no-break space-y-6 text-xs text-slate-600 leading-relaxed text-justify">
+                    <div class="no-break avoid-break space-y-6 text-xs text-slate-600 leading-relaxed text-justify">
                         <h2 class="text-sm font-black uppercase tracking-widest text-slate-900 border-l-4 border-slate-900 pl-4 py-1">I. Technical Audit Summary</h2>
                         <p>This performance dossier provides a comprehensive technical audit for <strong>${emp.name}</strong> during the <strong>${ev.type}</strong> phase. 
                         The evaluation assessed specific grouped competencies including <strong>OBS Setup & Troubleshooting</strong>, <strong>Camera Technical Configurations</strong>, and core <strong>Operational Skills</strong>. 
                         A final result of <strong>${finalScoreDisplay}</strong> was achieved based on these categorized performance indicators.</p>
                     </div>
                     ${breakdownHTML}
-                    <div class="overflow-x-auto no-break">
-                    <h2 class="text-sm font-black uppercase tracking-widest text-slate-900 border-l-4 border-slate-900 pl-4 py-1 mb-4">III. Complete Itemized Response Log</h2>
-                    <table class="w-full text-[10px] border-collapse border border-slate-200"><thead><tr class="bg-slate-900 text-white"><th class="p-4 border text-left uppercase w-3/4">Assessment Indicator</th><th class="p-4 border text-right uppercase w-1/4">Score</th></tr></thead><tbody>${tableRows}</tbody></table>
+                    <div class="overflow-x-auto">
+                        <h2 class="text-sm font-black uppercase tracking-widest text-slate-900 border-l-4 border-slate-900 pl-4 py-1 mb-6">III. Complete Itemized Response Log</h2>
+                        ${groupedRows}
                     </div>
-                    <div class="no-break pt-24 grid grid-cols-1 md:grid-cols-2 gap-y-24 gap-x-12 px-6 font-black text-[8px] text-center uppercase tracking-[0.2em] text-black"><div class="border-t-2 border-black pt-4">Live Operator Trainee</div><div class="border-t-2 border-black pt-4">Live Operator Trainer</div><div class="border-t-2 border-black pt-4">Live Operator Lead</div><div class="border-t-2 border-black pt-4">Technical Support Supervisor</div></div>
                 </div>`;
+        }
+
+        window.showEvalDetail = function(empId, evalId) {
+            const emp = window.employees.find(e => e.id == empId), ev = emp.evaluations.find(e => e.id == evalId); if (!ev) return;
+            
+            document.getElementById('eval-detail-content').innerHTML = window.getEvalDetailHTML(emp, ev);
+            
             document.getElementById('back-to-report-btn').onclick = () => viewReport(empId);
             document.getElementById('download-eval-pdf').onclick = () => downloadPDF('eval-detail-content', `${emp.name}_Evaluation_Report.pdf`);
             switchView('eval-detail');
         }
 
+        // Updated Endorsement Generator
+        window.generateEndorsementLetter = function(empId, achId) {
+            const emp = window.employees.find(e => e.id == empId);
+            const ach = emp.achievements.find(a => a.id == achId);
+            if(!emp || !ach) return;
+
+            const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+            const type = ach.type; 
+            const subject = type === 'Regular' ? 'Recommendation for Regularization' : 'Endorsement for Probationary Status';
+            
+            // Collect assessment history
+            let evalHistoryHTML = '';
+            let relevantEvals = [];
+
+            if (type === 'Probationary') { 
+                // For Probationary Endorsement, show Trainee records
+                relevantEvals = emp.evaluations.filter(e => e.type === 'Trainee'); 
+            } else { 
+                // For Regularization Endorsement, show ONLY Probationary records (exclude Trainee)
+                relevantEvals = emp.evaluations.filter(e => e.type === 'Probationary'); 
+            }
+            
+            relevantEvals.sort((a,b) => new Date(a.date) - new Date(b.date));
+
+            if (relevantEvals.length > 0) {
+                // Use calculateNextDate logic for scheduled date column
+                let rows = relevantEvals.map(ev => {
+                    const scheduledDate = window.calculateNextDate(emp.hireDate, ev.phaseMonth - 1);
+                    return `
+                    <tr>
+                        <td class="border border-slate-300 p-2">${scheduledDate}</td>
+                        <td class="border border-slate-300 p-2">${ev.type} (Mo. ${ev.phaseMonth})</td>
+                        <td class="border border-slate-300 p-2 text-right font-bold">${ev.score}%</td>
+                    </tr>
+                `}).join('');
+                
+                evalHistoryHTML = `
+                    <div class="mb-4 avoid-break text-sm"> <!-- Reduced mb-8 to mb-4 -->
+                        <p class="mb-2 font-bold text-xs uppercase tracking-wide">Assessment Record Summary:</p>
+                        <table class="w-full text-xs text-left border-collapse border border-slate-300">
+                            <thead class="bg-slate-100">
+                                <tr>
+                                    <th class="border border-slate-300 p-2 w-1/3">Scheduled Date</th>
+                                    <th class="border border-slate-300 p-2 w-1/3">Phase</th>
+                                    <th class="border border-slate-300 p-2 w-1/3 text-right">Score</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    </div>
+                `;
+            } else {
+                evalHistoryHTML = `<p class="italic text-slate-500 mb-4 text-sm">No historical evaluation records found for this phase.</p>`;
+            }
+
+            let attachedReports = '';
+            relevantEvals.forEach(ev => {
+                 attachedReports += `
+                    <div class="page-break w-full h-8"></div>
+                    <div class="bg-white pt-8">
+                        ${window.getEvalDetailHTML(emp, ev)}
+                    </div>
+                 `;
+            });
+
+            const html = `
+                <div class="font-serif text-slate-800 leading-relaxed max-w-[8.5in] mx-auto"> <!-- Removed p-6 md:p-8 -->
+                    <div class="mb-6 border-b-2 border-slate-900 pb-2"> <!-- Reduced mb-12 to mb-6, pb-4 to pb-2 -->
+                        <h1 class="text-2xl md:text-3xl font-black uppercase text-slate-900">M-Commerce Corporation</h1>
+                        <p class="text-xs md:text-sm font-bold text-blue-600 uppercase tracking-widest">Operations Department</p>
+                    </div>
+                    
+                    <p class="mb-4 font-bold text-sm">${today}</p> <!-- Reduced mb-8 to mb-4 -->
+                    
+                    <div class="mb-4 text-sm"> <!-- Reduced mb-8 to mb-4 -->
+                        <p class="mb-0.5"><strong>To:</strong> Human Resources Department</p>
+                        <p><strong>From:</strong> Operations Management Team</p>
+                    </div>
+                    
+                    <p class="mb-6 uppercase font-bold tracking-wide text-base border-b border-slate-200 inline-block pb-1">Subject: ${subject} - ${emp.name}</p> <!-- Reduced mb-8 to mb-6 -->
+                    
+                    <p class="mb-4 text-sm">Dear HR Team,</p>
+                    
+                    <p class="mb-4 text-justify indent-8 text-sm"> <!-- Reduced mb-6 to mb-4 -->
+                        This letter serves as a formal endorsement for <strong>${emp.name}</strong> regarding their employment status. 
+                        Based on the recent performance evaluations and technical audits conducted, the employee has successfully demonstrated the required competencies for the role of Live Operator.
+                    </p>
+                    
+                    ${evalHistoryHTML}
+                    
+                    <div class="mb-4 avoid-break text-sm"> <!-- Reduced mb-6 to mb-4 -->
+                        <p class="mb-2 font-bold">Key performance observations include:</p>
+                        <ul class="list-disc ml-8 space-y-1 text-sm"> <!-- Reduced space-y-2 to space-y-1 -->
+                            <li>Consistent adherence to OBS technical standards and setup protocols.</li>
+                            <li>Demonstrated reliability, professional conduct, and adaptability to operational requirements.</li>
+                            <li>Effective execution of troubleshooting procedures during live sessions.</li>
+                        </ul>
+                    </div>
+                    
+                    <p class="mb-6 text-justify indent-8 text-sm"> <!-- Reduced mb-12 to mb-6 -->
+                        We officially recommend that <strong>${emp.name}</strong> be granted <strong>${type}</strong> status effective as per contract schedule. 
+                        We are confident in their continued contribution to the operations team.
+                    </p>
+                    
+                    <p class="mb-8 text-sm">Respectfully,</p> <!-- Reduced mb-16 to mb-8 -->
+                    
+                    <div class="grid grid-cols-2 gap-y-8 gap-x-8 avoid-break text-sm"> <!-- Reduced gap-y-16 to gap-y-8 -->
+                        <div>
+                            <p class="font-bold border-t border-black inline-block pt-2 w-full text-center uppercase text-xs tracking-wider">Live Operator</p>
+                            <p class="text-[10px] text-slate-500 text-center uppercase">(Employee Acknowledgement)</p>
+                        </div>
+                        <div>
+                             <p class="font-bold border-t border-black inline-block pt-2 w-full text-center uppercase text-xs tracking-wider">Live Operator Trainer</p>
+                             <p class="text-[10px] text-slate-500 text-center uppercase">(Verified By)</p>
+                        </div>
+                        <div>
+                            <p class="font-bold border-t border-black inline-block pt-2 w-full text-center uppercase text-xs tracking-wider">Live Operator Lead</p>
+                            <p class="text-[10px] text-slate-500 text-center uppercase">(Endorsed By)</p>
+                        </div>
+                        <div>
+                             <p class="font-bold border-t border-black inline-block pt-2 w-full text-center uppercase text-xs tracking-wider">Technical Support Supervisor</p>
+                             <p class="text-[10px] text-slate-500 text-center uppercase">(Approved By)</p>
+                        </div>
+                    </div>
+                </div>
+                ${attachedReports}
+            `;
+            
+            document.getElementById('endorsement-content').innerHTML = html;
+            document.getElementById('download-endorse-pdf').onclick = () => downloadPDF('endorsement-content', `${emp.name}_Endorsement_Letter.pdf`);
+            document.getElementById('back-to-report-from-endorse').onclick = () => viewReport(empId);
+            switchView('endorsement');
+        }
+
+        // New Termination Notice Generator
+        window.generateTerminationLetter = function(empId) {
+            const emp = window.employees.find(e => e.id == empId);
+            if(!emp) return;
+            const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+            const html = `
+                <div class="font-serif text-slate-800 leading-relaxed max-w-[8.5in] mx-auto"> <!-- Removed p-6 md:p-8 -->
+                    <div class="mb-6 border-b-2 border-rose-900 pb-2"> <!-- Reduced mb-12 to mb-6 -->
+                        <h1 class="text-2xl md:text-3xl font-black uppercase text-slate-900">M-Commerce Corporation</h1>
+                        <p class="text-xs md:text-sm font-bold text-rose-600 uppercase tracking-widest">confidential</p>
+                    </div>
+                    
+                    <p class="mb-4 font-bold text-sm">${today}</p> <!-- Reduced mb-8 to mb-4 -->
+                    
+                    <p class="mb-4 text-sm"><strong>To:</strong> ${emp.name}</p> <!-- Reduced mb-8 to mb-4 -->
+                    
+                    <p class="mb-6 uppercase font-bold tracking-wide text-base border-b border-slate-200 inline-block pb-1 text-rose-700">Notice of Termination</p> <!-- Reduced mb-8 to mb-6 -->
+                    
+                    <p class="mb-4 text-sm">Dear Mr./Ms. ${emp.name.split(' ').pop()},</p> <!-- Reduced mb-6 to mb-4 -->
+                    
+                    <p class="mb-4 text-justify indent-8 text-sm"> <!-- Reduced mb-6 to mb-4 -->
+                        We regret to inform you that your employment with M-Commerce Corporation is hereby terminated effective immediately. 
+                        This decision has been reached after a thorough review of your performance and adherence to company standards.
+                    </p>
+                    
+                    <div class="mb-4 bg-rose-50 p-4 border border-rose-100 rounded-lg text-sm"> <!-- Reduced mb-6 to mb-4 -->
+                        <p class="mb-1 font-bold text-rose-800">Grounds for decision:</p>
+                        <p class="italic text-slate-700">${emp.terminationReason || 'Failure to meet probationary standards.'}</p>
+                    </div>
+                    
+                    <p class="mb-6 text-justify indent-8 text-sm"> <!-- Reduced mb-12 to mb-6 -->
+                        Please arrange for the return of any company property in your possession. You will receive separate communication regarding your final pay and clearance procedures.
+                    </p>
+                    
+                    <p class="mb-12 text-sm">Sincerely,</p> <!-- Reduced mb-24 to mb-12 -->
+                    
+                    <div>
+                        <p class="font-bold border-t border-black inline-block pt-2 w-64 text-sm">Human Resources Department</p>
+                        <p class="text-xs text-slate-500">M-Commerce Corporation</p>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('termination-content').innerHTML = html;
+            document.getElementById('download-term-pdf').onclick = () => downloadPDF('termination-content', `${emp.name}_Termination_Notice.pdf`);
+            document.getElementById('back-to-report-from-term').onclick = () => viewReport(empId);
+            switchView('termination');
+        }
+
         window.downloadCertificatePDF = async function(filename) {
             const el = document.getElementById('cert-pdf-wrapper');
+            const container = document.getElementById('cert-preview-container');
+            const wrapper = document.getElementById('cert-pdf-wrapper');
+            
+            // Temporarily reset transform to get full resolution capture
+            const currentTransform = wrapper.style.transform;
+            const currentHeight = container.style.height;
+            wrapper.style.transform = 'none';
+            container.style.height = 'auto';
+
             const opt = { margin: 0, filename: filename, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true, letterRendering: true, scrollY: 0 }, jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }, pagebreak: { mode: ['css', 'legacy'] } };
             showNotification("Generating Landscape Certificate...");
-            try { await html2pdf().set(opt).from(el).save(); } catch (e) { console.error(e); showNotification("Export failed."); }
+            
+            try { 
+                await html2pdf().set(opt).from(el).save(); 
+            } catch (e) { 
+                console.error(e); 
+                showNotification("Export failed."); 
+            } finally {
+                // Restore preview scale
+                wrapper.style.transform = currentTransform;
+                container.style.height = currentHeight;
+            }
         }
         
         window.viewCardFromAchievement = function(empId, achId) {
@@ -1443,15 +1720,31 @@
             document.getElementById('cert-name').innerText = emp.name;
             document.getElementById('cert-status').innerText = a.type;
             document.getElementById('cert-date').innerText = formatDateStandard(a.date);
-            document.getElementById('download-cert-pdf').onclick = () => window.downloadCertificatePDF(`${emp.name}_Certificate.pdf`);
+            
             document.getElementById('modal-backdrop').classList.remove('hidden');
             document.getElementById('congrats-modal').classList.remove('hidden');
+            
+            // Adjust Scale for Preview logic (duplicated for consistency)
+            const wrapper = document.getElementById('cert-pdf-wrapper');
+            const container = document.getElementById('cert-preview-container');
+            wrapper.style.transform = '';
+            const availableWidth = Math.min(window.innerWidth * 0.9, 1100); 
+            const baseWidth = 11.69 * 96; 
+            const scale = availableWidth / baseWidth;
+            if (scale < 1) {
+                wrapper.style.transform = `scale(${scale})`;
+                const scaledHeight = (8.27 * 96) * scale;
+                container.style.height = `${scaledHeight + 50}px`;
+            } else { container.style.height = 'auto'; }
+
+            document.getElementById('download-cert-pdf').onclick = () => window.downloadCertificatePDF(`${emp.name}_Certificate.pdf`);
             lucide.createIcons();
         }
 
         window.downloadPDF = async function(elId, filename) {
             const el = document.getElementById(elId);
-            const opt = { margin: [0.5, 0.5, 0.5, 0.5], filename, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true, letterRendering: true, scrollY: 0 }, jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }, pagebreak: { mode: ['css', 'legacy'] } };
+            // Reduced margins to 0.25 inches on all sides
+            const opt = { margin: [0.25, 0.25, 0.25, 0.25], filename, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true, letterRendering: true, scrollY: 0 }, jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }, pagebreak: { mode: ['css', 'legacy'] } };
             showNotification("Processing formal export...");
             try { await html2pdf().set(opt).from(el).save(); } catch (e) { showNotification("Export failed."); }
         }
@@ -1862,6 +2155,12 @@
             document.getElementById('login-screen').classList.remove('hidden');
             document.getElementById('app-content').classList.add('hidden');
         });
+        
+        // Attach Event Listeners
+        const restoreInput = document.getElementById('restore-input');
+        if (restoreInput) {
+             restoreInput.addEventListener('change', window.restoreData);
+        }
 
         startSystem();
     </script>
