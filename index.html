@@ -94,21 +94,21 @@
             <p class="text-slate-500 text-sm font-medium mb-8">Live Operator Tracking System</p>
             
             <div class="space-y-3">
-                <button onclick="window.attemptLogin('lead')" class="role-btn w-full p-4 rounded-xl border-2 border-slate-100 hover:border-blue-600 hover:bg-blue-50 transition-all group text-left flex items-center gap-4">
+                <button onclick="window.attemptLogin('lead')" class="role-btn cursor-pointer w-full p-4 rounded-xl border-2 border-slate-100 hover:border-blue-600 hover:bg-blue-50 transition-all group text-left flex items-center gap-4">
                     <div class="bg-blue-100 p-2 rounded-lg text-blue-600"><i data-lucide="shield"></i></div>
                     <div>
                         <p class="font-bold text-slate-900 group-hover:text-blue-700">Live Operator Lead</p>
                         <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Full Admin Access</p>
                     </div>
                 </button>
-                <button onclick="window.attemptLogin('trainer')" class="role-btn w-full p-4 rounded-xl border-2 border-slate-100 hover:border-purple-600 hover:bg-purple-50 transition-all group text-left flex items-center gap-4">
+                <button onclick="window.attemptLogin('trainer')" class="role-btn cursor-pointer w-full p-4 rounded-xl border-2 border-slate-100 hover:border-purple-600 hover:bg-purple-50 transition-all group text-left flex items-center gap-4">
                     <div class="bg-purple-100 p-2 rounded-lg text-purple-600"><i data-lucide="award"></i></div>
                     <div>
                         <p class="font-bold text-slate-900 group-hover:text-purple-700">Live Operator Trainer</p>
                         <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Full Admin Access</p>
                     </div>
                 </button>
-                <button onclick="window.attemptLogin('operator')" class="role-btn w-full p-4 rounded-xl border-2 border-slate-100 hover:border-emerald-600 hover:bg-emerald-50 transition-all group text-left flex items-center gap-4">
+                <button onclick="window.attemptLogin('operator')" class="role-btn cursor-pointer w-full p-4 rounded-xl border-2 border-slate-100 hover:border-emerald-600 hover:bg-emerald-50 transition-all group text-left flex items-center gap-4">
                     <div class="bg-emerald-100 p-2 rounded-lg text-emerald-600"><i data-lucide="user"></i></div>
                     <div>
                         <p class="font-bold text-slate-900 group-hover:text-emerald-700">Live Operator</p>
@@ -518,40 +518,84 @@
             </div>
         </div>
 
-        <!-- Celebration Modal -->
+        <!-- Celebration Modal (Moved from Script) -->
         <div id="congrats-modal" class="bg-white w-full max-w-6xl rounded-[30px] shadow-2xl p-0 overflow-hidden hidden mx-4 max-h-[90vh] overflow-y-auto">
             <!-- Scaling Wrapper for Preview -->
             <div id="cert-preview-container">
                 <!-- Landscape Wrapper: A4 Landscape is approx 11.7 x 8.3 in -->
-                <div id="cert-pdf-wrapper" class="bg-white flex items-center justify-center p-8 origin-top-left" style="width: 11.69in; height: 8.27in; margin: 0 auto; flex-shrink: 0;">
-                    <!-- Frame Construction using Standard Borders for Maximum PDF Compatibility -->
-                    <div class="w-full h-full border-[20px] border-[#B48C36] p-2 flex flex-col box-border">
-                        <div class="w-full h-full border-[8px] border-[#D4AF37] flex flex-col justify-center items-center p-8 text-center space-y-6 relative bg-white box-border">
-                            <!-- Decorative Corners -->
-                            <div class="absolute top-2 left-2 w-16 h-16 border-t-4 border-l-4 border-[#B48C36]"></div>
-                            <div class="absolute top-2 right-2 w-16 h-16 border-t-4 border-r-4 border-[#B48C36]"></div>
-                            <div class="absolute bottom-2 left-2 w-16 h-16 border-b-4 border-l-4 border-[#B48C36]"></div>
-                            <div class="absolute bottom-2 right-2 w-16 h-16 border-b-4 border-r-4 border-[#B48C36]"></div>
-                            <div class="space-y-3 z-10">
-                                <h4 class="text-blue-900 font-black uppercase tracking-[0.4em] text-sm">M-Commerce Corporation</h4>
-                                <p class="text-xs text-slate-400 font-bold uppercase tracking-widest">Operation Department</p>
-                            </div>
-                            <div class="space-y-4 z-10">
-                                <h2 class="cert-title text-6xl font-black text-slate-900">Certificate of Promotion</h2>
-                                <p class="text-slate-500 font-medium italic text-lg">This honor is officially awarded to</p>
-                            </div>
-                            <div class="space-y-4 z-10">
-                                <h3 class="text-6xl font-black text-[#B48C36] underline underline-offset-8 decoration-slate-200" id="cert-name"></h3>
-                                <div class="space-y-1">
-                                    <p class="text-slate-500 text-lg">For demonstrating exceptional technical mastery and professionalism,</p>
-                                    <p class="text-slate-500 text-lg">qualifying for advancement to the role of</p>
+                <div id="cert-pdf-wrapper" class="bg-white p-0 origin-top-left relative shadow-2xl" style="width: 11.69in; height: 8.27in; margin: 0 auto; flex-shrink: 0; box-sizing: border-box; overflow: hidden;">
+                    <div class="flex h-full w-full">
+                        <!-- Left Corporate Sidebar -->
+                        <div class="w-[30%] h-full bg-[#0f172a] relative flex flex-col justify-between p-12 text-white print:bg-[#0f172a] print:text-white">
+                            <!-- Geometric Accents -->
+                            <div class="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-bl-[100px]"></div>
+                            <div class="absolute bottom-0 left-0 w-32 h-32 bg-white/5 rounded-tr-[100px]"></div>
+                            
+                            <!-- Top Icon -->
+                            <div class="z-10 mt-8">
+                                <div class="w-20 h-20 bg-amber-500 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-900/20 mb-6">
+                                    <i data-lucide="award" class="w-10 h-10 text-white"></i>
                                 </div>
-                                <p class="text-4xl font-black text-blue-900 uppercase tracking-tighter mt-4" id="cert-status"></p>
+                                <div class="h-1 w-12 bg-amber-500/50 rounded-full mb-4"></div>
+                                <p class="text-amber-500 font-bold uppercase tracking-[0.2em] text-xs">Excellence</p>
+                                <p class="text-slate-400 text-[10px] uppercase tracking-widest mt-1">In Operations</p>
                             </div>
-                            <div class="pt-12 w-full max-w-4xl grid grid-cols-3 gap-12 items-end z-10">
-                                <div class="border-t-2 border-slate-900 pt-4"><p class="text-[10px] font-black uppercase text-slate-400 mb-1">Date of Award</p><p class="text-sm font-bold text-slate-900" id="cert-date"></p></div>
-                                <div class="flex justify-center items-center opacity-30"><i data-lucide="award" class="text-blue-900 w-16 h-16"></i></div>
-                                <div class="border-t-2 border-slate-900 pt-4"><p class="text-[10px] font-black uppercase text-slate-400 mb-1">Authorization</p><p class="text-sm font-bold text-slate-900">Live Operator Trainer</p></div>
+
+                            <!-- Bottom Branding -->
+                            <div class="z-10 mb-8 opacity-80">
+                                <h4 class="font-black uppercase tracking-widest text-lg leading-tight">M-Corp<br>Tracker</h4>
+                                <p class="text-[9px] text-slate-400 mt-2 uppercase tracking-wider">Official Document</p>
+                            </div>
+                        </div>
+
+                        <!-- Right Content Area -->
+                        <div class="w-[70%] h-full bg-white relative p-16 flex flex-col justify-between">
+                            <!-- Watermark -->
+                            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.03] pointer-events-none">
+                                <i data-lucide="shield-check" class="w-96 h-96 text-slate-900"></i>
+                            </div>
+
+                            <!-- Header -->
+                            <div class="relative z-10 pt-4">
+                                <p class="text-slate-400 font-bold uppercase tracking-[0.25em] text-xs mb-3">Certificate of</p>
+                                <h1 class="cert-title text-7xl font-black text-slate-900 tracking-tight leading-none">Promotion</h1>
+                                <div class="w-full h-[2px] bg-slate-100 mt-8 relative">
+                                    <div class="absolute left-0 top-0 h-full w-32 bg-amber-500"></div>
+                                </div>
+                            </div>
+
+                            <!-- Main Content -->
+                            <div class="relative z-10 flex-grow flex flex-col justify-center py-8">
+                                <p class="text-slate-500 font-serif italic text-xl mb-6">This certifies that</p>
+                                
+                                <h2 class="text-5xl md:text-6xl font-black text-[#0f172a] mb-8 leading-tight break-words" id="cert-name">Employee Name</h2>
+                                
+                                <p class="text-slate-600 leading-relaxed max-w-xl text-base">
+                                    Has successfully met all performance criteria and demonstrated exceptional technical proficiency. In recognition of this achievement, they are officially promoted to the position of:
+                                </p>
+                                
+                                <div class="mt-8">
+                                    <span class="text-3xl font-bold text-amber-600 uppercase tracking-wide border-l-[6px] border-amber-500 pl-6 py-2 block bg-amber-50/50" id="cert-status">
+                                        Role Title
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Footer -->
+                            <div class="relative z-10 flex items-end justify-between pt-8 border-t border-slate-100">
+                                <div>
+                                    <p class="text-[10px] text-slate-400 uppercase tracking-wider font-bold mb-1">Date of Effectivity</p>
+                                    <p class="text-xl font-bold text-slate-900 font-mono" id="cert-date">YYYY-MM-DD</p>
+                                </div>
+                                
+                                <div class="text-right">
+                                    <div class="h-16 flex items-end justify-end mb-2">
+                                        <!-- Signature Line Placeholder -->
+                                        <div class="w-56 border-b-2 border-slate-300"></div>
+                                    </div>
+                                    <p class="text-[10px] text-slate-400 uppercase tracking-wider font-bold">Authorized Signature</p>
+                                    <p class="text-sm font-black text-slate-900 mt-1">Live Operator Trainer</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -562,10 +606,10 @@
                 <button id="download-cert-pdf" class="w-full md:w-auto px-8 py-3 bg-blue-900 text-white font-bold rounded-xl flex items-center justify-center gap-2 shadow-xl active:scale-95"><i data-lucide="download"></i> Download Certificate (Landscape)</button>
             </div>
         </div>
-    </div>
+    </div> <!-- Added missing closing div -->
 
-    <!-- NEW PROMPT OVERLAY (Updated z-index to 110 to show over login screen) -->
-    <div id="prompt-overlay" class="fixed inset-0 bg-slate-900/60 hidden z-[110] backdrop-blur-sm flex items-center justify-center p-4">
+    <!-- NEW PROMPT OVERLAY (Updated z-index to 9999 to guarantee visibility) -->
+    <div id="prompt-overlay" class="fixed inset-0 bg-slate-900/60 hidden z-[9999] backdrop-blur-sm items-center justify-center p-4">
         <div class="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-6 md:p-8 text-center mx-4">
             <h3 class="text-xl font-bold mb-2" id="prompt-modal-title">Input Required</h3>
             <p class="text-sm text-slate-500 mb-4" id="prompt-modal-message">Please enter a value:</p>
@@ -622,19 +666,26 @@
 
             const roleName = r === 'lead' ? 'Live Operator Lead' : 'Live Operator Trainer';
 
-            window.showPromptModal(
-                "Admin Access Required", 
-                `Enter password for ${roleName}:`, 
-                "", 
-                (password) => {
-                    if (password === passwords[r]) {
-                        window.login(r);
-                    } else {
-                        window.showNotification("Access Denied: Incorrect Password");
-                    }
-                },
-                "password" 
-            );
+            try {
+                window.showPromptModal(
+                    "Admin Access Required", 
+                    `Enter password for ${roleName}:`, 
+                    "", 
+                    (password) => {
+                        if (password === passwords[r]) {
+                            window.login(r);
+                        } else {
+                            window.showNotification("Access Denied: Incorrect Password");
+                        }
+                    },
+                    "password" 
+                );
+            } catch (e) {
+                console.error("Login Prompt Error:", e);
+                // Fallback login if modal fails
+                const p = prompt(`Enter password for ${roleName}:`);
+                if (p === passwords[r]) window.login(r);
+            }
         }
 
         window.login = function(role) {
@@ -689,21 +740,33 @@
         window.closeConfirmModal = function() { document.getElementById('confirm-overlay').classList.add('hidden'); }
 
         window.showPromptModal = function(title, message, initialValue, onConfirm, inputType = 'text') {
+            const overlay = document.getElementById('prompt-overlay');
+            if(!overlay) return;
+
             document.getElementById('prompt-modal-title').innerText = title;
             document.getElementById('prompt-modal-message').innerText = message;
+            
             const input = document.getElementById('prompt-input');
             input.type = inputType; // Set input type (text or password)
             input.value = initialValue || '';
-            document.getElementById('prompt-overlay').classList.remove('hidden');
-            input.focus();
+            
+            // Ensure visibility by swapping classes strictly
+            overlay.classList.remove('hidden');
+            overlay.classList.add('flex');
+            
+            // Focus with slight delay to ensure render
+            setTimeout(() => input.focus(), 50);
+            
             const confirmBtn = document.getElementById('prompt-confirm-btn');
             // Remove old listeners to prevent stacking
             const newBtn = confirmBtn.cloneNode(true);
             confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
+            
             newBtn.onclick = () => {
                 const val = document.getElementById('prompt-input').value.trim();
                 if(val) { onConfirm(val); closePromptModal(); }
             };
+            
             // Add Enter key support
             input.onkeyup = (e) => {
                 if(e.key === 'Enter') newBtn.click();
@@ -711,7 +774,13 @@
         }
 
         window.closePromptModal = function() { 
-            document.getElementById('prompt-overlay').classList.add('hidden'); 
+            const overlay = document.getElementById('prompt-overlay');
+            if(!overlay) return;
+            
+            // Hide by swapping classes strictly
+            overlay.classList.remove('flex');
+            overlay.classList.add('hidden');
+            
             // Reset input type back to text
             document.getElementById('prompt-input').type = 'text';
         }
@@ -865,10 +934,21 @@
              }
         }
 
-        window.calculateNextDate = function(hireDate, monthsToAddAdjusted) {
-             if (!hireDate) return formatDateStandard(new Date());
-             const parts = hireDate.split('-');
-             const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+        window.calculateNextDate = function(dateInput, monthsToAddAdjusted) {
+             if (!dateInput) return formatDateStandard(new Date());
+             
+             let d;
+             // Check if YYYY-MM-DD format (standard DB format)
+             if (typeof dateInput === 'string' && dateInput.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                 const parts = dateInput.split('-');
+                 d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+             } else {
+                 // Try parsing standard date string (e.g., "January 1, 2024")
+                 d = new Date(dateInput);
+             }
+             
+             if (isNaN(d.getTime())) return "N/A";
+
              d.setMonth(d.getMonth() + monthsToAddAdjusted + 1);
              return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
         }
@@ -1315,7 +1395,18 @@
             const emp = window.employees.find(e => e.id == id); if (!emp) return;
             if(action === 'promote') {
                 const oldS = emp.status, newS = oldS === 'Trainee' ? 'Probationary' : 'Regular';
-                const effectiveDate = calculateNextDueDate(emp);
+                
+                // STRICT LOGIC:
+                // Regularization Date = Scheduled Date of the LAST assessment (passed).
+                // Probationary Start Date = Scheduled Date of the LAST assessment (passed).
+                // The "Schedule" for the *next* assessment will naturally follow this date + 1 month via calculateNextDueDate.
+                
+                // We use (emp.evaluations.length - 1) because calculateNextDate adds (input + 1).
+                // So (N - 1) + 1 = N months from hire.
+                // Example: Hire July 1. 3 Evals. Next Date function gets (3-1=2). Adds 2+1=3 months. July -> Oct.
+                // This sets the Achievement Date to the date of the assessment that triggered the promotion.
+                let effectiveDate = window.calculateNextDate(emp.hireDate, emp.evaluations.length - 1);
+
                 const newAchievements = [...(emp.achievements || []), { id: Date.now(), title: `Promoted to ${newS}`, date: effectiveDate, type: newS, fromStatus: oldS, evaluations: [...emp.evaluations.slice(emp.phaseStartIdx || 0)] }];
                 const updatedEmp = { ...emp, status: newS, achievements: newAchievements, phaseStartIdx: emp.evaluations.length, phaseLimit: 3 };
                 window.saveEmployee(updatedEmp).then(() => { window.logActivity('promote', `Contract Advanced to ${newS}`, emp.name); const idx = window.employees.findIndex(e => e.id === id); if(idx !== -1) window.employees[idx] = updatedEmp; viewReport(id); showCongrats({ ...updatedEmp }); });
@@ -1645,6 +1736,10 @@
             // Collect assessment history
             let evalHistoryHTML = '';
             let relevantEvals = [];
+            
+            // Determine the base date for the schedule.
+            // Default to hire date (for Probationary Endorsement).
+            let baseDateForSchedule = emp.hireDate;
 
             if (type === 'Probationary') { 
                 // For Probationary Endorsement, show Trainee records
@@ -1652,14 +1747,21 @@
             } else { 
                 // For Regularization Endorsement, show ONLY Probationary records (exclude Trainee)
                 relevantEvals = emp.evaluations.filter(e => e.type === 'Probationary'); 
+                
+                // For Regularization, the "Month 1" of probation starts AFTER they became Probationary.
+                // Find the Probationary achievement to get the correct start date.
+                const probAch = emp.achievements.find(a => a.type === 'Probationary');
+                if (probAch && probAch.date && probAch.date !== 'Pending') {
+                    baseDateForSchedule = probAch.date;
+                }
             }
             
             relevantEvals.sort((a,b) => new Date(a.date) - new Date(b.date));
 
             if (relevantEvals.length > 0) {
-                // Use calculateNextDate logic for scheduled date column
+                // Use calculateNextDate logic with the correct base date
                 let rows = relevantEvals.map(ev => {
-                    const scheduledDate = window.calculateNextDate(emp.hireDate, ev.phaseMonth - 1);
+                    const scheduledDate = window.calculateNextDate(baseDateForSchedule, ev.phaseMonth - 1);
                     return `
                     <tr>
                         <td class="border border-slate-300 p-2">${scheduledDate}</td>
@@ -1887,22 +1989,52 @@
             showNotification("Dossier Backup Created.");
         }
 
+        // Helper to ensure dates are in YYYY-MM-DD format
+        window.normalizeDate = function(dateStr) {
+            if (!dateStr || dateStr === 'Pending') return dateStr;
+            // Check if matches standard YYYY-MM-DD
+            if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+            
+            const d = new Date(dateStr);
+            if (isNaN(d.getTime())) return dateStr; // Return original if invalid
+            
+            // Convert to YYYY-MM-DD
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
         window.restoreData = function(event) {
             const file = event.target.files[0]; 
             event.target.value = '';
             if(!file) return;
-            showConfirmModal("Restore Data", "This will merge backup data into the cloud. Existing IDs will be updated. Continue?", () => {
+            showConfirmModal("Restore Data", "This will merge backup data into the cloud. Dates will be normalized to ensure correct scheduling. Continue?", () => {
                 const reader = new FileReader();
                 reader.onload = async (e) => {
                     try {
                         const data = JSON.parse(e.target.result);
                         if(data.employees && Array.isArray(data.employees)) {
-                            showNotification("Processing Restore...");
+                            showNotification("Processing Restore & Adjusting Dates...");
                             const existingMap = new Map();
                             window.employees.forEach(emp => existingMap.set(emp.id, emp.firebaseId));
                             let count = 0;
+                            
                             for (const backupEmp of data.employees) {
                                 const { firebaseId: oldFbId, ...empData } = backupEmp;
+                                
+                                // Automatic Date Adjustment/Normalization
+                                if (empData.hireDate) {
+                                    empData.hireDate = window.normalizeDate(empData.hireDate);
+                                }
+                                
+                                if (empData.achievements && Array.isArray(empData.achievements)) {
+                                    empData.achievements = empData.achievements.map(ach => ({
+                                        ...ach,
+                                        date: window.normalizeDate(ach.date)
+                                    }));
+                                }
+
                                 if (existingMap.has(empData.id)) {
                                     empData.firebaseId = existingMap.get(empData.id);
                                     await window.saveEmployee(empData, true);
@@ -1914,7 +2046,7 @@
                             if(data.refresherStructure) window.refresherStructure = data.refresherStructure;
                             if(data.evalStructure || data.refresherStructure) await window.saveEvalStructure(true);
                             
-                            showNotification(`Sync Complete: ${count} Records.`);
+                            showNotification(`Sync Complete: ${count} Records Updated.`);
                         } else { showNotification("Invalid Backup File."); }
                     } catch (err) { console.error("Restore Error:", err); showNotification("Corrupt Data File."); }
                 };
@@ -2129,34 +2261,40 @@
         window.appId = appId;
         
         // Attach form handler manually since module script scope is different
-        document.getElementById('add-trainee-form').onsubmit = (e) => {
-            e.preventDefault();
-            const formData = new FormData(e.target);
-            const firebaseId = formData.get('firebaseId');
-            const id = formData.get('id') || Date.now();
-            const name = formData.get('name');
-            const hireDate = formData.get('hireDate');
-            const status = formData.get('status') || 'Trainee';
+        // Safely check if form exists to prevent null reference error
+        const traineeForm = document.getElementById('add-trainee-form');
+        if (traineeForm) {
+            traineeForm.onsubmit = (e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const firebaseId = formData.get('firebaseId');
+                const id = formData.get('id') || Date.now();
+                const name = formData.get('name');
+                const hireDate = formData.get('hireDate');
+                const status = formData.get('status') || 'Trainee';
 
-            if (firebaseId) {
-                const emp = window.employees.find(e => e.firebaseId == firebaseId);
-                if (emp) {
+                if (firebaseId) {
+                    const emp = window.employees.find(e => e.firebaseId == firebaseId);
+                    if (emp) {
+                        window.saveEmployee({
+                            firebaseId, id: parseInt(id), name, hireDate,
+                            status: status, // Use selected status
+                            evaluations: emp.evaluations,
+                            achievements: emp.achievements, phaseStartIdx: emp.phaseStartIdx, phaseLimit: emp.phaseLimit
+                        }).then(() => window.logActivity('edit', 'Updated personnel details', name));
+                    }
+                } else {
                     window.saveEmployee({
-                        firebaseId, id: parseInt(id), name, hireDate,
+                        id: parseInt(id), name, hireDate, 
                         status: status, // Use selected status
-                        evaluations: emp.evaluations,
-                        achievements: emp.achievements, phaseStartIdx: emp.phaseStartIdx, phaseLimit: emp.phaseLimit
-                    }).then(() => window.logActivity('edit', 'Updated personnel details', name));
+                        evaluations: [], achievements: [], phaseStartIdx: 0, phaseLimit: 3
+                    }).then(() => window.logActivity('new_hire', 'New personnel registered', name));
                 }
-            } else {
-                window.saveEmployee({
-                    id: parseInt(id), name, hireDate, 
-                    status: status, // Use selected status
-                    evaluations: [], achievements: [], phaseStartIdx: 0, phaseLimit: 3
-                }).then(() => window.logActivity('new_hire', 'New personnel registered', name));
-            }
-            closeModal();
-        };
+                closeModal();
+            };
+        } else {
+            console.error("Critical: 'add-trainee-form' element not found in DOM.");
+        }
 
         // Auth Logic with Error Handling
         async function startSystem() {
@@ -2283,6 +2421,7 @@
             // Force show login screen
             document.getElementById('login-screen').classList.remove('hidden');
             document.getElementById('app-content').classList.add('hidden');
+            lucide.createIcons();
         });
         
         // Attach Event Listeners
