@@ -497,12 +497,24 @@
                 <div><label class="block text-sm font-semibold mb-1 text-slate-700">Hire Date</label><input type="date" name="hireDate" required class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500"></div>
                 <div>
                     <label class="block text-sm font-semibold mb-1 text-slate-700">Status</label>
-                    <select name="status" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                    <select name="status" id="status-select" onchange="window.toggleDateFields()" class="w-full px-4 py-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500 bg-white">
                         <option value="Trainee">Trainee</option>
                         <option value="Probationary">Probationary</option>
                         <option value="Regular">Regular</option>
                     </select>
                 </div>
+                
+                <!-- Dynamic Date Fields -->
+                <div id="probation-date-container" class="hidden bg-slate-50 p-3 rounded-xl border border-slate-100">
+                    <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Probationary Start Date</label>
+                    <input type="date" name="probationDate" class="w-full px-4 py-2 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500 bg-white text-sm">
+                </div>
+
+                <div id="regular-date-container" class="hidden bg-slate-50 p-3 rounded-xl border border-slate-100">
+                    <label class="block text-xs font-bold uppercase text-slate-400 mb-1">Regularization Date</label>
+                    <input type="date" name="regularDate" class="w-full px-4 py-2 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-blue-500 bg-white text-sm">
+                </div>
+
                 <button type="submit" class="w-full bg-slate-900 text-white py-3.5 rounded-xl font-bold hover:bg-black transition-all shadow-lg mt-4 active:scale-95">Save to Database</button>
             </form>
         </div>
@@ -822,13 +834,34 @@
             document.querySelectorAll('#modal-backdrop > div').forEach(el => el.classList.add('hidden'));
         }
 
+        window.toggleDateFields = function() {
+            const status = document.getElementById('status-select').value;
+            const probDiv = document.getElementById('probation-date-container');
+            const regDiv = document.getElementById('regular-date-container');
+            
+            if (status === 'Trainee') {
+                probDiv.classList.add('hidden');
+                regDiv.classList.add('hidden');
+            } else if (status === 'Probationary') {
+                probDiv.classList.remove('hidden');
+                regDiv.classList.add('hidden');
+            } else if (status === 'Regular') {
+                probDiv.classList.remove('hidden');
+                regDiv.classList.remove('hidden');
+            }
+        }
+
         window.showAddTraineeModal = function() {
             document.getElementById('trainee-modal-title').innerText = 'Personnel Registration';
             const form = document.getElementById('add-trainee-form');
             form.reset();
             form.querySelector('input[name="firebaseId"]').value = '';
             form.querySelector('input[name="id"]').value = '';
-            form.querySelector('select[name="status"]').value = 'Trainee'; 
+            form.querySelector('select[name="status"]').value = 'Trainee';
+            
+            // Reset dynamic fields visibility
+            window.toggleDateFields();
+            
             document.getElementById('modal-backdrop').classList.remove('hidden');
             document.getElementById('add-trainee-modal').classList.remove('hidden');
             lucide.createIcons();
@@ -844,6 +877,30 @@
             form.querySelector('input[name="name"]').value = emp.name;
             form.querySelector('input[name="hireDate"]').value = emp.hireDate;
             form.querySelector('select[name="status"]').value = emp.status;
+            
+            // Pre-fill dates if achievements exist
+            const probAch = emp.achievements?.find(a => a.type === 'Probationary');
+            const regAch = emp.achievements?.find(a => a.type === 'Regular');
+            
+            // Helper to convert "Month DD, YYYY" back to "YYYY-MM-DD" for input
+            const toInputDate = (dateStr) => {
+                if(!dateStr || dateStr === 'Pending') return '';
+                // Check if already YYYY-MM-DD
+                if(/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+                const d = new Date(dateStr);
+                if(isNaN(d.getTime())) return '';
+                return d.toISOString().split('T')[0];
+            };
+
+            if (probAch) form.querySelector('input[name="probationDate"]').value = toInputDate(probAch.date);
+            else form.querySelector('input[name="probationDate"]').value = '';
+
+            if (regAch) form.querySelector('input[name="regularDate"]').value = toInputDate(regAch.date);
+            else form.querySelector('input[name="regularDate"]').value = '';
+
+            // Update visibility
+            window.toggleDateFields();
+
             document.getElementById('modal-backdrop').classList.remove('hidden');
             document.getElementById('add-trainee-modal').classList.remove('hidden');
             lucide.createIcons();
@@ -1420,13 +1477,18 @@
             const emp = window.employees.find(e => e.id == id);
             const parseDateLocal = (dateStr) => { const parts = dateStr.split('-'); return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2])); };
             const formatDate = (dateObj) => { return dateObj.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }); };
-            const addMonthsToHireDate = (months) => { const d = parseDateLocal(emp.hireDate); d.setMonth(d.getMonth() + months); return formatDate(d); };
             
             const dateHired = formatDate(parseDateLocal(emp.hireDate));
             const probAch = emp.achievements.find(a => a.type === 'Probationary');
             const regAch = emp.achievements.find(a => a.type === 'Regular');
-            let dateProb = probAch ? addMonthsToHireDate(probAch.evaluations.length) : 'Pending';
-            let dateReg = regAch ? addMonthsToHireDate((probAch ? probAch.evaluations.length : 0) + regAch.evaluations.length) : 'Pending';
+            
+            // Use stored date directly if available, otherwise Pending
+            let dateProb = probAch ? (probAch.date.includes('-') || probAch.date.includes(',') ? probAch.date : formatDateStandard(probAch.date)) : 'Pending';
+            let dateReg = regAch ? (regAch.date.includes('-') || regAch.date.includes(',') ? regAch.date : formatDateStandard(regAch.date)) : 'Pending';
+
+            // Ensure formatting is pretty if it was stored as YYYY-MM-DD
+            if (dateProb !== 'Pending' && /^\d{4}-\d{2}-\d{2}$/.test(dateProb)) dateProb = formatDateStandard(dateProb);
+            if (dateReg !== 'Pending' && /^\d{4}-\d{2}-\d{2}$/.test(dateReg)) dateReg = formatDateStandard(dateReg);
 
             const phaseEvals = emp.evaluations.slice(emp.phaseStartIdx || 0);
             const isCycleComplete = phaseEvals.length >= (emp.phaseLimit || 3);
@@ -2272,24 +2334,72 @@
                 const name = formData.get('name');
                 const hireDate = formData.get('hireDate');
                 const status = formData.get('status') || 'Trainee';
+                
+                // Capture Date Inputs
+                const probationDateInput = formData.get('probationDate');
+                const regularDateInput = formData.get('regularDate');
 
+                // Prepare Employee Object
+                let empData = {
+                    id: parseInt(id),
+                    name,
+                    hireDate,
+                    status,
+                    evaluations: [],
+                    achievements: [],
+                    phaseStartIdx: 0,
+                    phaseLimit: 3
+                };
+
+                // If editing, preserve existing data
                 if (firebaseId) {
-                    const emp = window.employees.find(e => e.firebaseId == firebaseId);
-                    if (emp) {
-                        window.saveEmployee({
-                            firebaseId, id: parseInt(id), name, hireDate,
-                            status: status, // Use selected status
-                            evaluations: emp.evaluations,
-                            achievements: emp.achievements, phaseStartIdx: emp.phaseStartIdx, phaseLimit: emp.phaseLimit
-                        }).then(() => window.logActivity('edit', 'Updated personnel details', name));
+                    const existingEmp = window.employees.find(e => e.firebaseId == firebaseId);
+                    if (existingEmp) {
+                        empData = { ...existingEmp, name, hireDate, status };
+                        empData.firebaseId = firebaseId; // Ensure ID is kept
                     }
-                } else {
-                    window.saveEmployee({
-                        id: parseInt(id), name, hireDate, 
-                        status: status, // Use selected status
-                        evaluations: [], achievements: [], phaseStartIdx: 0, phaseLimit: 3
-                    }).then(() => window.logActivity('new_hire', 'New personnel registered', name));
                 }
+
+                // Helper to add/update achievement
+                const upsertAchievement = (type, dateValue) => {
+                    if (!dateValue) return;
+                    
+                    const formattedDate = window.formatDateStandard(dateValue); // Format for display
+                    
+                    const existingIndex = empData.achievements.findIndex(a => a.type === type);
+                    if (existingIndex >= 0) {
+                        empData.achievements[existingIndex].date = formattedDate;
+                    } else {
+                        empData.achievements.push({
+                            id: Date.now() + (type === 'Regular' ? 100 : 0),
+                            title: `Promoted to ${type}`,
+                            date: formattedDate,
+                            type: type,
+                            evaluations: [] // Placeholder
+                        });
+                    }
+                };
+
+                // Logic to save dates based on status
+                if (status === 'Probationary' || status === 'Regular') {
+                    upsertAchievement('Probationary', probationDateInput);
+                }
+                
+                if (status === 'Regular') {
+                    upsertAchievement('Regular', regularDateInput);
+                }
+
+                // Cleanup achievements if downgrading status (optional, but cleaner)
+                if (status === 'Trainee') {
+                    empData.achievements = empData.achievements.filter(a => a.type !== 'Probationary' && a.type !== 'Regular');
+                } else if (status === 'Probationary') {
+                    empData.achievements = empData.achievements.filter(a => a.type !== 'Regular');
+                }
+
+                window.saveEmployee(empData).then(() => {
+                    window.logActivity(firebaseId ? 'edit' : 'new_hire', firebaseId ? 'Updated personnel details' : 'New personnel registered', name);
+                });
+                
                 closeModal();
             };
         } else {
